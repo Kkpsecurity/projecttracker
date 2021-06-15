@@ -39,7 +39,6 @@ $profile = $content['profile'];
 
                         <div class="col-lg-5">
                             @include('flash::message')
-                           
                             <div class="password-console"></div>
                             <form action="{{ route('profile.password.process') }}" method="POST" class="form" role="form">
                                 @csrf

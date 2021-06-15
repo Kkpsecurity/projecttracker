@@ -7,15 +7,16 @@
 <div class="container">
     <div class="row">
         <div class="col-md-12">
+            @include('flash::message')
             <div class="message-console"></div>
-            <form action="{{ route('home.detail.process') }}" role="form" id="project-form">
+            <form action="{{ route('home.detail.process') }}" role="form" id="project-form" method="post" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" id="id" name="id" value="{{$client->id}}">
 
                 <div class="form-group">
                     <label for="corporate_name">Company</label>
                     <select class="form-control" id="corporate_name" name="corporate_name" required>
-                        <option value="">Select a Company</option>
+                        <option value="">{{ __('Select a Company') }}</option>
                         <option {{ ($client->corporate_name == 'CIS' ? 'selected' : '') }}>CIS</option>
                         <option {{ ($client->corporate_name == 'S2' ? 'selected' : '') }}>S2</option>
                     </select>
@@ -60,6 +61,35 @@
                     <textarea id="description" name="description" class="form-control" rows="4">{{ $client->description }}</textarea>
                 </div>
 
+                <h3>{{ __('Project Files') }}</h3><hr>
+
+                <div class="form-group">
+                    @if($client->file1)
+                        <a href="{{ url('home/detach/file1') }}" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></a>
+                        <a href="{{ Storage::url('app/project/' . $client->file1) }}">{{ $client->file1 }}</a>
+                    @else
+                        <input type="file" name="file1" class="form-control" id="file1" />
+                    @endif
+                </div>
+
+                <div class="form-group">
+                    @if($client->file2)
+                        <a href="{{ url('home/detach/file2') }}" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></a>
+                        <a href="{{ Storage::url('app/project/' . $client->file2) }}">{{ $client->file2 }}</a>
+                    @else
+                        <input type="file" name="file2" class="form-control" id="file2" />
+                    @endif
+                </div>
+
+                <div class="form-group">
+                    @if($client->file3)
+                        <a href="" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></a>
+                        <a href="{{ Storage::url('app/project/' . $client->file3) }}">{{ $client->file3 }}</a>
+                    @else
+                        <input type="file" name="file3" class="form-control" id="file3" />
+                    @endif
+                </div>
+
                 <div class="form-group">
                     <div class="row">
                         <div class="col-md-6 text-left">
@@ -70,6 +100,7 @@
                         </div>
                     </div>
                 </div>
+
             </form>
         </div>
     </div>
@@ -86,7 +117,7 @@
         const ProjectForm = $('form#project-form');
         ProjectForm.show();
 
-        CreateTrigger.on('click', function(e) {
+      /*  ProjectForm.on('submit', function(e) {
             e.preventDefault();
             const Message = $('div.message-console');
             ProjectForm.slideUp(400);
@@ -94,7 +125,16 @@
             $.ajax({
                 type: "POST",
                 url: ProjectForm.attr('action'),
-                data: ProjectForm.serialize(),
+                data: {
+                    '_token': '{{csrf_token()}}',
+                    'corporate_name': $('#corporate_name :selected').val(),
+                    'client_name': $('#client_name').val(),
+                    'poc': $('#poc').val(),
+                    'description': $('#description').val(),
+                    'status': $('#status').val(),
+                    'quick_status': $('#quick_status').val(),
+                    'file1': $('#file1').val()
+                },
                 dataType: 'json',
                 success: function(result) {
                     if(result.success === true) {
@@ -111,18 +151,16 @@
                         alert('RESULT ERROR: ' + result.message);
                     }
                 },
-                error: function(result)
-                {
+                error: function(result) {
                     alert('ERROR: ' + result.message);
                 },
-                always: function(result)
-                {
+                always: function(result) {
                     alert('Some thing went wrong, But we are not sure what. This error has been logged');
                 }
             });
 
 
-        });
+        });*/
 
         DeleteTrigger.on('click', function(e) {
             e.preventDefault();

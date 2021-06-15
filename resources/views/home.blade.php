@@ -41,6 +41,7 @@
                     @endif
                 </tbody>
             </table>
+            <span class="pull-right">{{ $clients->render() }}</span>
         </div>
     </div>
 </div>
@@ -113,6 +114,8 @@
                 <button type="button" class="btn btn-primary" id="create_project-trigger">Save changes</button>
             </div>
         </div>
+
+
     </div>
 </div>
 @endsection
@@ -132,10 +135,11 @@
             ProjectForm.slideUp(400);
             $('.modal-footer').fadeOut(400);
 
+
             $.ajax({
                 type: "POST",
                 url: ProjectForm.attr('action'),
-                data: ProjectForm.serialize(),
+                data:  ProjectForm.serialize(),
                 dataType: 'json',
                 success: function(result) {
                     if(result.success === true) {
@@ -143,7 +147,7 @@
                         Message.addClass('alert alert-success');
                         Message.fadeIn(400);
                         setTimeout(function() {
-                            window.location.href = '{{ url('home') }}'
+                          //  window.location.href = '{{ url('home') }}'
                         }, 3000);
                     } else {
                         alert('RESULT ERROR: ' + result.message);
