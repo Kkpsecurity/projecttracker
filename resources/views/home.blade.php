@@ -11,6 +11,45 @@
             <span><a href="#" data-toggle="modal" data-target="#create_project" class="btn btn-success"><i class="fa fa-plus"></i> Create a New Project</a></span>
         </div>
         <div class="col-md-12 pt-3 m-t-20">
+<?php
+
+    $active_tab         = Request()->segment(3) ?? 'opp';
+    $tabs = [
+        'opp'       => [
+            'icon'  => 'fa fa-file',
+            'name'  => 'Opportunities Pipeline'
+        ],
+        'active'    => [
+                'icon'  => 'fa fa-check',
+                'name'  => 'Active Projects'
+            ],
+        'closed'   => [
+            'icon'  => 'fa fa-ban',
+            'name'  => 'Closed Projects'
+        ]
+    ];
+?>
+            <div class="card">
+                <div class="card-header">
+                    <style>
+                        .lms-tabs {
+                            border-radius: 0;
+                            background: #ccc;
+                        }
+                        .lms-tabs:hover, .lms-tabs.active {
+                            background: #333;
+                            color: #eee;
+                        }
+                    </style>
+                    @foreach($tabs as $tab_id => $tab)
+                        <a href="{{ url('home/tabs/' . $tab_id) }}" class="lms-tabs btn btn-default {{ ($tab_id == $active_tab ? 'active' : '') }}">
+                            <i class="fa {{ $tab['icon'] }}"></i> @lang(ucwords($tab['name']))
+                        </a>
+                    @endforeach
+                </div>
+
+            </div>
+
             <table class="table table-bordered table-striped table-hover shadow" style="background: #fff;">
                 <thead>
                 <tr>
@@ -23,22 +62,22 @@
                 </tr>
                 </thead>
                 <tbody>
-                    @if(count($clients) > 0)
-                        @foreach ($clients as $client)
-                            <tr>
-                                <td>{{ $client->corporate_name }}</td>
-                                <td>{{ $client->client_name }}</td>
-                                <td><a href="{{ url('home/detail', $client->id) }}"><strong>{{ $client->project_name }}</strong></a></td>
-                                <td>{{ $client->quick_status  }}</td>
-                                <td style="width: 180px; text-align: right;">{{ $client->created_at->format('M d Y H:i:s')  }}</td>
-                                <td style="width: 180px; text-align: right;">{{ $client->updated_at->format('M d Y H:i:s')  }}</td>
-                            </tr>
-                        @endforeach
-                    @else
+                @if(count($clients) > 0)
+                    @foreach ($clients as $client)
                         <tr>
-                            <td colspan="6">No Projects Found</td>
+                            <td>{{ $client->corporate_name }}</td>
+                            <td>{{ $client->client_name }}</td>
+                            <td><a href="{{ url('home/detail', $client->id) }}"><strong>{{ $client->project_name }}</strong></a></td>
+                            <td>{{ $client->quick_status  }}</td>
+                            <td style="width: 180px; text-align: right;">{{ $client->created_at->format('M d Y H:i:s')  }}</td>
+                            <td style="width: 180px; text-align: right;">{{ $client->updated_at->format('M d Y H:i:s')  }}</td>
                         </tr>
-                    @endif
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="6">No Projects Found</td>
+                    </tr>
+                @endif
                 </tbody>
             </table>
             <span class="pull-right">{{ $clients->render() }}</span>

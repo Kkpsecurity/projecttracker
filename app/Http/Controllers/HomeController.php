@@ -30,7 +30,22 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $clients = Client::paginate(10);
+        $oppStatus = ['New Lead', 'Proposal Sent', 'Contracting Now'];
+        $activeStatus = ['Active'];
+        $closedStatus = ['Closed'];
+
+        $segment = \Request::segment(3);
+        if($segment == 'opp') {
+            $status = $oppStatus;
+        } elseif($segment == 'active') {
+            $status = $activeStatus;
+        } elseif ($segment == 'closed') {
+            $status = $closedStatus;
+        } else {
+            $status = $oppStatus;
+        }
+
+        $clients = Client::whereIn('quick_status', $status)->orderBy('updated_at', 'desc')->paginate(10);
 
         $content = [
             'clients' => $clients
@@ -81,7 +96,6 @@ class HomeController extends Controller
 
        $client =  Client::find($request->id);
 
-
         $client->corporate_name = $request->corporate_name;
         $client->client_name = $request->client_name;
         $client->project_name = $request->project_name;
@@ -91,18 +105,17 @@ class HomeController extends Controller
         $client->quick_status = $request->quick_status;
 
         if($request->hasFile('file1')) {
-            $file1 = $request->file('file1')->store('project');
-            $client->file1 =    $request->file('file1')->hashName();
+            $file1 =$request->file('file1')->storeAs('project', $request->file('file1')->getClientOriginalName());
+            $client->file1 =    $request->file('file1')->getClientOriginalName();
         }
         if($request->hasFile('file2')) {
-            $file1 = $request->file('file2')->store('project');
-            $client->file2 =    $request->file('file2')->hashName();
+            $file1 = $request->file('file2')->storeAs('project', $request->file('file2')->getClientOriginalName());
+            $client->file2 =    $request->file('file2')->getClientOriginalName();
         }
         if($request->hasFile('file3')) {
-            $file3 = $request->file('file3')->store('project');
-            $client->file3 =    $request->file('file3')->hashName();
+            $file3 = $request->file('file3')->storeAs('project', $request->file('file3')->getClientOriginalName());
+            $client->file3 =    $request->file('file3')->getClientOriginalName();
         }
-
 
         $client->updated_at = now();
         $client->save();
@@ -112,6 +125,22 @@ class HomeController extends Controller
 
         flash(__('You have updated successfullt'))->success();
         return redirect()->back();
+    }
+
+    public function detachFile($file , $id) {
+        $client = Client::find($id);
+
+        Storage::delete('app/project/' . $file);
+
+        $client->{$file} = null;
+        $client->save();
+
+        return Redirect()->back();
+    }
+
+    function downloadFile($filename){
+        $file = Storage::disk('public')->url($filename);
+        return response()->download(storage_path("app/public/project/{$filename}"));
     }
 
     public function destroy($id) {

@@ -65,8 +65,8 @@
 
                 <div class="form-group">
                     @if($client->file1)
-                        <a href="{{ url('home/detach/file1') }}" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></a>
-                        <a href="{{ Storage::url('app/project/' . $client->file1) }}">{{ $client->file1 }}</a>
+                        <a href="{{ url('home/detach/file1/' . $client->id) }}" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></a>
+                        <a href="{{ url('home/download/' . $client->file1) }}">{{ $client->file1 }}</a>
                     @else
                         <input type="file" name="file1" class="form-control" id="file1" />
                     @endif
@@ -74,8 +74,8 @@
 
                 <div class="form-group">
                     @if($client->file2)
-                        <a href="{{ url('home/detach/file2') }}" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></a>
-                        <a href="{{ Storage::url('app/project/' . $client->file2) }}">{{ $client->file2 }}</a>
+                        <a href="{{ url('home/detach/file2/' . $client->id) }}" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></a>
+                        <a href="{{ url('home/download/' . $client->file2) }}">{{ $client->file2 }}</a>
                     @else
                         <input type="file" name="file2" class="form-control" id="file2" />
                     @endif
@@ -83,8 +83,8 @@
 
                 <div class="form-group">
                     @if($client->file3)
-                        <a href="" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></a>
-                        <a href="{{ Storage::url('app/project/' . $client->file3) }}">{{ $client->file3 }}</a>
+                        <a href="{{ url('home/detach/file3/' . $client->id) }}" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></a>
+                        <a href="{{ url('home/download/' . $client->file3) }}">{{ $client->file3 }}</a>
                     @else
                         <input type="file" name="file3" class="form-control" id="file3" />
                     @endif
