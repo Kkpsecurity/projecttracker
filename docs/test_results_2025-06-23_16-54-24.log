@@ -1,0 +1,117 @@
+[2025-06-23 16:54:24] === BACKUP CONTROLLER TESTS STARTED ===
+[2025-06-23 16:54:24] Timestamp: 2025-06-23 16:54:24
+[2025-06-23 16:54:24] --- Testing Backup Validation Method ---
+[2025-06-23 16:54:24] Testing case: valid_with_name
+[2025-06-23 16:54:24]   Data: {"name":"Test Backup","tables":["hb837","consultants"]}
+[2025-06-23 16:54:24]   Validation passed: YES
+[2025-06-23 16:54:24]   Expected to pass: YES
+[2025-06-23 16:54:24]   Result: CORRECT
+[2025-06-23 16:54:24] Testing case: valid_without_name
+[2025-06-23 16:54:24]   Data: {"tables":["hb837"]}
+[2025-06-23 16:54:24]   Validation passed: YES
+[2025-06-23 16:54:24]   Expected to pass: YES
+[2025-06-23 16:54:24]   Result: CORRECT
+[2025-06-23 16:54:24] Testing case: invalid_no_tables
+[2025-06-23 16:54:25]   Data: {"name":"Test","tables":[]}
+[2025-06-23 16:54:25]   Validation passed: NO
+[2025-06-23 16:54:25]   Errors: {"tables":["The tables field is required."]}
+[2025-06-23 16:54:25]   Expected to pass: NO
+[2025-06-23 16:54:25]   Result: CORRECT
+[2025-06-23 16:54:25] Testing case: invalid_missing_tables
+[2025-06-23 16:54:25]   Data: {"name":"Test"}
+[2025-06-23 16:54:25]   Validation passed: NO
+[2025-06-23 16:54:25]   Errors: {"tables":["The tables field is required."]}
+[2025-06-23 16:54:25]   Expected to pass: NO
+[2025-06-23 16:54:25]   Result: CORRECT
+[2025-06-23 16:54:25] --- Testing File Name Cleaning ---
+[2025-06-23 16:54:25]   Input: 'Test Backup 123'
+[2025-06-23 16:54:26]   Expected: 'TestBackup123'
+[2025-06-23 16:54:26]   Actual: 'TestBackup123'
+[2025-06-23 16:54:26]   Result: PASS
+[2025-06-23 16:54:26]   Input: 'backup@#$%^&*()'
+[2025-06-23 16:54:26]   Expected: 'backup'
+[2025-06-23 16:54:26]   Actual: 'backup'
+[2025-06-23 16:54:26]   Result: PASS
+[2025-06-23 16:54:26]   Input: 'My-File_Name'
+[2025-06-23 16:54:26]   Expected: 'My-File_Name'
+[2025-06-23 16:54:26]   Actual: 'My-File_Name'
+[2025-06-23 16:54:26]   Result: PASS
+[2025-06-23 16:54:26]   Input: '123 Test!@# $%^'
+[2025-06-23 16:54:26]   Expected: '123Test'
+[2025-06-23 16:54:26]   Actual: '123Test'
+[2025-06-23 16:54:27]   Result: PASS
+[2025-06-23 16:54:27]   Input: 'Special chars: <>?:"{}|'
+[2025-06-23 16:54:27]   Expected: 'Specialchars'
+[2025-06-23 16:54:27]   Actual: 'Specialchars'
+[2025-06-23 16:54:27]   Result: PASS
+[2025-06-23 16:54:27]   Input: ''
+[2025-06-23 16:54:27]   Expected: ''
+[2025-06-23 16:54:27]   Actual: ''
+[2025-06-23 16:54:27]   Result: PASS
+[2025-06-23 16:54:27]   Input: 'normal_file-name'
+[2025-06-23 16:54:27]   Expected: 'normal_file-name'
+[2025-06-23 16:54:27]   Actual: 'normal_file-name'
+[2025-06-23 16:54:27]   Result: PASS
+[2025-06-23 16:54:27] --- Testing Configuration Processing ---
+[2025-06-23 16:54:27]   Config 0:
+[2025-06-23 16:54:27]     Input: {"name":"Test Backup","tables":["hb837","consultants"]}
+[2025-06-23 16:54:28]     Processed name: 'TestBackup'
+[2025-06-23 16:54:28]     Used default name: NO
+[2025-06-23 16:54:28]     Tables count: 2
+[2025-06-23 16:54:28]     Final config: {"name":"TestBackup","tables":["hb837","consultants"]}
+[2025-06-23 16:54:28]   Config 1:
+[2025-06-23 16:54:28]     Input: {"name":"","tables":["hb837"]}
+[2025-06-23 16:54:28]     Processed name: 'Backup_2025-06-23_16-54-28'
+[2025-06-23 16:54:28]     Used default name: YES
+[2025-06-23 16:54:28]     Tables count: 1
+[2025-06-23 16:54:28]     Final config: {"name":"Backup_2025-06-23_16-54-28","tables":["hb837"]}
+[2025-06-23 16:54:28]   Config 2:
+[2025-06-23 16:54:28]     Input: {"name":null,"tables":["hb837","consultants","users"]}
+[2025-06-23 16:54:29]     Processed name: 'Backup_2025-06-23_16-54-29'
+[2025-06-23 16:54:29]     Used default name: YES
+[2025-06-23 16:54:29]     Tables count: 3
+[2025-06-23 16:54:29]     Final config: {"name":"Backup_2025-06-23_16-54-29","tables":["hb837","consultants","users"]}
+[2025-06-23 16:54:29]   Config 3:
+[2025-06-23 16:54:29]     Input: {"tables":["hb837"]}
+[2025-06-23 16:54:29]     Processed name: 'Backup_2025-06-23_16-54-29'
+[2025-06-23 16:54:29]     Used default name: YES
+[2025-06-23 16:54:29]     Tables count: 1
+[2025-06-23 16:54:29]     Final config: {"name":"Backup_2025-06-23_16-54-29","tables":["hb837"]}
+[2025-06-23 16:54:29] --- Testing Import Validation Rules ---
+[2025-06-23 16:54:29]   Testing: valid_minimal
+[2025-06-23 16:54:29]     Data: []
+[2025-06-23 16:54:29]     Validation passed: YES
+[2025-06-23 16:54:30]     Should truncate: NO
+[2025-06-23 16:54:30]   Testing: with_truncate_on
+[2025-06-23 16:54:30]     Data: {"truncate":"on"}
+[2025-06-23 16:54:30]     Validation passed: YES
+[2025-06-23 16:54:30]     Should truncate: YES
+[2025-06-23 16:54:30]   Testing: with_truncate_off
+[2025-06-23 16:54:30]     Data: {"truncate":"off"}
+[2025-06-23 16:54:30]     Validation passed: NO
+[2025-06-23 16:54:30]     Errors: {"truncate":["The selected truncate is invalid."]}
+[2025-06-23 16:54:30]     Should truncate: NO
+[2025-06-23 16:54:30]   Testing: invalid_truncate
+[2025-06-23 16:54:30]     Data: {"truncate":"invalid_value"}
+[2025-06-23 16:54:30]     Validation passed: NO
+[2025-06-23 16:54:30]     Errors: {"truncate":["The selected truncate is invalid."]}
+[2025-06-23 16:54:30]     Should truncate: NO
+[2025-06-23 16:54:30] --- Testing Default Name Generation Logic ---
+[2025-06-23 16:54:30]   Testing: With name
+[2025-06-23 16:54:31]     Input: 'My Backup'
+[2025-06-23 16:54:31]     Result: 'My Backup'
+[2025-06-23 16:54:31]     Used default: NO
+[2025-06-23 16:54:31]   Testing: Empty string
+[2025-06-23 16:54:31]     Input: ''
+[2025-06-23 16:54:31]     Result: 'Backup_2025-06-23_16-54-31'
+[2025-06-23 16:54:31]     Used default: YES
+[2025-06-23 16:54:31]   Testing: Null value
+[2025-06-23 16:54:31]     Input: NULL
+[2025-06-23 16:54:31]     Result: 'Backup_2025-06-23_16-54-31'
+[2025-06-23 16:54:31]     Used default: YES
+[2025-06-23 16:54:31]   Testing: Whitespace only
+[2025-06-23 16:54:31]     Input: '   '
+[2025-06-23 16:54:32]     Result: '   '
+[2025-06-23 16:54:32]     Used default: NO
+[2025-06-23 16:54:32] === ALL TESTS COMPLETED SUCCESSFULLY ===
+[2025-06-23 16:54:32] Results logged to: T:\projecttracker/test_results_2025-06-23_16-54-24.log

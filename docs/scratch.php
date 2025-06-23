@@ -1,0 +1,29 @@
+<?php 
+[2024-12-10 19:44:35] local.INFO: Mapped Data:
+{
+    "report_status":"",
+    "property_name":"",
+    "management_company_id":null,
+    "owner_id":null,
+    "property_type":"",
+    "units":null,
+    "address":"",
+    "city":"",
+    "county":"",
+    "state":"",
+    "zip":"",
+    "assigned_consultant_id":null,
+    "scheduled_date_of_inspection":null,
+    "report_submitted":null,
+    "billing_req_sent":null,
+    "phone":"",
+    "property_manager_name":"",
+    "property_manager_email":"",
+    "regional_manager_name":"",
+    "regional_manager_email":"",
+    "agreement_submitted":null,
+    "contracting_status":"Quoted",
+    "quoted_price":null,
+    "sub_fees_estimated_expenses":null,
+    "project_net_profit":null
+}
