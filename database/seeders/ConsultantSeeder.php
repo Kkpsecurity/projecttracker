@@ -1,6 +1,7 @@
 <?php
 
-use App\Models\Client;
+namespace Database\Seeders;
+
 use App\Models\Consultant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
@@ -11,15 +12,19 @@ class ConsultantSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
+         // Disable foreign key checks
+         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+         
          // Truncate the table (Optional: Only if you want a fresh import)
          Consultant::truncate();
+         
+         // Re-enable foreign key checks
+         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-         // Path to the JSON file containing client data
+        // Path to the JSON file containing consultant data
          $jsonFile = storage_path('app/database/seeds/data/consultants.json');
 
          // Check if the file exists
@@ -36,7 +41,7 @@ class ConsultantSeeder extends Seeder
              return;
          }
 
-         // Insert each client into the database
+        // Insert each consultant into the database
          foreach ($jsonData as $data) {
             Consultant::create([
                 'id' => $data['id'] ?? null,
@@ -54,7 +59,6 @@ class ConsultantSeeder extends Seeder
                 'updated_at' => Carbon::parse($data['updated_at'] ?? now()),
              ]);
          }
-
 
         $this->command->info("Consultant data imported successfully from $jsonFile.");
     }

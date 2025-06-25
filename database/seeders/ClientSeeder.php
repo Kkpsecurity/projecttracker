@@ -1,5 +1,7 @@
 <?php
 
+namespace Database\Seeders;
+
 use App\Models\Client;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
@@ -10,13 +12,17 @@ class ClientSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
+        // Disable foreign key checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        
         // Truncate the table (Optional: Only if you want a fresh import)
         Client::truncate();
+        
+        // Re-enable foreign key checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Path to the JSON file containing client data
         $jsonFile = storage_path('app/database/seeds/data/clients.json');
