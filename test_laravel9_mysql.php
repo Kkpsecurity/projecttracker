@@ -28,20 +28,20 @@ try {
     echo "\n2. Database: " . config('database.default') . " ($dbName)\n";    // Test connection
     DB::connection()->getPdo();
     echo "3. MySQL Connection: ✅ SUCCESS\n";
-    
+
     // Test 4: Migrations
     $migrations = DB::table('migrations')->count();
     echo "\n4. Migrations: $migrations (should be 13)\n";    // Test 5: Models
     $userModel = class_exists('App\Models\User') ? '✅ EXISTS' : '❌ MISSING';
     echo "5. User Model: $userModel\n";
-    
+
     $hb837Model = class_exists('App\Models\HB837') ? '✅ EXISTS' : '❌ MISSING';
     echo "6. HB837 Model: $hb837Model\n";
-    
+
     // Test 6: Basic queries
     $userCount = DB::table('users')->count();
     echo "\n7. User Count: $userCount\n";
-    
+
     // Test 7: Cache operations
     echo "\n8. Cache Test:\n";
     cache(['test_key' => 'Laravel 9 Test']);
