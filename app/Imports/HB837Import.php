@@ -276,10 +276,31 @@ class HB837Import implements ToModel, WithHeadingRow
                 case 'city':
                 case 'county':
                 case 'phone':
-                case 'securitygauge_crime_risk':
                 case 'property_name':
                 case 'property_type':
                     $mapped[$field] = is_string($value) ? trim($value) : $value;
+                    break;
+                case 'securitygauge_crime_risk':
+                    $allowedRisks = array_map(function ($v) {
+                        return strtolower(trim($v));
+                    }, array_values(config('hb837.security_gauge', [])));
+                    $val = is_string($value) ? trim(strtolower($value)) : strtolower($value);
+
+                    if ($val === '' || $val === null) {
+                        // Default to "Moderate" if no value
+                        $mapped[$field] = 'Moderate';
+                    } elseif (in_array($val, $allowedRisks, true)) {
+                        // Map back to the original case from config
+                        $original = array_search($val, $allowedRisks, true);
+                        $mapped[$field] = array_values(config('hb837.security_gauge', []))[$original];
+                    } else {
+                        $mapped[$field] = 'Moderate';
+                        Log::warning('Invalid securitygauge_crime_risk value skipped, defaulted to Moderate', [
+                            'input' => $value,
+                            'normalized' => $val,
+                            'allowed' => $allowedRisks
+                        ]);
+                    }
                     break;
 
                 // integer
@@ -583,5 +604,34 @@ class HB837Import implements ToModel, WithHeadingRow
 
         // Create a new consultant if not found
         return $this->processConsultantId(trim($name));
+    }
+
+    /**
+     * Import from Excel file - for testing and manual import runs.
+     */
+    public function importFromExcel($filePath)
+    {
+        try {
+            $import = new self();
+            $import->setTruncateMode(false); // Set as needed
+            $result = \Maatwebsite\Excel\Facades\Excel::import($import, $filePath);
+            Log::info('Import completed', [
+                'imported' => $import->importedCount,
+                'updated' => $import->updatedCount,
+                'skipped' => $import->skippedCount,
+                'skipped_properties' => $import->skippedProperties,
+            ]);
+            return [
+                'imported' => $import->importedCount,
+                'updated' => $import->updatedCount,
+                'skipped' => $import->skippedCount,
+                'skipped_properties' => $import->skippedProperties,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Import failed', ['error' => $e->getMessage()]);
+            return [
+                'error' => $e->getMessage(),
+            ];
+        }
     }
 }

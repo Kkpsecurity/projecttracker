@@ -93,7 +93,8 @@ class BackupDBController extends Controller
         // Validate request
         $validator = Validator::make($request->all(), [
             'csv_file' => 'required|file|mimes:csv,xlsx,xls|max:10240', // 10MB max
-            'truncate' => 'sometimes|in:on'
+            'truncate' => 'sometimes|in:on',
+            'import_title' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -112,6 +113,45 @@ class BackupDBController extends Controller
             'mime_type' => $file->getMimeType(),
             'size' => $file->getSize(),
         ]);
+
+        // --- Import Title Generation ---
+        $importTitle = $request->input('import_title');
+        if (empty($importTitle)) {
+            $importTitle = 'Import ' . date('Y-m-d');
+            try {
+                $extension = strtolower($file->getClientOriginalExtension());
+                if (in_array($extension, ['csv', 'xlsx', 'xls'])) {
+                    $rows = [];
+                    if ($extension === 'csv') {
+                        if (($handle = fopen($file->getRealPath(), 'r')) !== false) {
+                            $headers = fgetcsv($handle);
+                            $firstRow = fgetcsv($handle);
+                            fclose($handle);
+                            if ($headers && $firstRow) {
+                                $addressIdx = array_search('address', array_map('strtolower', $headers));
+                                if ($addressIdx !== false && isset($firstRow[$addressIdx])) {
+                                    $importTitle .= ' [' . trim($firstRow[$addressIdx]) . ']';
+                                }
+                            }
+                        }
+                    } else {
+                        $data = \Maatwebsite\Excel\Facades\Excel::toArray(new \stdClass(), $file);
+                        if (!empty($data) && !empty($data[0]) && count($data[0]) > 1) {
+                            $headers = $data[0][0];
+                            $firstRow = $data[0][1];
+                            $addressIdx = array_search('address', array_map('strtolower', $headers));
+                            if ($addressIdx !== false && isset($firstRow[$addressIdx])) {
+                                $importTitle .= ' [' . trim($firstRow[$addressIdx]) . ']';
+                            }
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                logger()->warning('Failed to auto-generate import title from file', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         try {
             $import = new HB837Import();
@@ -165,8 +205,10 @@ class BackupDBController extends Controller
                     'file_name' => $file->getClientOriginalName(),
                     'file_size' => $file->getSize(),
                     'truncated' => $wasTruncated,
+                    'import_title' => $importTitle,
                 ],
                 'user_id' => auth()->id(),
+                'import_title' => $importTitle,
             ]);
 
             logger()->info('Import Summary:', [
@@ -178,6 +220,7 @@ class BackupDBController extends Controller
                 'message' => $message,
                 'audit_id' => $audit->id,
                 'file_name' => $file->getClientOriginalName(),
+                'import_title' => $importTitle,
             ]);
 
             return redirect()->route('admin.hb837.index')->with('success', $message);
@@ -198,8 +241,10 @@ class BackupDBController extends Controller
                     'error' => $e->getMessage(),
                     'file_name' => $file->getClientOriginalName(),
                     'file_size' => $file->getSize(),
+                    'import_title' => $importTitle ?? null,
                 ],
                 'user_id' => auth()->id(),
+                'import_title' => $importTitle ?? null,
             ]);
 
             return redirect()->back()->withErrors(['error' => 'Error importing file: ' . $e->getMessage()]);

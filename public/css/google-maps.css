@@ -1,0 +1,45 @@
+#map {
+    height: 100%;
+    width: 100%;
+    min-height: 500px;
+    background: #ccc;
+    border: 1px dashed #333;
+}
+
+.map-container {
+    height: 500px;
+    width: 100%;
+    position: relative;
+}
+
+.address-form {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.address-form input {
+    margin-bottom: 10px;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.address-form button {
+    padding: 8px 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.address-form button:hover {
+    background-color: #0056b3;
+}

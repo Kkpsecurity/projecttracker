@@ -28,9 +28,9 @@ class AddUploadFeildsToClients extends Migration
     public function down()
     {
         Schema::table('clients', function (Blueprint $table) {
-            $table->dropIfExists('file1');
-            $table->dropIfExists('file2');
-            $table->dropIfExists('file3');
+            $table->dropColumn('file1');
+            $table->dropColumn('file2');
+            $table->dropColumn('file3');
         });
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-use App\User;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -13,11 +13,22 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('users')->truncate();
+        // Disable foreign key checks for PostgreSQL
 
+        // Truncate the users table
+        User::truncate();
+
+        // Create user records
         User::create([
             'name' => 'Richard Clark',
             'email' => 'richievc@gmail.com',
+            'password' => bcrypt('Secure$101'),
+            'email_verified_at' => now(),
+        ]);
+
+        User::create([
+            'name' => 'Chris Jones',
+            'email' => 'jonesy@cisworldservices.org',
             'password' => bcrypt('Secure$101'),
             'email_verified_at' => now(),
         ]);
@@ -37,10 +48,26 @@ class UserSeeder extends Seeder
         ]);
 
         User::create([
-            'name' => 'Jeff Ezell',
-            'email' => 'ezelljt@kkpsecuritygroup.com',
+            'name' => 'Ashley Casey',
+            'email' => 'ashley@s2institute.com',
             'password' => bcrypt('Secure$101'),
             'email_verified_at' => now(),
         ]);
+
+        User::create([
+            'name' => 'Hector Rodriguez',
+            'email' => 'rodrighb@cisworldservices.org',
+            'password' => bcrypt('Secure$101'),
+            'email_verified_at' => now(),
+        ]);
+
+        User::create([
+            'name' => 'Sandra Gundry',
+            'email' => 'sgundry@s2institute.com',
+            'password' => bcrypt('Secure$101'),
+            'email_verified_at' => now(),
+        ]);
+
+
     }
 }

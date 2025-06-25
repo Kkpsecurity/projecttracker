@@ -16,6 +16,18 @@
                         <div class="form-text">Only files exported from this system are supported.</div>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="import_title" class="form-label">Import Title (auto-generated if left blank)</label>
+                        <input type="text" name="import_title" id="import_title" class="form-control" placeholder="e.g. {{ now()->format('Y-m-d') }} - [First Address in File]">
+                        <div class="form-text">If left blank, a title will be generated using the current date and the first address in your file.</div>
+                    </div>
+
+                    @if(auth()->id() == 1)
+                        <div class="alert alert-info small mb-3">
+                            <strong>Debug:</strong> Authenticated as admin (User ID 1). Debugging and admin-only features are visible.
+                        </div>
+                    @endif
+
                     @if(auth()->id() == 1 || auth()->id() == 2)
                         <div class="form-check mb-3 border border-warning rounded p-3 bg-light">
                             <div class="d-flex align-items-center mb-2">
