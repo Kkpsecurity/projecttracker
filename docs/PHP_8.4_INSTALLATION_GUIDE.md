@@ -26,13 +26,13 @@
 
 ### Method 1: Manual Download (Recommended)
 
-### Step 1: Download PHP 8.4.7 (Latest Stable)
+### Step 1: Download PHP 8.4
 1. Go to https://windows.php.net/downloads/releases/
-2. Download **PHP 8.4.7** (latest stable release - May 6, 2025)
-3. Choose: **php-8.4.7-Win32-vs17-x64.zip** (Thread Safe x64)
-4. File size: ~33.9 MB
+2. Download **PHP 8.4.x** (latest stable release)
+3. Choose: **VC15 x64 Thread Safe** (to match your current setup)
+4. Example filename: `php-8.4.0-Win32-VC15-x64.zip`
 
-**Direct Download**: https://windows.php.net/downloads/releases/php-8.4.7-Win32-vs17-x64.zip
+**Note**: If PHP 8.4 stable isn't available yet, use the latest Release Candidate (RC) from: https://windows.php.net/qa/
 
 #### Step 2: Install in Laragon
 1. Extract the downloaded zip file

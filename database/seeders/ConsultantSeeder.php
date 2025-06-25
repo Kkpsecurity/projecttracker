@@ -17,10 +17,10 @@ class ConsultantSeeder extends Seeder
     {
          // Disable foreign key checks
          DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-         
+
          // Truncate the table (Optional: Only if you want a fresh import)
          Consultant::truncate();
-         
+
          // Re-enable foreign key checks
          DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 

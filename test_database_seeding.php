@@ -3,7 +3,7 @@
 /**
  * Laravel 10 Database Seeding Validation Test
  * Tests all seeded data and relationships
- * 
+ *
  * Usage: php test_database_seeding.php
  */
 
@@ -48,7 +48,7 @@ try {
 
     // Test relationships
     echo "🔗 RELATIONSHIP TESTS:\n";
-    
+
     // Test HB837 relationships
     $hb837 = HB837::with(['user', 'consultant', 'owner'])->first();
     if ($hb837) {
@@ -78,10 +78,10 @@ try {
     echo "📋 ENUM VALUE VALIDATION:\n";
     $reportStatuses = HB837::select('report_status')->distinct()->pluck('report_status')->toArray();
     echo "✅ Report statuses in use: " . implode(', ', $reportStatuses) . "\n";
-    
+
     $propertyTypes = HB837::select('property_type')->distinct()->pluck('property_type')->toArray();
     echo "✅ Property types in use: " . implode(', ', $propertyTypes) . "\n";
-    
+
     $contractingStatuses = HB837::select('contracting_status')->distinct()->pluck('contracting_status')->toArray();
     echo "✅ Contracting statuses in use: " . implode(', ', $contractingStatuses) . "\n";
     echo "\n";
