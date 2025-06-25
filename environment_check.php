@@ -2,7 +2,7 @@
 /**
  * Environment Check Script for Laravel Upgrade
  * Run this script to check current environment status
- * 
+ *
  * Usage: php environment_check.php
  */
 
@@ -33,7 +33,7 @@ try {
         $composer = json_decode(file_get_contents($composerPath), true);
         $laravelVersion = $composer['require']['laravel/framework'] ?? 'Unknown';
         echo "Composer Laravel: " . $laravelVersion . "\n";
-        
+
         if (strpos($laravelVersion, '^7') === 0) {
             echo "⏳ Laravel Version: Ready for upgrade process (Laravel 7)\n";
         } elseif (strpos($laravelVersion, '^8') === 0) {
@@ -60,7 +60,7 @@ try {
     if (file_exists($dbPath)) {
         $size = round(filesize($dbPath) / 1024, 2);
         echo "✅ Database: SQLite file exists ({$size} KB)\n";
-        
+
         // Check if backup exists
         $backupPath = __DIR__ . '/database/database_backup_pre_upgrade.sqlite';
         if (file_exists($backupPath)) {
