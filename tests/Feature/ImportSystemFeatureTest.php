@@ -167,7 +167,7 @@ class ImportSystemFeatureTest extends TestCase
     public function test_import_batch_processing(): void
     {
         $import = new \App\Imports\HB837Import();
-        
+
         // Test that counters are initialized properly
         $this->assertEquals(0, $import->importedCount);
         $this->assertEquals(0, $import->updatedCount);

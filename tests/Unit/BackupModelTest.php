@@ -25,7 +25,7 @@ class BackupModelTest extends TestCase
         $expected = [
             'uuid', 'name', 'tables', 'user_id', 'filename', 'size', 'record_count', 'status'
         ];
-        
+
         $this->assertEquals($expected, $backup->getFillable());
     }
 
@@ -36,7 +36,7 @@ class BackupModelTest extends TestCase
     {
         $backup = new Backup();
         $casts = $backup->getCasts();
-        
+
         $this->assertArrayHasKey('tables', $casts);
         $this->assertEquals('array', $casts['tables']);
     }

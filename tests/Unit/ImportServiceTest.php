@@ -40,7 +40,7 @@ class ImportServiceTest extends TestCase
     {
         $reflection = new \ReflectionClass($this->importService);
         $this->assertTrue($reflection->hasMethod('getExpectedHeaders'));
-        
+
         $method = $reflection->getMethod('getExpectedHeaders');
         $this->assertTrue($method->isProtected());
     }
@@ -52,7 +52,7 @@ class ImportServiceTest extends TestCase
     {
         $reflection = new \ReflectionClass($this->importService);
         $this->assertTrue($reflection->hasMethod('validateHeaders'));
-        
+
         $method = $reflection->getMethod('validateHeaders');
         $this->assertTrue($method->isProtected());
     }
@@ -64,7 +64,7 @@ class ImportServiceTest extends TestCase
     {
         $reflection = new \ReflectionClass($this->importService);
         $method = $reflection->getMethod('previewImport');
-        
+
         $this->assertEquals(1, $method->getNumberOfParameters());
         $this->assertEquals('filePath', $method->getParameters()[0]->getName());
     }
@@ -76,7 +76,7 @@ class ImportServiceTest extends TestCase
     {
         $reflection = new \ReflectionClass($this->importService);
         $method = $reflection->getMethod('executeImport');
-        
+
         $this->assertEquals(1, $method->getNumberOfParameters());
         $this->assertEquals('filePath', $method->getParameters()[0]->getName());
     }

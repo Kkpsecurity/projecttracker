@@ -41,7 +41,7 @@ class HB837ImportTest extends TestCase
         $this->assertObjectHasProperty('updatedCount', $this->hb837Import);
         $this->assertObjectHasProperty('skippedCount', $this->hb837Import);
         $this->assertObjectHasProperty('skippedProperties', $this->hb837Import);
-        
+
         // Check default values
         $this->assertEquals(0, $this->hb837Import->importedCount);
         $this->assertEquals(0, $this->hb837Import->updatedCount);
@@ -55,10 +55,10 @@ class HB837ImportTest extends TestCase
     public function test_set_truncate_mode(): void
     {
         $this->assertTrue(method_exists($this->hb837Import, 'setTruncateMode'));
-        
+
         $result = $this->hb837Import->setTruncateMode(true);
         $this->assertInstanceOf(HB837Import::class, $result);
-        
+
         $result = $this->hb837Import->setTruncateMode(false);
         $this->assertInstanceOf(HB837Import::class, $result);
     }
@@ -88,13 +88,13 @@ class HB837ImportTest extends TestCase
     {
         $reflection = new \ReflectionClass($this->hb837Import);
         $this->assertTrue($reflection->hasProperty('truncateMode'));
-        
+
         $property = $reflection->getProperty('truncateMode');
         $property->setAccessible(true);
-        
+
         // Default should be false
         $this->assertFalse($property->getValue($this->hb837Import));
-        
+
         // Set to true and verify
         $this->hb837Import->setTruncateMode(true);
         $this->assertTrue($property->getValue($this->hb837Import));
@@ -107,11 +107,11 @@ class HB837ImportTest extends TestCase
     {
         $reflection = new \ReflectionClass($this->hb837Import);
         $this->assertTrue($reflection->hasProperty('fields'));
-        
+
         $property = $reflection->getProperty('fields');
         $property->setAccessible(true);
         $fields = $property->getValue($this->hb837Import);
-        
+
         $this->assertIsArray($fields);
     }
 

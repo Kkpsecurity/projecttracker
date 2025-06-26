@@ -90,7 +90,7 @@ class BackupSystemFeatureTest extends TestCase
             'user_id' => $this->user->id,
             'name' => 'User Backup 1'
         ]);
-        
+
         $backup2 = Backup::factory()->create([
             'user_id' => $this->user->id,
             'name' => 'User Backup 2'
