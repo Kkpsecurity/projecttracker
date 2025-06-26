@@ -332,27 +332,28 @@ return [
             'icon' => 'fas fa-project-diagram',
             'submenu' => [
                 [
+                    'text' => 'All Projects',
+                    'route' => 'admin.home.index',
+                    'icon' => 'fas fa-list',
+                ],
+                [
                     'text' => 'Opportunities',
-                    'route' => 'admin.home.tabs',
-                    'route_params' => ['tab' => 'opp'],
+                    'url' => '/admin/home/tabs/opp',
                     'icon' => 'fas fa-file-alt',
                 ],
                 [
                     'text' => 'Active Projects',
-                    'route' => 'admin.home.tabs',
-                    'route_params' => ['tab' => 'active'],
+                    'url' => '/admin/home/tabs/active',
                     'icon' => 'fas fa-play-circle',
                 ],
                 [
                     'text' => 'Completed Projects',
-                    'route' => 'admin.home.tabs',
-                    'route_params' => ['tab' => 'completed'],
+                    'url' => '/admin/home/tabs/completed',
                     'icon' => 'fas fa-check-circle',
                 ],
                 [
                     'text' => 'Closed Projects',
-                    'route' => 'admin.home.tabs',
-                    'route_params' => ['tab' => 'closed'],
+                    'url' => '/admin/home/tabs/closed',
                     'icon' => 'fas fa-times-circle',
                 ],
             ],

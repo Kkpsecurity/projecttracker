@@ -43,7 +43,7 @@
                 <div class="icon">
                     <i class="fas fa-play-circle"></i>
                 </div>
-                <a href="{{ route('admin.home.tabs', ['tab' => 'active']) }}" class="small-box-footer">
+                <a href="{{ route('admin.home.index') }}" class="small-box-footer">
                     More info <i class="fas fa-arrow-circle-right"></i>
                 </a>
             </div>
@@ -59,7 +59,7 @@
                 <div class="icon">
                     <i class="fas fa-check-circle"></i>
                 </div>
-                <a href="{{ route('admin.home.tabs', ['tab' => 'completed']) }}" class="small-box-footer">
+                <a href="{{ route('admin.home.index') }}" class="small-box-footer">
                     More info <i class="fas fa-arrow-circle-right"></i>
                 </a>
             </div>
@@ -175,18 +175,18 @@
                             </a>
                         </div>
                         <div class="col-md-3">
-                            <a href="{{ route('admin.hb837.import') }}" class="btn btn-info btn-block">
+                            <a href="{{ route('admin.hb837.backup.dashboard') }}" class="btn btn-info btn-block">
                                 <i class="fas fa-upload"></i> Import Data
                             </a>
                         </div>
                         <div class="col-md-3">
-                            <a href="{{ route('admin.services.backup') }}" class="btn btn-warning btn-block">
+                            <a href="{{ route('admin.hb837.backup.dashboard') }}" class="btn btn-warning btn-block">
                                 <i class="fas fa-database"></i> Create Backup
                             </a>
                         </div>
                         <div class="col-md-3">
-                            <a href="{{ route('admin.hb837.report') }}" class="btn btn-secondary btn-block">
-                                <i class="fas fa-file-pdf"></i> Generate Report
+                            <a href="{{ route('admin.hb837.index') }}" class="btn btn-secondary btn-block">
+                                <i class="fas fa-file-pdf"></i> View Reports
                             </a>
                         </div>
                     </div>
