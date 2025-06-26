@@ -10,3 +10,9 @@ Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+
+# Large archive files
+*.rar
+*.zip
+*.tar.gz
+*.7z
