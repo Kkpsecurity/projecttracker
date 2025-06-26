@@ -87,42 +87,42 @@
                     </div>
 
                     <!-- Records Table -->
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="hb837-table">
+                    <div class="table-responsive-modern">
+                        <table class="table table-modern table-compact" id="hb837-table">
                             <thead>
                                 <tr>
-                                    <th>Property ID</th>
+                                    <th style="width: 80px;">Property ID</th>
                                     <th>Property Name</th>
                                     <th>Owner Name</th>
                                     <th>Address</th>
-                                    <th>Consultant</th>
-                                    <th>Status</th>
-                                    <th>Crime Risk</th>
-                                    <th>Updated</th>
-                                    <th width="120">Actions</th>
+                                    <th style="width: 120px;">Consultant</th>
+                                    <th style="width: 100px;">Status</th>
+                                    <th style="width: 100px;">Crime Risk</th>
+                                    <th style="width: 120px;">Updated</th>
+                                    <th style="width: 120px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($collection as $record)
                                     <tr>
-                                        <td><strong>#{{ $record->id }}</strong></td>
-                                        <td>{{ $record->property_name }}</td>
+                                        <td><span class="table-id">#{{ $record->id }}</span></td>
+                                        <td><strong>{{ $record->property_name }}</strong></td>
                                         <td>{{ $record->owner_name }}</td>
                                         <td>
-                                            <small>
+                                            <div class="table-address">
                                                 {{ $record->address }}<br>
-                                                {{ $record->city }}, {{ $record->state }} {{ $record->zip }}
-                                            </small>
+                                                <small class="text-muted">{{ $record->city }}, {{ $record->state }} {{ $record->zip }}</small>
+                                            </div>
                                         </td>
                                         <td>
                                             @if($record->consultant)
-                                                <span class="badge badge-info">{{ $record->consultant->name }}</span>
+                                                <span class="table-badge badge-info">{{ $record->consultant->name }}</span>
                                             @else
                                                 <span class="text-muted">Unassigned</span>
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="status-badge status-{{ strtolower($record->report_status) }}">
+                                            <span class="table-badge badge-{{ strtolower($record->report_status) === 'active' ? 'success' : (strtolower($record->report_status) === 'quoted' ? 'warning' : (strtolower($record->report_status) === 'completed' ? 'info' : 'secondary')) }}">
                                                 {{ $record->report_status }}
                                             </span>
                                         </td>

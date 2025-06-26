@@ -16,7 +16,6 @@ class HB837 extends Model
         'report_status',
         'property_name',
         'management_company',
-        'owner_id',
         'owner_name',
         'property_type',
         'units',
@@ -71,11 +70,6 @@ class HB837 extends Model
     public function consultant()
     {
         return $this->belongsTo(Consultant::class, 'assigned_consultant_id', 'id');
-    }
-
-    public function owner()
-    {
-        return $this->belongsTo(Owner::class, 'owner_id', 'id');
     }
 
     public function getAddressesGroupedByMacroClient()

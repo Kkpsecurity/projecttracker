@@ -3,7 +3,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="importModalLabel"><i class="fas fa-file-import me-2"></i>Import HB837 Data</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="$('#importModal').modal('hide')"></button>
             </div>
 
             <form id="importForm" action="{{ route('admin.hb837.backup.import') }}" method="POST" enctype="multipart/form-data" onsubmit="return confirmImport()">
@@ -47,7 +47,7 @@
                 </div>
 
                 <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="$('#importModal').modal('hide')">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-upload me-1"></i> Import Data
                     </button>

@@ -19,9 +19,9 @@
 @section('main_content')
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card card-table">
                 <div class="card-header">
-                    <div class="row">
+                    <div class="row align-items-center">
                         <div class="col-md-6">
                             <h3 class="card-title">
                                 <i class="fas fa-users"></i>
@@ -29,7 +29,7 @@
                             </h3>
                         </div>
                         <div class="col-md-6 text-right">
-                            <a href="{{ route('admin.users.create') }}" class="btn btn-success">
+                            <a href="{{ route('admin.users.create') }}" class="btn btn-light">
                                 <i class="fas fa-user-plus"></i> Create New User
                             </a>
                         </div>
@@ -37,66 +37,66 @@
                 </div>
 
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="users-table">
+                    <div class="table-responsive-modern">
+                        <table class="table table-modern table-compact" id="users-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th style="width: 60px;">ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
-                                    <th>Last Login</th>
-                                    <th width="120">Actions</th>
+                                    <th style="width: 100px;">Role</th>
+                                    <th style="width: 100px;">Status</th>
+                                    <th style="width: 120px;">Created</th>
+                                    <th style="width: 120px;">Last Login</th>
+                                    <th style="width: 120px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($users as $user)
                                     <tr>
-                                        <td><strong>#{{ $user->id }}</strong></td>
+                                        <td><span class="table-id">#{{ $user->id }}</span></td>
                                         <td>
-                                            <div class="user-panel">
-                                                <div class="info">
+                                            <div class="d-flex align-items-center">
+                                                <div>
                                                     <strong>{{ $user->name }}</strong>
                                                     @if($user->id == 1)
-                                                        <small class="badge badge-danger ml-1">SUPER ADMIN</small>
+                                                        <small class="table-badge badge-danger ml-1">SUPER</small>
                                                     @elseif($user->id == 2)
-                                                        <small class="badge badge-warning ml-1">ADMIN</small>
+                                                        <small class="table-badge badge-warning ml-1">ADMIN</small>
                                                     @endif
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
-                                            <a href="mailto:{{ $user->email }}">{{ $user->email }}</a>
+                                            <a href="mailto:{{ $user->email }}" class="table-email">{{ $user->email }}</a>
                                         </td>
                                         <td>
                                             @if($user->id == 1)
-                                                <span class="badge badge-danger">Super Admin</span>
+                                                <span class="table-badge badge-danger">Super Admin</span>
                                             @elseif($user->id == 2)
-                                                <span class="badge badge-warning">Admin</span>
+                                                <span class="table-badge badge-warning">Admin</span>
                                             @else
-                                                <span class="badge badge-info">User</span>
+                                                <span class="table-badge badge-info">User</span>
                                             @endif
                                         </td>
                                         <td>
                                             @if($user->email_verified_at)
-                                                <span class="badge badge-success">Active</span>
+                                                <span class="table-badge badge-success">Active</span>
                                             @else
-                                                <span class="badge badge-secondary">Pending</span>
+                                                <span class="table-badge badge-secondary">Pending</span>
                                             @endif
                                         </td>
                                         <td>
-                                            <small class="text-muted">
+                                            <span class="table-date">
                                                 {{ $user->created_at->format('M d, Y') }}
-                                            </small>
+                                            </span>
                                         </td>
                                         <td>
-                                            <small class="text-muted">
+                                            <span class="table-date">
                                                 {{ $user->updated_at->diffForHumans() }}
-                                            </small>
+                                            </span>
                                         </td>
-                                        <td>
+                                        <td class="table-actions">
                                             <div class="btn-group btn-group-sm">
                                                 <a href="{{ route('admin.users.edit', $user->id) }}" 
                                                    class="btn btn-info btn-sm" title="Edit User">

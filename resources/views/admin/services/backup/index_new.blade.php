@@ -2,7 +2,11 @@
 
 @section('title', 'Database Backup & Services')
 
-@section('content_header_content')
+@section('content_header                                                       <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importModal">
+                                        <i class="fas fa-upload"></i> Import Data
+                                    </button>              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#backupModal">
+                                        <i class="fas fa-save"></i> Create Backup
+                                    </button>ntent')
     <div class="row">
         <div class="col-sm-6">
             <h1 class="m-0">Database Backup & Services</h1>
@@ -136,9 +140,23 @@
                                 </div>
                                 <div class="card-body text-center">
                                     <p class="text-muted">Restore database from a previous backup.</p>
-                                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#restoreModal">
-                                        <i class="fas fa-undo"></i> Restore Backup
-                                    </button>
+                                    @if($backups->count() > 0)
+                                        <p class="text-info small">
+                                            <i class="fas fa-info-circle"></i> 
+                                            Use the restore buttons next to individual backups below.
+                                        </p>
+                                        <button type="button" class="btn btn-warning" disabled>
+                                            <i class="fas fa-undo"></i> Select backup below to restore
+                                        </button>
+                                    @else
+                                        <p class="text-warning small">
+                                            <i class="fas fa-exclamation-triangle"></i> 
+                                            No backups available to restore.
+                                        </p>
+                                        <button type="button" class="btn btn-warning" disabled>
+                                            <i class="fas fa-undo"></i> No backups available
+                                        </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -164,16 +182,16 @@
                     </div>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
+                    <div class="table-responsive-modern">
+                        <table class="table table-modern table-compact">
                             <thead>
                                 <tr>
                                     <th>Backup Name</th>
-                                    <th>Created By</th>
-                                    <th>Created At</th>
-                                    <th>File Size</th>
-                                    <th>Status</th>
-                                    <th width="150">Actions</th>
+                                    <th style="width: 120px;">Created By</th>
+                                    <th style="width: 140px;">Created At</th>
+                                    <th style="width: 100px;">File Size</th>
+                                    <th style="width: 100px;">Status</th>
+                                    <th style="width: 150px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -193,8 +211,8 @@
                                             <small class="text-muted">{{ $backup->created_at->diffForHumans() }}</small>
                                         </td>
                                         <td>
-                                            @if($backup->file_size)
-                                                {{ number_format($backup->file_size / 1024, 2) }} KB
+                                            @if($backup->size)
+                                                {{ number_format($backup->size / 1024, 2) }} KB
                                             @else
                                                 <span class="text-muted">Unknown</span>
                                             @endif
@@ -216,8 +234,10 @@
                                                         <i class="fas fa-download"></i>
                                                     </a>
                                                     <button type="button" class="btn btn-warning btn-sm" 
-                                                            data-toggle="modal" data-target="#restoreModal" 
+                                                            data-bs-toggle="modal" data-bs-target="#restoreModal" 
                                                             data-backup-id="{{ $backup->uuid }}" 
+                                                            data-backup-name="{{ $backup->name ?: 'Backup_' . $backup->id }}"
+                                                            data-backup-filename="{{ $backup->filename }}"
                                                             title="Restore">
                                                         <i class="fas fa-undo"></i>
                                                     </button>
@@ -338,13 +358,61 @@
 
 @section('custom_js')
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap 5 modals explicitly
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modalElement => {
+                new bootstrap.Modal(modalElement);
+            });
+            
+            // Handle restore modal data with vanilla JS
+            const restoreModal = document.getElementById('restoreModal');
+            if (restoreModal) {
+                restoreModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    
+                    if (!button) {
+                        return;
+                    }
+                    
+                    const backupId = button.getAttribute('data-backup-id');
+                    const backupName = button.getAttribute('data-backup-name') || 'Backup';
+                    const backupFilename = button.getAttribute('data-backup-filename') || 'backup.sql';
+                    
+                    if (backupId) {
+                        this.querySelector('#restore_backup_id').value = backupId;
+                        this.querySelector('#restore-backup-name').textContent = backupName;
+                        this.querySelector('#restore-backup-filename').textContent = backupFilename;
+                        
+                        // Update the form action URL
+                        const restoreUrl = "{{ route('admin.hb837.backup.restore', ':uuid') }}".replace(':uuid', backupId);
+                        this.querySelector('#restore-form').setAttribute('action', restoreUrl);
+                    }
+                });
+            }
+        });
+        
         $(document).ready(function() {
-            // Handle restore modal data
+            // Fallback jQuery handlers for compatibility
             $('#restoreModal').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget);
+                
+                if (button.length === 0) {
+                    return;
+                }
+                
                 var backupId = button.data('backup-id');
+                var backupName = button.data('backup-name') || 'Backup';
+                var backupFilename = button.data('backup-filename') || 'backup.sql';
+                
                 if (backupId) {
                     $(this).find('#restore_backup_id').val(backupId);
+                    $(this).find('#restore-backup-name').text(backupName);
+                    $(this).find('#restore-backup-filename').text(backupFilename);
+                    
+                    // Update the form action URL
+                    var restoreUrl = "{{ route('admin.hb837.backup.restore', ':uuid') }}".replace(':uuid', backupId);
+                    $(this).find('#restore-form').attr('action', restoreUrl);
                 }
             });
             

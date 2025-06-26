@@ -396,11 +396,6 @@ return [
             'route' => 'admin.consultants.index',
             'icon' => 'fas fa-user-tie',
         ],
-        [
-            'text' => 'Owners',
-            'route' => 'admin.owners.index',
-            'icon' => 'fas fa-users',
-        ],
 
         // User Management Section (Admin only)
         [

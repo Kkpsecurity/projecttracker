@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin\HB837;
 
 use App\Models\HB837;
-use App\Models\Owner;
 use App\Models\Client;
 use App\Models\HB837File;
 use App\Models\Consultant;
@@ -183,13 +182,6 @@ class HB837Controller extends Controller
             $validated['assigned_consultant_id'] = null;
         }
 
-        // Resolve or create owner ID
-        if (!empty($validated['owner_name'])) {
-            $validated['owner_id'] = Owner::firstOrCreate([
-                'name' => trim($validated['owner_name'])
-            ])->id;
-        }
-
         // Calculate net profit
         $validated['project_net_profit'] = $validated['quoted_price'] && $validated['sub_fees_estimated_expenses']
             ? $validated['quoted_price'] - $validated['sub_fees_estimated_expenses']
@@ -270,9 +262,8 @@ class HB837Controller extends Controller
         // Load record and relationships
         $hb837 = HB837::with('files')->findOrFail($id);
 
-        // Optional: preload consultant list, clients, owners, etc.
+        // Optional: preload consultant list, clients, etc.
         $clients = Client::all();
-        $owners = Owner::all();
         $consultants = Consultant::all(['id', 'first_name', 'last_name']);
 
         // Ensure valid tab
@@ -281,7 +272,6 @@ class HB837Controller extends Controller
         return view('admin.hb837.edit-hb837', [
             'hb837' => $hb837,
             'clients' => $clients,
-            'owners' => $owners,
             'consultants' => $consultants,
             'tabFields' => $fields[$tab],
             'tab' => $tab
@@ -397,12 +387,6 @@ class HB837Controller extends Controller
         ];
 
         $validatedData = $request->validate($rules);
-
-        // If owner_name is set, assign or create owner_id
-        if (!empty($validatedData['owner_name'])) {
-            $owner = Owner::firstOrCreate(['name' => trim($validatedData['owner_name'])]);
-            $validatedData['owner_id'] = $owner->id;
-        }
 
         $hb837 = HB837::findOrFail($id);
         $hb837->update($validatedData);

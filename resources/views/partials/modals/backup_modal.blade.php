@@ -5,7 +5,7 @@
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="fas fa-save me-2"></i>Create New Backup</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+                    aria-label="Close" onclick="$('#backupModal').modal('hide')"></button>
             </div>
             <div class="modal-body p-3">
                 <div class="alert alert-light border-primary border-start border-3">
@@ -77,7 +77,7 @@
                 </form>
             </div>
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-lg btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-lg btn-light px-4" data-bs-dismiss="modal" onclick="$('#backupModal').modal('hide')">Cancel</button>
                 <button type="submit" form="backupForm" class="btn btn-lg btn-primary px-4">
                     <i class="fas fa-database me-2"></i>Create Backup
                 </button>

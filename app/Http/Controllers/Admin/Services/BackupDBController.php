@@ -351,7 +351,6 @@ class BackupDBController extends Controller
     {
         $hb837Count = HB837::count();
         $consultantsCount = DB::table('consultants')->count();
-        $ownersCount = DB::table('owners')->count();
         $usersCount = DB::table('users')->count();
 
         // HB837 specific stats (relevant to backups/imports)
@@ -413,7 +412,6 @@ class BackupDBController extends Controller
             'monthly_trends' => $monthlyTrends,
             'system_counts' => [
                 'consultants' => $consultantsCount,
-                'owners' => $ownersCount,
                 'users' => $usersCount,
             ],
         ];
@@ -666,7 +664,6 @@ class BackupDBController extends Controller
         $tableMapping = [
             'hb837' => ['address', 'property_name', 'report_status'],
             'consultants' => ['first_name', 'last_name', 'email'],
-            'owners' => ['name', 'email', 'company_name'],
             'clients' => ['name', 'email', 'phone'],
             'users' => ['name', 'email', 'email_verified_at'],
         ];
