@@ -154,7 +154,7 @@
                     </ul>
                 </div>
                 <div class="card-footer">
-                    <a href="<?php echo e(route('admin.services.backup')); ?>" class="btn btn-sm btn-primary btn-block">Manage Backups</a>
+                    <a href="<?php echo e(route('admin.hb837.backup.dashboard')); ?>" class="btn btn-sm btn-primary btn-block">Manage Backups</a>
                 </div>
             </div>
         </div>
