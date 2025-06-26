@@ -13,7 +13,17 @@ class DatabaseSeeder extends Seeder
     {
         $this->command->info('🌱 Starting database seeding...');
 
-        // Seed in order to handle relationships
+        // Option 1: Use PostgreSQL migration data (from actual dump)
+        if ($this->command->confirm('Do you want to migrate data from PostgreSQL dump?', false)) {
+            $this->call([
+                PostgreSQLToMySQLDataSeeder::class,
+            ]);
+            $this->command->info('✅ PostgreSQL data migration completed!');
+            return;
+        }
+
+        // Option 2: Use sample/test data (original seeders)
+        $this->command->info('Using sample/test data seeders...');
         $this->call([
             UserSeeder::class,
             OwnerSeeder::class,
