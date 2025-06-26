@@ -256,13 +256,13 @@ return [
     |
     */
 
-    'use_route_url' => false,
-    'dashboard_url' => 'home',
-    'logout_url' => 'logout',
-    'login_url' => 'login',
+    'use_route_url' => true,
+    'dashboard_url' => 'admin.dashboard',
+    'logout_url' => 'admin.logout',
+    'login_url' => 'admin.login',
     'register_url' => 'register',
-    'password_reset_url' => 'password/reset',
-    'password_email_url' => 'password/email',
+    'password_reset_url' => 'admin.password.request',
+    'password_email_url' => 'admin.password.email',
     'profile_url' => false,
     'disable_darkmode_routes' => false,
 
