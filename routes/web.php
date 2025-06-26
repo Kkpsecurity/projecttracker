@@ -13,6 +13,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\HB837\GoogleMapsController;
 use App\Http\Controllers\Admin\Services\BackupDBController;
 use App\Http\Controllers\Admin\Consultants\ConsultantController;
+use App\Http\Controllers\Admin\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,9 +51,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
  */
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
 
-    Route::get('/', function () {
-        return redirect()->route('admin.home.index');
-    })->name('dashboard');
+    // Dashboard Route
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
     // ProTrack Dashboard Routes
     Route::prefix('home')->name('home.')->group(function () {
