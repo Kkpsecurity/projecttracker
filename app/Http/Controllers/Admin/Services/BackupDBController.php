@@ -31,7 +31,7 @@ class BackupDBController extends Controller
             ->latest()
             ->paginate(10);
 
-        return view('admin.services.backup.index', [
+        return view('admin.services.backup.index_new', [
             'backups' => $backups,
             'stats' => $this->getBackupStats($backups),
             'systemStats' => $this->getSystemStats(),

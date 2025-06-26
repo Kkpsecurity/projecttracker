@@ -54,14 +54,20 @@ class HB837Controller extends Controller
             ? date('Y-m-d H:i:s', Storage::lastModified($backupPath))
             : null;
 
-        return view('admin.hb837.hb837', [
-            'hb837' => $projects,
+        return view('admin.hb837.hb837_new', [
+            'collection' => $projects,
             'tab' => $tab,
             'savedDate' => $savedDate,
             'sort' => $sort,
             'direction' => $direction,
             'num_rows' => $numRows,
-            'search' => $request->get('search')
+            'search' => $request->get('search'),
+            'stats' => [
+                'total' => HB837::count(),
+                'active' => HB837::where('report_status', 'Active')->count(),
+                'quoted' => HB837::where('contracting_status', 'quoted')->count(),
+                'completed' => HB837::where('report_status', 'completed')->count(),
+            ]
         ]);
     }
 

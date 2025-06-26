@@ -57,7 +57,7 @@ class HomeController extends Controller
             'clients' => $clients
         ];
 
-        return view('admin.protrack.home', compact('content'));
+        return view('admin.protrack.home_new', compact('content'));
     }
 
     public function process(Request $request)

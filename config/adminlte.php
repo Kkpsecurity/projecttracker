@@ -315,15 +315,15 @@ return [
             'type' => 'sidebar-menu-search',
             'text' => 'search',
         ],
-        
+
         // Dashboard
         [
             'text' => 'Dashboard',
             'route' => 'admin.dashboard',
             'icon' => 'fas fa-tachometer-alt',
-            'active' => ['admin/dashboard', 'admin']
+            'active' => ['admin/dashboard', 'admin', 'admin/']
         ],
-        
+
         // Project Management Section
         ['header' => 'PROJECT MANAGEMENT'],
         [
@@ -357,7 +357,7 @@ return [
                 ],
             ],
         ],
-        
+
         // HB837 Section
         [
             'text' => 'HB837 Management',
@@ -374,21 +374,18 @@ return [
                     'icon' => 'fas fa-plus',
                 ],
                 [
-                    'text' => 'Import Data',
-                    'route' => 'admin.hb837.import',
-                    'icon' => 'fas fa-upload',
-                ],
-                [
-                    'text' => 'Google Maps View',
-                    'route' => 'admin.hb837.google-maps',
-                    'icon' => 'fas fa-map-marked-alt',
-                ],
-                [
-                    'text' => 'Generate Report',
-                    'route' => 'admin.hb837.report',
-                    'icon' => 'fas fa-file-pdf',
+                    'text' => 'Backup & Services',
+                    'route' => 'admin.hb837.backup.dashboard',
+                    'icon' => 'fas fa-database',
                 ],
             ],
+        ],
+
+        // Map Tools
+        [
+            'text' => 'Plot Maps',
+            'route' => 'admin.mapplots.index',
+            'icon' => 'fas fa-map-marked-alt',
         ],
 
         // Data Management Section
@@ -403,53 +400,21 @@ return [
             'route' => 'admin.owners.index',
             'icon' => 'fas fa-users',
         ],
-        [
-            'text' => 'Plot Addresses',
-            'route' => 'admin.plots.index',
-            'icon' => 'fas fa-map-pin',
-        ],
 
-        // System Tools Section
-        ['header' => 'SYSTEM TOOLS'],
+        // User Management Section (Admin only)
         [
-            'text' => 'Backup & Services',
-            'icon' => 'fas fa-tools',
-            'submenu' => [
-                [
-                    'text' => 'Database Backup',
-                    'route' => 'admin.services.backup',
-                    'icon' => 'fas fa-database',
-                ],
-                [
-                    'text' => 'System Status',
-                    'route' => 'admin.services.status',
-                    'icon' => 'fas fa-heartbeat',
-                ],
-            ],
-        ],
-
-        // User Management Section
-        ['header' => 'USER MANAGEMENT'],
-        [
-            'text' => 'Users',
+            'text' => 'User Management',
+            'route' => 'admin.users.index',
             'icon' => 'fas fa-users-cog',
-            'submenu' => [
-                [
-                    'text' => 'All Users',
-                    'route' => 'admin.users.index',
-                    'icon' => 'fas fa-list',
-                ],
-                [
-                    'text' => 'Add New User',
-                    'route' => 'admin.users.create',
-                    'icon' => 'fas fa-user-plus',
-                ],
-            ],
+            'can' => 'admin-access',
         ],
+
+        // Account Management
+        ['header' => 'ACCOUNT'],
         [
-            'text' => 'Profile Settings',
-            'route' => 'admin.profile.edit',
-            'icon' => 'fas fa-user-cog',
+            'text' => 'Change Password',
+            'route' => 'admin.profile.change_password',
+            'icon' => 'fas fa-key',
         ],
     ],
 

@@ -27,8 +27,8 @@ class DashboardController extends Controller
         // Gather dashboard statistics
         $stats = [
             'total_projects' => HB837::count(),
-            'active_projects' => HB837::where('status', 'active')->count(),
-            'completed_projects' => HB837::where('status', 'completed')->count(),
+            'active_projects' => HB837::where('report_status', 'Active')->count(),
+            'completed_projects' => HB837::where('report_status', 'Completed')->count(),
             'total_consultants' => Consultant::count(),
             'recent_backups' => Backup::latest()->take(5)->get(),
             'recent_projects' => HB837::latest()->take(10)->get(),
