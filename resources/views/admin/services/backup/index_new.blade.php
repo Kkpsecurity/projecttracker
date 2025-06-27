@@ -95,72 +95,7 @@
                     </h3>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card card-outline card-primary">
-                                <div class="card-header">
-                                    <h5 class="card-title">
-                                        <i class="fas fa-download"></i>
-                                        Create Backup
-                                    </h5>
-                                </div>
-                                <div class="card-body text-center">
-                                    <p class="text-muted">Generate a new database backup with selected tables.</p>
-                                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#backupModal">
-                                        <i class="fas fa-database"></i> Create Backup
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <div class="card card-outline card-success">
-                                <div class="card-header">
-                                    <h5 class="card-title">
-                                        <i class="fas fa-upload"></i>
-                                        Import Data
-                                    </h5>
-                                </div>
-                                <div class="card-body text-center">
-                                    <p class="text-muted">Import HB837 data from Excel files.</p>
-                                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importModal">
-                                        <i class="fas fa-file-excel"></i> Import Data
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <div class="card card-outline card-warning">
-                                <div class="card-header">
-                                    <h5 class="card-title">
-                                        <i class="fas fa-undo"></i>
-                                        Restore Database
-                                    </h5>
-                                </div>
-                                <div class="card-body text-center">
-                                    <p class="text-muted">Restore database from a previous backup.</p>
-                                    @if($backups->count() > 0)
-                                        <p class="text-info small">
-                                            <i class="fas fa-info-circle"></i> 
-                                            Use the restore buttons next to individual backups below.
-                                        </p>
-                                        <button type="button" class="btn btn-warning" disabled>
-                                            <i class="fas fa-undo"></i> Select backup below to restore
-                                        </button>
-                                    @else
-                                        <p class="text-warning small">
-                                            <i class="fas fa-exclamation-triangle"></i> 
-                                            No backups available to restore.
-                                        </p>
-                                        <button type="button" class="btn btn-warning" disabled>
-                                            <i class="fas fa-undo"></i> No backups available
-                                        </button>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Cards removed - buttons moved to header area -->
                 </div>
             </div>
         </div>
@@ -176,9 +111,17 @@
                         Backup History
                     </h3>
                     <div class="card-tools">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.reload()">
-                            <i class="fas fa-sync-alt"></i> Refresh
-                        </button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#backupModal">
+                                <i class="fas fa-database"></i> Create Backup
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#export_import_modal">
+                                <i class="fas fa-file-excel"></i> Import Data
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.reload()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body p-0">

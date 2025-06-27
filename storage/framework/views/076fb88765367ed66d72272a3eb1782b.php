@@ -59,7 +59,7 @@
                                 <a href="<?php echo e(route('admin.hb837.create')); ?>" class="btn btn-success">
                                     <i class="fas fa-plus"></i> Add New Record
                                 </a>
-                                <button type="button" class="btn btn-info" data-toggle="modal" data-target="#export_import_modal">
+                                <button type="button" class="btn btn-info" id="import-btn" onclick="openImportModal()">
                                     <i class="fas fa-exchange-alt"></i> Import/Export
                                 </button>
                                 <a href="<?php echo e(route('admin.hb837.backup.dashboard')); ?>" class="btn btn-warning">
@@ -88,43 +88,42 @@
                     </div>
 
                     <!-- Records Table -->
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="hb837-table">
+                    <div class="table-responsive-modern">
+                        <table class="table table-modern table-compact" id="hb837-table">
                             <thead>
                                 <tr>
-                                    <th>Property ID</th>
+                                    <th style="width: 80px;">Property ID</th>
                                     <th>Property Name</th>
                                     <th>Owner Name</th>
                                     <th>Address</th>
-                                    <th>Consultant</th>
-                                    <th>Status</th>
-                                    <th>Crime Risk</th>
-                                    <th>Updated</th>
-                                    <th width="120">Actions</th>
+                                    <th style="width: 120px;">Consultant</th>
+                                    <th style="width: 100px;">Status</th>
+                                    <th style="width: 100px;">Crime Risk</th>
+                                    <th style="width: 120px;">Updated</th>
+                                    <th style="width: 120px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php $__empty_1 = true; $__currentLoopData = $collection; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $record): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                     <tr>
-                                        <td><strong>#<?php echo e($record->id); ?></strong></td>
-                                        <td><?php echo e($record->property_name); ?></td>
+                                        <td><span class="table-id">#<?php echo e($record->id); ?></span></td>
+                                        <td><strong><?php echo e($record->property_name); ?></strong></td>
                                         <td><?php echo e($record->owner_name); ?></td>
                                         <td>
-                                            <small>
+                                            <div class="table-address">
                                                 <?php echo e($record->address); ?><br>
-                                                <?php echo e($record->city); ?>, <?php echo e($record->state); ?> <?php echo e($record->zip); ?>
-
-                                            </small>
+                                                <small class="text-muted"><?php echo e($record->city); ?>, <?php echo e($record->state); ?> <?php echo e($record->zip); ?></small>
+                                            </div>
                                         </td>
                                         <td>
                                             <?php if($record->consultant): ?>
-                                                <span class="badge badge-info"><?php echo e($record->consultant->name); ?></span>
+                                                <span class="table-badge badge-info"><?php echo e($record->consultant->name); ?></span>
                                             <?php else: ?>
                                                 <span class="text-muted">Unassigned</span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <span class="status-badge status-<?php echo e(strtolower($record->report_status)); ?>">
+                                            <span class="table-badge badge-<?php echo e(strtolower($record->report_status) === 'active' ? 'success' : (strtolower($record->report_status) === 'quoted' ? 'warning' : (strtolower($record->report_status) === 'completed' ? 'info' : 'secondary'))); ?>">
                                                 <?php echo e($record->report_status); ?>
 
                                             </span>
@@ -304,7 +303,82 @@
     <script src="//cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
     <script src="//cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
     <script>
+        // Simple modal function
+        function openImportModal() {
+            console.log('openImportModal called directly');
+            
+            // Force show the modal with all possible methods
+            try {
+                console.log('Trying jQuery modal show...');
+                $('#export_import_modal').modal('show');
+            } catch (e) {
+                console.error('jQuery modal failed:', e);
+            }
+            
+            try {
+                console.log('Trying direct style manipulation...');
+                document.getElementById('export_import_modal').style.display = 'block';
+                document.getElementById('export_import_modal').classList.add('show');
+                
+                // Add backdrop
+                let backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.id = 'modal-backdrop-custom';
+                document.body.appendChild(backdrop);
+                
+            } catch (e) {
+                console.error('Direct manipulation failed:', e);
+            }
+        }
+        
         $(document).ready(function() {
+            // Debug modal trigger comprehensive
+            console.log('=== HB837 Modal Debugging ===');
+            console.log('jQuery loaded:', typeof $);
+            console.log('Bootstrap modal available:', typeof $.fn.modal);
+            console.log('Modal element count:', $('#export_import_modal').length);
+            console.log('Button element count:', $('#import-btn').length);
+            console.log('Modal HTML exists:', $('#export_import_modal').html() ? 'YES' : 'NO');
+            
+            // Check modal state
+            if ($('#export_import_modal').length > 0) {
+                console.log('Modal classes:', $('#export_import_modal').attr('class'));
+                console.log('Modal display style:', $('#export_import_modal').css('display'));
+            }
+            
+            // Add click handler with comprehensive debugging
+            $('#import-btn').on('click', function(e) {
+                console.log('=== Button Click Event ===');
+                console.log('Event triggered at:', new Date().toISOString());
+                console.log('Button element:', this);
+                console.log('Event object:', e);
+                
+                // Try manual modal show
+                try {
+                    console.log('Attempting manual modal show...');
+                    $('#export_import_modal').modal('show');
+                    console.log('Modal show command completed');
+                    
+                    // Check if modal is visible after a delay
+                    setTimeout(function() {
+                        const isVisible = $('#export_import_modal').is(':visible');
+                        const hasShowClass = $('#export_import_modal').hasClass('show');
+                        console.log('Modal visible after 500ms:', isVisible);
+                        console.log('Modal has show class:', hasShowClass);
+                        console.log('Modal display style after show:', $('#export_import_modal').css('display'));
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('Error in modal show:', error);
+                }
+            });
+            
+            // Test function
+            window.debugModal = function() {
+                console.log('Manual test function called');
+                $('#export_import_modal').modal('show');
+            };
+            
             // Initialize DataTable with basic features
             $('#hb837-table').DataTable({
                 "responsive": true,

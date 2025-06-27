@@ -30,6 +30,7 @@ class HB837 extends Model
         'report_submitted',
         'billing_req_sent',
         'financial_notes',
+        'consultant_notes',
         'securitygauge_crime_risk',
         "notes",
         'property_manager_name',

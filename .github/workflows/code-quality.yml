@@ -1,0 +1,83 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: mbstring, dom, fileinfo, mysql, zip, bcmath, gd
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install PHP dependencies
+      run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+    - name: Install Node dependencies
+      run: npm ci
+
+    - name: Run Laravel Pint (PHP CS Fixer)
+      run: php ./vendor/bin/pint --test
+
+    - name: Run ESLint
+      run: npm run lint
+
+    - name: Run Prettier check
+      run: npx prettier --check "resources/js/**/*.{js,vue}" "resources/views/**/*.blade.php"
+
+    - name: Check PHP syntax
+      run: find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" | xargs -I {} php -l {}
+
+    - name: Run PHPStan (Static Analysis)
+      run: |
+        composer require --dev phpstan/phpstan larastan/larastan --no-interaction
+        ./vendor/bin/phpstan analyse --memory-limit=2G
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+        npm ci
+
+    - name: Check for outdated PHP packages
+      run: composer outdated --direct
+
+    - name: Check for outdated Node packages
+      run: npm outdated || true
+
+    - name: Audit Node dependencies
+      run: npm audit --audit-level high
+
+    - name: Check Composer security
+      run: composer audit

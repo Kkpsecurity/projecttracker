@@ -108,6 +108,22 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             ->where('macro_client', '.*')
             ->name('macro_client_properties');
 
+        // New enhanced routes
+        Route::put('/{plot}', [GoogleMapsController::class, 'update'])
+            ->where('plot', '[0-9]+')
+            ->name('update');
+
+        Route::post('/{plot}/convert-to-client', [GoogleMapsController::class, 'convertToClient'])
+            ->where('plot', '[0-9]+')
+            ->name('convert_to_client');
+
+        Route::get('/{plot}/export', [GoogleMapsController::class, 'exportPlotData'])
+            ->where('plot', '[0-9]+')
+            ->name('export');
+
+        Route::get('/statistics', [GoogleMapsController::class, 'getPlotStatistics'])
+            ->name('statistics');
+
     });
 
 
@@ -207,4 +223,5 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             'login_info' => 'Email: admin@test.com, Password: password123'
         ]);
     });
+
 });

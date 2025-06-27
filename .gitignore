@@ -11,8 +11,42 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
 # Large archive files
 *.rar
 *.zip
 *.tar.gz
 *.7z
+
+# Build artifacts
+/public/mix-manifest.json
+/public/css/app.css
+/public/js/app.js
+
+# Testing and Coverage
+coverage/
+*.coverage
+.nyc_output/
+
+# Logs
+logs
+*.log
+
+# Temporary files
+tmp/
+temp/

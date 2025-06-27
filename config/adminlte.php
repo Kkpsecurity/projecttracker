@@ -402,7 +402,6 @@ return [
             'text' => 'User Management',
             'route' => 'admin.users.index',
             'icon' => 'fas fa-users-cog',
-            'can' => 'admin-access',
         ],
 
         // Account Management
