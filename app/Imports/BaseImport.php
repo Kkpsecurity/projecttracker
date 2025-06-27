@@ -8,18 +8,18 @@ namespace App\Imports;
  * mapping, and error handling.
  *
  * @version 2.0.0
- * @package App\Imports
  */
 
 use Carbon\Carbon;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 abstract class BaseImport implements WithHeadingRow
 {
     protected $importId;
+
     protected $rowErrors = [];
+
     protected $stats = [
         'created' => 0,
         'updated' => 0,
@@ -28,7 +28,9 @@ abstract class BaseImport implements WithHeadingRow
     ];
 
     protected $currentRow;
+
     protected $modelClass;
+
     protected $identifierFields = ['address', 'property_name'];
 
     public function __construct()
@@ -38,9 +40,13 @@ abstract class BaseImport implements WithHeadingRow
     }
 
     abstract protected function init();
+
     abstract protected function mapData(array $row);
+
     abstract protected function validateRow(array $row): bool;
+
     abstract protected function findExistingModel(array $data);
+
     abstract protected function handleImportRecord(array $data);
 
     public function getImportId()
@@ -73,11 +79,12 @@ abstract class BaseImport implements WithHeadingRow
         $required = config('hb837.required_fields');
         $missing = array_diff($required, array_keys($row));
 
-        if (!empty($missing)) {
+        if (! empty($missing)) {
             $this->addRowError(
                 'Missing required headers',
                 ['missing_headers' => $missing]
             );
+
             return false;
         }
 
@@ -86,12 +93,15 @@ abstract class BaseImport implements WithHeadingRow
 
     protected function parseDate($value): ?string
     {
-        if (empty($value)) return null;
+        if (empty($value)) {
+            return null;
+        }
 
         try {
             if (is_numeric($value)) {
                 return Carbon::createFromFormat('Y-m-d', gmdate('Y-m-d', ($value - 25569) * 86400))->format('Y-m-d');
             }
+
             return Carbon::parse($value)->format('Y-m-d');
         } catch (\Exception $e) {
             return null;
@@ -100,12 +110,12 @@ abstract class BaseImport implements WithHeadingRow
 
     protected function parseCurrency($value): float
     {
-        return $value ? (float)preg_replace('/[^\d.]/', '', $value) : 0.0;
+        return $value ? (float) preg_replace('/[^\d.]/', '', $value) : 0.0;
     }
 
     protected function parseInteger($value): int
     {
-        return is_numeric($value) ? (int)$value : 0;
+        return is_numeric($value) ? (int) $value : 0;
     }
 
     protected function cleanString($value): string

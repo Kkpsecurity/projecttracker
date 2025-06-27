@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 namespace App\Exports;
 
 use Illuminate\Support\Collection;
@@ -23,7 +24,7 @@ class ConsultantExport implements FromCollection, WithHeadings, WithTitle
             ? $this->consultantsWithFiles()
             : $this->consultantsOnly();
 
-        Log::info('Exporting consultants: ' . $data->count());
+        Log::info('Exporting consultants: '.$data->count());
 
         return $data;
     }

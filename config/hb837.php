@@ -18,11 +18,9 @@ return [
         'report_status' => 'not-started',
     ],
 
-
     'property_types' => ['garden', 'midrise', 'highrise', 'industrial', 'bungalo'],
     'contracting_statuses' => ['executed', 'quoted', 'started', 'closed'],
     'report_statuses' => ['not-started', 'in-progress', 'in-review', 'completed'],
-
 
     'map_api_key' => env('APP_ENV') === 'local'
         ? env('GOOGLE_MAPS_API_KEY_DEV', env('GOOGLE_MAPS_API_KEY'))
@@ -50,7 +48,7 @@ return [
         2 => 'Moderate',
         3 => 'Elevated',
         4 => 'High',
-        5 => 'Severe'
+        5 => 'Severe',
     ],
 
     // Development configuration

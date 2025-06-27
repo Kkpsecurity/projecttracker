@@ -22,7 +22,6 @@ class HB837File extends Model
 
     /**
      * Relationship with HB837.
-     * @return BelongsTo
      */
     public function hb837(): BelongsTo
     {
@@ -31,7 +30,6 @@ class HB837File extends Model
 
     /**
      * Relationship with User.
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -40,21 +38,19 @@ class HB837File extends Model
 
     /**
      * Get the full file path.
-     * @return string
      */
     public function getFilePathAttribute(): string
     {
-        return storage_path('app/' . $this->attributes['file_path']);
+        return storage_path('app/'.$this->attributes['file_path']);
     }
 
     /**
      * Get the file size in a human-readable format.
-     * @return string|null
      */
     public function getFileSizeAttribute(): ?string
     {
         if (File::exists($this->attributes['file_path'])) {
-            return $this->humanReadableFileSize(File::size(storage_path('app/' . $this->attributes['file_path'])));
+            return $this->humanReadableFileSize(File::size(storage_path('app/'.$this->attributes['file_path'])));
         }
 
         return null;
@@ -62,12 +58,11 @@ class HB837File extends Model
 
     /**
      * Get the file type.
-     * @return string|null
      */
     public function getFileTypeAttribute(): ?string
     {
         if (File::exists($this->attributes['file_path'])) {
-            return File::mimeType(storage_path('app/' . $this->attributes['file_path']));
+            return File::mimeType(storage_path('app/'.$this->attributes['file_path']));
         }
 
         return null;
@@ -75,13 +70,12 @@ class HB837File extends Model
 
     /**
      * Convert bytes to a human-readable file size.
-     * @param int $bytes
-     * @return string
      */
     private function humanReadableFileSize(int $bytes): string
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $i = floor(log($bytes, 1024));
-        return round($bytes / pow(1024, $i), 2) . ' ' . $units[$i];
+
+        return round($bytes / pow(1024, $i), 2).' '.$units[$i];
     }
 }

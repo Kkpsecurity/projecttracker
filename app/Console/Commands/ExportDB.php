@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
-
 class ExportDB extends Command
 {
     /**
@@ -39,7 +38,7 @@ class ExportDB extends Command
 
         // Create directory if it doesn't exist
         $exportPath = 'database/seeds/data';
-        if (!Storage::disk('local')->exists($exportPath)) {
+        if (! Storage::disk('local')->exists($exportPath)) {
             Storage::disk('local')->makeDirectory($exportPath);
         }
 
@@ -87,6 +86,7 @@ class ExportDB extends Command
         }
 
         $this->info('All tables exported successfully.');
+
         return Command::SUCCESS;
     }
 }

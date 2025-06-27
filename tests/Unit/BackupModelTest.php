@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use App\Models\Backup;
+use PHPUnit\Framework\TestCase;
 
 class BackupModelTest extends TestCase
 {
@@ -12,7 +12,7 @@ class BackupModelTest extends TestCase
      */
     public function test_backup_model_can_be_instantiated(): void
     {
-        $backup = new Backup();
+        $backup = new Backup;
         $this->assertInstanceOf(Backup::class, $backup);
     }
 
@@ -21,9 +21,9 @@ class BackupModelTest extends TestCase
      */
     public function test_backup_model_has_correct_fillable_fields(): void
     {
-        $backup = new Backup();
+        $backup = new Backup;
         $expected = [
-            'uuid', 'name', 'tables', 'user_id', 'filename', 'size', 'record_count', 'status'
+            'uuid', 'name', 'tables', 'user_id', 'filename', 'size', 'record_count', 'status',
         ];
 
         $this->assertEquals($expected, $backup->getFillable());
@@ -34,7 +34,7 @@ class BackupModelTest extends TestCase
      */
     public function test_backup_model_casts_tables_as_array(): void
     {
-        $backup = new Backup();
+        $backup = new Backup;
         $casts = $backup->getCasts();
 
         $this->assertArrayHasKey('tables', $casts);
@@ -50,7 +50,7 @@ class BackupModelTest extends TestCase
             'uuid' => 'test-uuid',
             'name' => 'Test Name',
             'tables' => ['table1', 'table2'],
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
 
         $this->assertEquals('test-uuid', $backup->uuid);
@@ -64,7 +64,7 @@ class BackupModelTest extends TestCase
      */
     public function test_backup_has_user_relationship(): void
     {
-        $backup = new Backup();
+        $backup = new Backup;
         $this->assertTrue(method_exists($backup, 'user'));
     }
 
@@ -73,7 +73,7 @@ class BackupModelTest extends TestCase
      */
     public function test_backup_model_table_name(): void
     {
-        $backup = new Backup();
+        $backup = new Backup;
         $this->assertEquals('backups', $backup->getTable());
     }
 
@@ -82,7 +82,7 @@ class BackupModelTest extends TestCase
      */
     public function test_backup_model_uses_timestamps(): void
     {
-        $backup = new Backup();
+        $backup = new Backup;
         $this->assertTrue($backup->usesTimestamps());
     }
 }

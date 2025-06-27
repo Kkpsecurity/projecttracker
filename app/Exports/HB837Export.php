@@ -5,13 +5,12 @@ namespace App\Exports;
 use App\Models\HB837;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class HB837Export implements FromCollection, WithHeadings, ShouldAutoSize
+class HB837Export implements FromCollection, ShouldAutoSize, WithHeadings
 {
-
-   /**
+    /**
      * @var array
      */
     protected $included_files;
@@ -20,7 +19,6 @@ class HB837Export implements FromCollection, WithHeadings, ShouldAutoSize
     {
         $this->included_files = $included_files;
     }
-
 
     public function collection(): Collection
     {
@@ -60,7 +58,7 @@ class HB837Export implements FromCollection, WithHeadings, ShouldAutoSize
                 'hb837s.billing_req_sent',
                 'hb837s.financial_notes',
                 'hb837s.consultant_notes',
-                'hb837s.notes'
+                'hb837s.notes',
             ])
             ->leftJoin('owners', 'hb837s.owner_id', '=', 'owners.id')
             ->leftJoin('consultants', 'hb837s.assigned_consultant_id', '=', 'consultants.id')
@@ -138,7 +136,7 @@ class HB837Export implements FromCollection, WithHeadings, ShouldAutoSize
             'Macro Email',
             'Financial Notes',
             'Consultant Notes',
-            'Notes'
+            'Notes',
         ];
     }
 }

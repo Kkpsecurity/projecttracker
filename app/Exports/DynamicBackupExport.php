@@ -2,7 +2,6 @@
 
 namespace App\Exports;
 
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 class DynamicBackupExport implements WithMultipleSheets
@@ -40,5 +39,4 @@ class DynamicBackupExport implements WithMultipleSheets
 
         return $sheets;
     }
-
 }

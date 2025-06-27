@@ -2,22 +2,23 @@
 
 namespace App\Imports;
 
-use Carbon\Carbon;
+use App\Models\Consultant;
 use App\Models\HB837;
 use App\Models\Owner;
-use App\Models\Consultant;
-use Illuminate\Support\Str;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-
 class HB837Import implements ToModel, WithHeadingRow
 {
-
     public $importedCount = 0;
+
     public $updatedCount = 0;
+
     public $skippedCount = 0;
+
     public $skippedProperties = [];
 
     /**
@@ -31,6 +32,7 @@ class HB837Import implements ToModel, WithHeadingRow
     public function setTruncateMode($enabled = true)
     {
         $this->truncateMode = $enabled;
+
         return $this;
     }
 
@@ -102,7 +104,8 @@ class HB837Import implements ToModel, WithHeadingRow
         if (empty(trim($mapped['address'] ?? ''))) {
             Log::warning('Skipping row: missing address.', ['row' => $row]);
             $this->skippedCount++;
-            $this->skippedProperties[] = 'Missing address in row: ' . json_encode($row);
+            $this->skippedProperties[] = 'Missing address in row: '.json_encode($row);
+
             return null;
         }
 
@@ -114,24 +117,26 @@ class HB837Import implements ToModel, WithHeadingRow
         $mapped['report_status'] = $this->validateReportStatus($mapped['report_status'] ?? '');
 
         // Upsert logic - skip existing record check in truncate mode
-        if (!$this->truncateMode) {
+        if (! $this->truncateMode) {
             $existing = HB837::firstWhere('address', $mapped['address']);
 
             if ($existing) {
                 $updates = [];
                 foreach ($mapped as $key => $value) {
                     // Only patch non-null, non-empty, non-zero values that differ
-                    if (!is_null($value) && $value !== '' && $value !== 0.0 && $existing->{$key} != $value) {
+                    if (! is_null($value) && $value !== '' && $value !== 0.0 && $existing->{$key} != $value) {
                         $updates[$key] = $value;
                     }
                 }
                 if (count($updates) === 0) {
                     $this->skippedCount++;
+
                     return null;
                 }
                 $existing->update($updates);
                 Log::info('HB837 Record Updated', ['id' => $existing->id]);
                 $this->updatedCount++;
+
                 return $existing->fresh();
             }
         }
@@ -144,6 +149,7 @@ class HB837Import implements ToModel, WithHeadingRow
             Log::info('HB837 Record Created', ['id' => $new->id]);
         }
         $this->importedCount++;
+
         return $new;
     }
 
@@ -157,7 +163,7 @@ class HB837Import implements ToModel, WithHeadingRow
         // Compare only fields that exist in the new data
         $differences = array_diff_assoc($newData, array_intersect_key($existingData, $newData));
 
-        return !empty($differences); // Returns true if there are changes
+        return ! empty($differences); // Returns true if there are changes
     }
 
     /**
@@ -170,7 +176,7 @@ class HB837Import implements ToModel, WithHeadingRow
 
         // Key existing HB837 models by "address|property_name"
         $existingRecords = HB837::all()->keyBy(function ($m) {
-            return strtolower($m->address . '|' . $m->property_name);
+            return strtolower($m->address.'|'.$m->property_name);
         });
 
         $total = count($rows);
@@ -188,11 +194,11 @@ class HB837Import implements ToModel, WithHeadingRow
             $prop = trim($mapped['property_name'] ?? '');
 
             // Skip rows missing address
-            if (!$addr) {
+            if (! $addr) {
                 continue;
             }
 
-            $key = strtolower($addr . '|' . $prop);
+            $key = strtolower($addr.'|'.$prop);
             if (isset($existingRecords[$key])) {
                 $model = $existingRecords[$key];
                 $changes = [];
@@ -240,7 +246,6 @@ class HB837Import implements ToModel, WithHeadingRow
             'new_properties' => $newLog,
         ];
     }
-
 
     private function mapHeaders(array $row): array
     {
@@ -298,17 +303,17 @@ class HB837Import implements ToModel, WithHeadingRow
                         Log::warning('Invalid securitygauge_crime_risk value skipped, defaulted to Moderate', [
                             'input' => $value,
                             'normalized' => $val,
-                            'allowed' => $allowedRisks
+                            'allowed' => $allowedRisks,
                         ]);
                     }
                     break;
 
-                // integer
+                    // integer
                 case 'units':
                     $mapped[$field] = is_numeric($value) ? (int) $value : 0;
                     break;
 
-                // currency -> float
+                    // currency -> float
                 case 'quoted_price':
                 case 'sub_fees_estimated_expenses':
                     $mapped[$field] = $value !== null
@@ -316,7 +321,7 @@ class HB837Import implements ToModel, WithHeadingRow
                         : 0.0;
                     break;
 
-                // net profit based on quoted & sub fees
+                    // net profit based on quoted & sub fees
                 case 'project_net_profit':
                     $mapped[$field] = $this->calculateNetProfit(
                         $mapped['quoted_price'] ?? 0,
@@ -324,7 +329,7 @@ class HB837Import implements ToModel, WithHeadingRow
                     );
                     break;
 
-                // dates
+                    // dates
                 case 'scheduled_date_of_inspection':
                 case 'report_submitted':
                 case 'agreement_submitted':
@@ -332,7 +337,7 @@ class HB837Import implements ToModel, WithHeadingRow
                     $mapped[$field] = $this->parseDate($value);
                     break;
 
-                // validations
+                    // validations
                 case 'contracting_status':
                     $mapped[$field] = $this->validateContractingStatus($value);
                     break;
@@ -349,7 +354,7 @@ class HB837Import implements ToModel, WithHeadingRow
                     $mapped[$field] = $this->validateZip($value);
                     break;
 
-                // relations
+                    // relations
                 case 'assigned_consultant_id':
                     $mapped[$field] = $this->processConsultantId($value);
                     break;
@@ -369,7 +374,6 @@ class HB837Import implements ToModel, WithHeadingRow
         return $mapped;
     }
 
-
     /** helper to pull the first non-empty key out of the row */
     private function firstNonEmpty(array $row, array $keys)
     {
@@ -378,9 +382,9 @@ class HB837Import implements ToModel, WithHeadingRow
                 return $row[$k];
             }
         }
+
         return null;
     }
-
 
     /**
      * Get a value from the row, trimming and cleaning it.
@@ -442,14 +446,15 @@ class HB837Import implements ToModel, WithHeadingRow
                 return Carbon::createFromFormat('Y-m-d', gmdate('Y-m-d', ($value - 25569) * 86400))->format('Y-m-d');
             } catch (\Exception $e) {
                 Log::warning('Date Parsing Failed', ['value' => $value]);
+
                 return null;
             }
         }
 
         Log::warning('Invalid date format', ['value' => $value]);
+
         return null;
     }
-
 
     /**
      * Validate and set property type.
@@ -458,6 +463,7 @@ class HB837Import implements ToModel, WithHeadingRow
     {
         $allowedTypes = config('hb837.property_types');
         $cleanedValue = strtolower(trim($value));
+
         return in_array($cleanedValue, $allowedTypes) ? $cleanedValue : 'garden';
     }
 
@@ -523,9 +529,10 @@ class HB837Import implements ToModel, WithHeadingRow
      */
     private function calculateNetProfit($quotedPrice, $subFees)
     {
-        if (!$quotedPrice || !$subFees) {
+        if (! $quotedPrice || ! $subFees) {
             return null;
         }
+
         return floatval($quotedPrice) - floatval($subFees);
     }
 
@@ -537,10 +544,10 @@ class HB837Import implements ToModel, WithHeadingRow
         return $name ? Owner::firstOrCreate(['name' => trim($name)])->id : null;
     }
 
-    private function processConsultantId(string $name = null): ?int
+    private function processConsultantId(?string $name = null): ?int
     {
         // Bail on empty or non-alphabetic values (e.g. a date)
-        if (empty($name) || !preg_match('/[A-Za-z]/', $name)) {
+        if (empty($name) || ! preg_match('/[A-Za-z]/', $name)) {
             return null;
         }
 
@@ -548,7 +555,7 @@ class HB837Import implements ToModel, WithHeadingRow
         [$first, $last] = array_pad(explode(' ', trim($name), 2), 2, trim($name));
 
         // Build a predictable email
-        $email = Str::slug("{$first}.{$last}") . '@example.com';
+        $email = Str::slug("{$first}.{$last}").'@example.com';
 
         // Find or create by first & last name; update email if missing
         $consultant = Consultant::updateOrCreate(
@@ -558,7 +565,6 @@ class HB837Import implements ToModel, WithHeadingRow
 
         return $consultant->id;
     }
-
 
     /**
      * Get the default owner ID.
@@ -577,7 +583,7 @@ class HB837Import implements ToModel, WithHeadingRow
             return $this->getDefaultOwnerId();
         }
 
-        $owner = Owner::where('name', 'LIKE', '%' . trim($name) . '%')->first();
+        $owner = Owner::where('name', 'LIKE', '%'.trim($name).'%')->first();
 
         if ($owner) {
             return $owner->id;
@@ -596,7 +602,7 @@ class HB837Import implements ToModel, WithHeadingRow
             return null; // No consultant assigned
         }
 
-        $consultant = Consultant::where('first_name', 'LIKE', '%' . trim($name) . '%')->first();
+        $consultant = Consultant::where('first_name', 'LIKE', '%'.trim($name).'%')->first();
 
         if ($consultant) {
             return $consultant->id;
@@ -612,7 +618,7 @@ class HB837Import implements ToModel, WithHeadingRow
     public function importFromExcel($filePath)
     {
         try {
-            $import = new self();
+            $import = new self;
             $import->setTruncateMode(false); // Set as needed
             $result = \Maatwebsite\Excel\Facades\Excel::import($import, $filePath);
             Log::info('Import completed', [
@@ -621,6 +627,7 @@ class HB837Import implements ToModel, WithHeadingRow
                 'skipped' => $import->skippedCount,
                 'skipped_properties' => $import->skippedProperties,
             ]);
+
             return [
                 'imported' => $import->importedCount,
                 'updated' => $import->updatedCount,
@@ -629,6 +636,7 @@ class HB837Import implements ToModel, WithHeadingRow
             ];
         } catch (\Exception $e) {
             Log::error('Import failed', ['error' => $e->getMessage()]);
+
             return [
                 'error' => $e->getMessage(),
             ];

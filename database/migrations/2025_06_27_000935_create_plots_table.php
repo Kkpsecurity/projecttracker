@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('client_contact_phone')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             // Indexes for performance
             $table->index(['plot_type', 'is_active']);
             $table->index('plot_name');

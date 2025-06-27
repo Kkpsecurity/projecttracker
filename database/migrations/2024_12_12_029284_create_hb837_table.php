@@ -12,7 +12,8 @@ class CreateHb837Table extends Migration
      * @return void
      */
     public function up()
-    {Schema::dropIfExists('hb837');
+    {
+        Schema::dropIfExists('hb837');
         Schema::create('hb837', function (Blueprint $table) {
             $table->id();
 
@@ -23,6 +24,7 @@ class CreateHb837Table extends Migration
 
             /**
              * Owner Id
+             *
              * @deprecated message="Owner ID is deprecated and will be removed in a future release."
              */
             $table->unsignedBigInteger('owner_id')->nullable();

@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Backup;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class BackupSystemFeatureTest extends TestCase
 {
@@ -37,7 +37,7 @@ class BackupSystemFeatureTest extends TestCase
     {
         $backupData = [
             'name' => 'Test Backup',
-            'tables' => ['hb837', 'clients']
+            'tables' => ['hb837', 'clients'],
         ];
 
         $response = $this->actingAs($this->user)
@@ -46,7 +46,7 @@ class BackupSystemFeatureTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('backups', [
             'name' => 'Test Backup',
-            'user_id' => $this->user->id
+            'user_id' => $this->user->id,
         ]);
     }
 
@@ -57,7 +57,7 @@ class BackupSystemFeatureTest extends TestCase
     {
         $invalidData = [
             'name' => '', // Empty name
-            'tables' => [] // Empty tables array
+            'tables' => [], // Empty tables array
         ];
 
         $response = $this->actingAs($this->user)
@@ -73,7 +73,7 @@ class BackupSystemFeatureTest extends TestCase
     {
         $backupData = [
             'name' => 'Test Backup',
-            'tables' => ['hb837']
+            'tables' => ['hb837'],
         ];
 
         $response = $this->post('/admin/services/backup/save', $backupData);
@@ -88,19 +88,19 @@ class BackupSystemFeatureTest extends TestCase
         // Create some backups
         $backup1 = Backup::factory()->create([
             'user_id' => $this->user->id,
-            'name' => 'User Backup 1'
+            'name' => 'User Backup 1',
         ]);
 
         $backup2 = Backup::factory()->create([
             'user_id' => $this->user->id,
-            'name' => 'User Backup 2'
+            'name' => 'User Backup 2',
         ]);
 
         // Create backup for another user
         $otherUser = User::factory()->create();
         $otherBackup = Backup::factory()->create([
             'user_id' => $otherUser->id,
-            'name' => 'Other User Backup'
+            'name' => 'Other User Backup',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -119,7 +119,7 @@ class BackupSystemFeatureTest extends TestCase
     {
         $backup = Backup::factory()->create([
             'user_id' => $this->user->id,
-            'filename' => 'test_backup.xlsx'
+            'filename' => 'test_backup.xlsx',
         ]);
 
         $response = $this->get("/admin/services/backup/download/{$backup->id}");
@@ -133,7 +133,7 @@ class BackupSystemFeatureTest extends TestCase
     {
         $backup = Backup::factory()->create([
             'user_id' => $this->user->id,
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
 
         $this->assertEquals('pending', $backup->status);

@@ -2,14 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Exports\DynamicBackupExport;
 use App\Models\Backup;
 use App\Models\ImportAudit;
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
-use App\Exports\DynamicBackupExport;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AutoBackupCommand extends Command
@@ -29,15 +29,17 @@ class AutoBackupCommand extends Command
      */
     public function handle()
     {
-        if (!config('backup.enable_cron', true)) {
+        if (! config('backup.enable_cron', true)) {
             $this->info('Auto backup is disabled in configuration.');
             Log::info('Auto backup skipped - disabled in configuration');
+
             return Command::SUCCESS;
         }
 
-        if (!cache('backup_cron_enabled', true)) {
+        if (! cache('backup_cron_enabled', true)) {
             $this->info('Auto backup is disabled via admin setting.');
             Log::info('Auto backup skipped - disabled by admin');
+
             return Command::SUCCESS;
         }
 
@@ -48,10 +50,10 @@ class AutoBackupCommand extends Command
             // Default tables to backup
             $tables = $this->option('tables') ?: ['hb837', 'consultants', 'owners'];
 
-            $this->info('Backing up tables: ' . implode(', ', $tables));
+            $this->info('Backing up tables: '.implode(', ', $tables));
 
             // Generate backup name
-            $name = 'Auto_Backup_' . date('Y-m-d_H-i-s');
+            $name = 'Auto_Backup_'.date('Y-m-d_H-i-s');
 
             // Create backup configuration
             $config = [
@@ -70,13 +72,13 @@ class AutoBackupCommand extends Command
 
             $this->info("✅ Backup completed successfully: {$audit->filename}");
             $this->info("📊 Records backed up: {$backupData['record_count']}");
-            $this->info("💾 File size: " . $this->formatBytes($backupData['size']));
+            $this->info('💾 File size: '.$this->formatBytes($backupData['size']));
 
             Log::info('Auto backup completed successfully', [
                 'filename' => $audit->filename,
                 'size' => $backupData['size'],
                 'record_count' => $backupData['record_count'],
-                'tables' => $tables
+                'tables' => $tables,
             ]);
 
             // Clean up old backups (keep last 10)
@@ -85,13 +87,13 @@ class AutoBackupCommand extends Command
             return Command::SUCCESS;
 
         } catch (\Throwable $e) {
-            $this->error("❌ Auto backup failed: " . $e->getMessage());
+            $this->error('❌ Auto backup failed: '.$e->getMessage());
 
             Log::error('Auto backup failed', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             // Record failed backup audit
@@ -190,11 +192,12 @@ class AutoBackupCommand extends Command
      */
     protected function countRecords(array $tables): int
     {
-        return array_reduce($tables, function($sum, $table) {
+        return array_reduce($tables, function ($sum, $table) {
             try {
                 return $sum + DB::table($table)->count();
             } catch (\Exception $e) {
                 Log::warning("Could not count records in table: $table", ['error' => $e->getMessage()]);
+
                 return $sum;
             }
         }, 0);
@@ -216,7 +219,8 @@ class AutoBackupCommand extends Command
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $pow = $bytes > 0 ? floor(log($bytes, 1024)) : 0;
         $pow = min($pow, count($units) - 1);
-        return round($bytes / (1024 ** $pow), $precision) . ' ' . $units[$pow];
+
+        return round($bytes / (1024 ** $pow), $precision).' '.$units[$pow];
     }
 
     /**
@@ -243,11 +247,11 @@ class AutoBackupCommand extends Command
                     $backup->delete();
                 }
 
-                $this->info("🧹 Cleaned up " . $oldBackups->count() . " old backups");
-                Log::info("Auto backup cleanup completed", ['deleted_count' => $oldBackups->count()]);
+                $this->info('🧹 Cleaned up '.$oldBackups->count().' old backups');
+                Log::info('Auto backup cleanup completed', ['deleted_count' => $oldBackups->count()]);
             }
         } catch (\Exception $e) {
-            $this->warn("⚠️ Cleanup failed: " . $e->getMessage());
+            $this->warn('⚠️ Cleanup failed: '.$e->getMessage());
             Log::warning('Auto backup cleanup failed', ['error' => $e->getMessage()]);
         }
     }

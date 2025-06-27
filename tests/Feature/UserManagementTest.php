@@ -17,7 +17,7 @@ class UserManagementTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Create an admin user for testing
         $this->admin = User::factory()->create([
             'name' => 'Admin User',

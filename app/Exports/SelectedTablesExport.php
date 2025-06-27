@@ -20,13 +20,17 @@ class SelectedTablesExport implements WithMultipleSheets
         foreach ($this->tables as $table) {
             switch ($table) {
                 case 'hb837':
-                    $sheets[] = new HB837Export(); break;
+                    $sheets[] = new HB837Export;
+                    break;
                 case 'consultants':
-                    $sheets[] = new \App\Exports\GenericTableExport('consultants'); break;
+                    $sheets[] = new \App\Exports\GenericTableExport('consultants');
+                    break;
                 case 'hb837_files':
-                    $sheets[] = new \App\Exports\GenericTableExport('hb837_files'); break;
+                    $sheets[] = new \App\Exports\GenericTableExport('hb837_files');
+                    break;
                 case 'consultant_files':
-                    $sheets[] = new \App\Exports\GenericTableExport('consultant_files'); break;
+                    $sheets[] = new \App\Exports\GenericTableExport('consultant_files');
+                    break;
                 default:
                     continue;
             }

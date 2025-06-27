@@ -2,9 +2,9 @@
 
 namespace Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
-use Database\Seeders\PostgreSQLToMySQLDataSeeder;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\PostgreSQLToMySQLDataSeeder;
+use PHPUnit\Framework\TestCase;
 
 class DatabaseSeederTest extends TestCase
 {
@@ -13,7 +13,7 @@ class DatabaseSeederTest extends TestCase
      */
     public function test_postgresql_to_mysql_seeder_exists(): void
     {
-        $seeder = new PostgreSQLToMySQLDataSeeder();
+        $seeder = new PostgreSQLToMySQLDataSeeder;
         $this->assertInstanceOf(PostgreSQLToMySQLDataSeeder::class, $seeder);
     }
 
@@ -22,7 +22,7 @@ class DatabaseSeederTest extends TestCase
      */
     public function test_database_seeder_exists(): void
     {
-        $seeder = new DatabaseSeeder();
+        $seeder = new DatabaseSeeder;
         $this->assertInstanceOf(DatabaseSeeder::class, $seeder);
     }
 
@@ -31,10 +31,10 @@ class DatabaseSeederTest extends TestCase
      */
     public function test_seeder_methods_exist(): void
     {
-        $postgresSeeder = new PostgreSQLToMySQLDataSeeder();
+        $postgresSeeder = new PostgreSQLToMySQLDataSeeder;
         $this->assertTrue(method_exists($postgresSeeder, 'run'));
 
-        $mainSeeder = new DatabaseSeeder();
+        $mainSeeder = new DatabaseSeeder;
         $this->assertTrue(method_exists($mainSeeder, 'run'));
     }
 }

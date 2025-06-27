@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class PostgreSQLToMySQLDataSeeder extends Seeder
 {
@@ -74,7 +73,7 @@ class PostgreSQLToMySQLDataSeeder extends Seeder
         ];
 
         DB::table('backups')->insert($backups);
-        $this->command->info('✅ Imported ' . count($backups) . ' backup records');
+        $this->command->info('✅ Imported '.count($backups).' backup records');
     }
 
     /**
@@ -225,7 +224,7 @@ class PostgreSQLToMySQLDataSeeder extends Seeder
             DB::table('clients')->insert($chunk);
         }
 
-        $this->command->info('✅ Imported ' . count($clients) . ' client records (sample)');
+        $this->command->info('✅ Imported '.count($clients).' client records (sample)');
         $this->command->warn('⚠️  Note: This is a sample of the client data. Full migration would include all 48+ records from the PostgreSQL dump.');
     }
 
@@ -240,7 +239,7 @@ class PostgreSQLToMySQLDataSeeder extends Seeder
         $backupCount = DB::table('backups')->count();
         $clientCount = DB::table('clients')->count();
 
-        $this->command->info("📊 Migration Summary:");
+        $this->command->info('📊 Migration Summary:');
         $this->command->info("   - Backups: {$backupCount} records");
         $this->command->info("   - Clients: {$clientCount} records");
 

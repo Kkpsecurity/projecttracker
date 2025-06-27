@@ -2,29 +2,21 @@
 
 namespace App\Http\Controllers\Admin\HB837;
 
-use App\Models\HB837;
-use App\Models\Client;
-use App\Models\HB837File;
-use App\Models\Consultant;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use App\Exports\HB837Export;
-use App\Imports\HB837Import;
-use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\File;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Controllers\Controller;
+use App\Models\Client;
+use App\Models\Consultant;
+use App\Models\HB837;
+use App\Models\HB837File;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Str;
 
 class HB837Controller extends Controller
 {
-
-
     public function index(Request $request, $tab = 'active')
     {
         $tab = in_array($tab = Str::lower($tab), ['active', 'quoted', 'completed', 'closed']) ? $tab : 'quoted';
@@ -66,7 +58,7 @@ class HB837Controller extends Controller
                 'active' => HB837::where('report_status', 'Active')->count(),
                 'quoted' => HB837::where('contracting_status', 'quoted')->count(),
                 'completed' => HB837::where('report_status', 'completed')->count(),
-            ]
+            ],
         ]);
     }
 
@@ -87,7 +79,7 @@ class HB837Controller extends Controller
             'agreement_submitted',
             'contracting_status',
             'billing_req_sent',
-            'report_submitted'
+            'report_submitted',
         ];
     }
 
@@ -122,9 +114,9 @@ class HB837Controller extends Controller
         }
     }
 
-    //#################################
+    // #################################
     // Create and Store HB837 Project
-    //#################################
+    // #################################
 
     public function create()
     {
@@ -190,6 +182,7 @@ class HB837Controller extends Controller
         $hb837 = HB837::create($validated);
 
         session()->flash('success', 'Record created successfully!');
+
         return redirect()->to("admin/hb837/{$hb837->id}/edit/general");
     }
 
@@ -198,16 +191,17 @@ class HB837Controller extends Controller
         return $value !== '' ? floatval(preg_replace('/[^\d.]/', '', $value)) : null;
     }
 
-    //#################################
+    // #################################
     // Edit and Update HB837 Project
-    //#################################
+    // #################################
 
     /**
      * Show the edit form for a specific HB837 project.
+     *
      * @method GET
      *
-     * @param int $id
-     * @param string $tab
+     * @param  int  $id
+     * @param  string  $tab
      * @return \Illuminate\View\View
      */
     public function edit($id, $tab = 'general')
@@ -274,16 +268,15 @@ class HB837Controller extends Controller
             'clients' => $clients,
             'consultants' => $consultants,
             'tabFields' => $fields[$tab],
-            'tab' => $tab
+            'tab' => $tab,
         ]);
     }
 
-
     /**
-     * @param \Illuminate\Http\Request $request
      * @method POST
-     * @param mixed $id
-     * @param mixed $tab
+     *
+     * @param  mixed  $id
+     * @param  mixed  $tab
      * @return RedirectResponse
      */
     public function update(Request $request, $id, $tab)
@@ -305,7 +298,6 @@ class HB837Controller extends Controller
                 abort(404, 'Invalid tab specified.');
         }
     }
-
 
     protected function updateGeneral(Request $request, $id)
     {
@@ -344,7 +336,7 @@ class HB837Controller extends Controller
         $validatedData = $request->validate(Arr::only($rules, $fields));
 
         // if no assigned_consultant_id is provided, set it to null
-        if ($validatedData['assigned_consultant_id'] == "-1") {
+        if ($validatedData['assigned_consultant_id'] == '-1') {
             $validatedData['assigned_consultant_id'] = null;
         }
 
@@ -352,9 +344,9 @@ class HB837Controller extends Controller
         $hb837->update($validatedData);
 
         session()->flash('success', 'General section updated successfully!');
-        return redirect()->to('admin/hb837/' . $hb837->id . '/edit/general');
-    }
 
+        return redirect()->to('admin/hb837/'.$hb837->id.'/edit/general');
+    }
 
     protected function updateAddress(Request $request, $id)
     {
@@ -372,6 +364,7 @@ class HB837Controller extends Controller
         $hb837->update($validatedData);
 
         session()->flash('success', 'Address section updated successfully!');
+
         return redirect()->to("admin/hb837/{$hb837->id}/edit/address");
     }
 
@@ -392,7 +385,8 @@ class HB837Controller extends Controller
         $hb837->update($validatedData);
 
         session()->flash('success', 'Contacts section updated successfully!');
-        return redirect()->to('admin/hb837/' . $hb837->id . '/edit/contacts');
+
+        return redirect()->to('admin/hb837/'.$hb837->id.'/edit/contacts');
     }
 
     protected function updateFinancials(Request $request, $id)
@@ -428,6 +422,7 @@ class HB837Controller extends Controller
         $hb837->update($validatedData);
 
         session()->flash('success', 'Financial section updated successfully!');
+
         return redirect()->to("admin/hb837/{$hb837->id}/edit/financials");
     }
 
@@ -462,15 +457,15 @@ class HB837Controller extends Controller
                     $file->delete();
 
                 } catch (\Exception $e) {
-                    return back()->withErrors(['error' => 'Error deleting file: ' . $file->filename . ' - ' . $e->getMessage()]);
+                    return back()->withErrors(['error' => 'Error deleting file: '.$file->filename.' - '.$e->getMessage()]);
                 }
             }
         }
 
         session()->flash('success', 'Files updated successfully!');
-        return redirect()->to('admin/hb837/' . $hb837->id . '/edit/files');
-    }
 
+        return redirect()->to('admin/hb837/'.$hb837->id.'/edit/files');
+    }
 
     public function deleteFile($id)
     {
@@ -482,7 +477,7 @@ class HB837Controller extends Controller
             try {
                 File::delete(storage_path("app/{$file->file_path}"));
             } catch (\Exception $e) {
-                return back()->withErrors(['error' => 'Error deleting file: ' . $e->getMessage()]);
+                return back()->withErrors(['error' => 'Error deleting file: '.$e->getMessage()]);
             }
         }
 
@@ -492,7 +487,6 @@ class HB837Controller extends Controller
         // Redirect back with success message
         return back()->with('success', 'File deleted successfully.');
     }
-
 
     protected function updateNotes(Request $request, $id)
     {
@@ -513,6 +507,7 @@ class HB837Controller extends Controller
         $hb837->save();
 
         session()->flash('success', 'Notes updated successfully!');
+
         return redirect()->to("admin/hb837/{$hb837->id}/edit/notes");
     }
 
@@ -521,7 +516,7 @@ class HB837Controller extends Controller
         $hb837 = HB837::findOrFail($id);
         $html = view('admin.hb837.report', compact('hb837'))->render();
         $pdf = Pdf::loadHTML($html);
+
         return $pdf->stream('report.pdf');
     }
 }
-

@@ -15,10 +15,10 @@ class BackupFactory extends Factory
     {
         return [
             'uuid' => Str::uuid()->toString(),
-            'name' => $this->faker->words(3, true) . ' Backup',
+            'name' => $this->faker->words(3, true).' Backup',
             'tables' => $this->faker->randomElements(['hb837', 'clients', 'consultants', 'users'], $this->faker->numberBetween(1, 3)),
             'user_id' => User::factory(),
-            'filename' => $this->faker->slug() . '.xlsx',
+            'filename' => $this->faker->slug().'.xlsx',
             'size' => $this->faker->numberBetween(1024, 10485760), // 1KB to 10MB
             'record_count' => $this->faker->numberBetween(50, 1000),
             'status' => $this->faker->randomElement(['pending', 'completed', 'failed']),

@@ -4,9 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\Plot;
 use App\Models\PlotAddress;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class PlotSeeder extends Seeder
 {
@@ -39,7 +39,7 @@ class PlotSeeder extends Seeder
                         'longitude' => -84.3875,
                         'location_name' => 'Secondary Building A',
                     ],
-                ]
+                ],
             ],
             [
                 'plot_name' => 'Residential Park Vista',
@@ -59,7 +59,7 @@ class PlotSeeder extends Seeder
                         'longitude' => -118.2435,
                         'location_name' => 'Community Center',
                     ],
-                ]
+                ],
             ],
             [
                 'plot_name' => 'Industrial Complex West',
@@ -74,7 +74,7 @@ class PlotSeeder extends Seeder
                         'longitude' => -96.7975,
                         'location_name' => 'Manufacturing Plant',
                     ],
-                ]
+                ],
             ],
             [
                 'plot_name' => 'University Campus North',
@@ -99,7 +99,7 @@ class PlotSeeder extends Seeder
                         'longitude' => -97.7340,
                         'location_name' => 'Recreation Center',
                     ],
-                ]
+                ],
             ],
             [
                 'plot_name' => 'Shopping Center East',
@@ -119,7 +119,7 @@ class PlotSeeder extends Seeder
                         'longitude' => -112.0742,
                         'location_name' => 'Food Court',
                     ],
-                ]
+                ],
             ],
             [
                 'plot_name' => 'Office Park Central',
@@ -134,7 +134,7 @@ class PlotSeeder extends Seeder
                         'longitude' => -104.9900,
                         'location_name' => 'Corporate Tower B',
                     ],
-                ]
+                ],
             ],
             [
                 'plot_name' => 'Medical Complex',
@@ -154,7 +154,7 @@ class PlotSeeder extends Seeder
                         'longitude' => -80.1920,
                         'location_name' => 'Emergency Department',
                     ],
-                ]
+                ],
             ],
             [
                 'plot_name' => 'Technology Park',
@@ -174,7 +174,7 @@ class PlotSeeder extends Seeder
                         'longitude' => -111.8885,
                         'location_name' => 'Innovation Center',
                     ],
-                ]
+                ],
             ],
         ];
 
@@ -200,6 +200,6 @@ class PlotSeeder extends Seeder
         }
 
         $totalAddresses = PlotAddress::count();
-        $this->command->info('Plot data seeded successfully - ' . count($plots) . ' plots and ' . $totalAddresses . ' addresses created.');
+        $this->command->info('Plot data seeded successfully - '.count($plots).' plots and '.$totalAddresses.' addresses created.');
     }
 }

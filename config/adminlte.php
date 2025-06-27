@@ -321,7 +321,7 @@ return [
             'text' => 'Dashboard',
             'route' => 'admin.dashboard',
             'icon' => 'fas fa-tachometer-alt',
-            'active' => ['admin/dashboard', 'admin', 'admin/']
+            'active' => ['admin/dashboard', 'admin', 'admin/'],
         ],
 
         // Project Management Section

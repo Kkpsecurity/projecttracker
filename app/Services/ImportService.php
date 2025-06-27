@@ -3,14 +3,14 @@
 namespace App\Services;
 
 use App\Imports\HB837Import;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ImportService
 {
     public function previewImport(string $filePath): array
     {
-        $import = new HB837Import();
+        $import = new HB837Import;
 
         try {
             $preview = Excel::toArray($import, $filePath)[0];
@@ -23,14 +23,14 @@ class ImportService
                 'validation' => $this->validateHeaders($firstRow),
             ];
         } catch (\Exception $e) {
-            Log::error("Import preview failed", ['error' => $e->getMessage()]);
+            Log::error('Import preview failed', ['error' => $e->getMessage()]);
             throw $e;
         }
     }
 
     public function executeImport(string $filePath): array
     {
-        $import = new HB837Import();
+        $import = new HB837Import;
 
         try {
             Excel::import($import, $filePath);
@@ -41,9 +41,9 @@ class ImportService
                 'errors' => $import->getRowErrors(),
             ];
         } catch (\Exception $e) {
-            Log::error("Import failed", [
+            Log::error('Import failed', [
                 'import_id' => $import->getImportId(),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -53,8 +53,8 @@ class ImportService
     {
         $mappings = config('hb837.mappings');
 
-        return array_unique(array_reduce($mappings, function($carry, $item) {
-            return array_merge($carry, (array)$item);
+        return array_unique(array_reduce($mappings, function ($carry, $item) {
+            return array_merge($carry, (array) $item);
         }, []));
     }
 

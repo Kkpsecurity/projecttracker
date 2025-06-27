@@ -1,19 +1,18 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Client;
-use http\Env\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-
 
 class HomeController extends Controller
 {
-    public $filePath = "";
+    public $filePath = '';
 
     /**
      * Create a new controller instance.
@@ -23,7 +22,7 @@ class HomeController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->filePath = "project/";
+        $this->filePath = 'project/';
     }
 
     /**
@@ -54,7 +53,7 @@ class HomeController extends Controller
         $clients = Client::whereIn('quick_status', $status)->orderBy('updated_at', 'desc')->paginate(10);
 
         $content = [
-            'clients' => $clients
+            'clients' => $clients,
         ];
 
         return view('admin.protrack.home_new', compact('content'));
@@ -64,7 +63,7 @@ class HomeController extends Controller
     {
         $client = new Client;
 
-        if (!$client) {
+        if (! $client) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -84,7 +83,7 @@ class HomeController extends Controller
         ]);
 
         if ($validator->fails()) {
-            $errorMessage = 'Please fill all required fields: ' . $validator->errors();
+            $errorMessage = 'Please fill all required fields: '.$validator->errors();
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -102,10 +101,10 @@ class HomeController extends Controller
         $client->poc = $request->poc;
         $client->description = $request->description;
 
-        $client->project_services_total = !empty($request->project_services_total) ? str_replace(array('$', ','), '', $request->project_services_total) : 0;
-        $client->project_expenses_total = !empty($request->project_expenses_total) ? str_replace(array('$', ','), '', $request->project_expenses_total) : 0;
-        $client->final_services_total = !empty($request->final_services_total) ? str_replace(array('$', ','), '', $request->final_services_total) : 0;
-        $client->final_billing_total = !empty($request->final_billing_total) ? str_replace(array('$', ','), '', $request->final_billing_total) : 0;
+        $client->project_services_total = ! empty($request->project_services_total) ? str_replace(['$', ','], '', $request->project_services_total) : 0;
+        $client->project_expenses_total = ! empty($request->project_expenses_total) ? str_replace(['$', ','], '', $request->project_expenses_total) : 0;
+        $client->final_services_total = ! empty($request->final_services_total) ? str_replace(['$', ','], '', $request->final_services_total) : 0;
+        $client->final_billing_total = ! empty($request->final_billing_total) ? str_replace(['$', ','], '', $request->final_billing_total) : 0;
 
         $client->status = $request->status;
         $client->quick_status = $request->quick_status ?? 'New Lead';
@@ -124,21 +123,18 @@ class HomeController extends Controller
         }
     }
 
-
-
     public function detail($id)
     {
         $client = Client::find($id);
 
         $content = [
-            'client' => $client
+            'client' => $client,
         ];
 
         return view('admin.protrack.detail', compact('content'));
     }
 
     /**
-     * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function detailProcess(Request $request)
@@ -173,7 +169,8 @@ class HomeController extends Controller
                     'errors' => $validator->errors(),
                 ], 422);
             } else {
-                flash('Please fill all required fields: ' . $validator->errors())->error();
+                flash('Please fill all required fields: '.$validator->errors())->error();
+
                 return Redirect::back()->withErrors($validator)->withInput();
             }
         }
@@ -188,10 +185,10 @@ class HomeController extends Controller
         $client->quick_status = $request->quick_status;
         $client->status = $request->status;
 
-        $client->project_services_total = !empty($request->project_services_total) ? str_replace(array('$', ','), '', $request->project_services_total) : 0;
-        $client->project_expenses_total = !empty($request->project_expenses_total) ? str_replace(array('$', ','), '', $request->project_expenses_total) : 0;
-        $client->final_services_total = !empty($request->final_services_total) ? str_replace(array('$', ','), '', $request->final_services_total) : 0;
-        $client->final_billing_total = !empty($request->final_billing_total) ? str_replace(array('$', ','), '', $request->final_billing_total) : 0;
+        $client->project_services_total = ! empty($request->project_services_total) ? str_replace(['$', ','], '', $request->project_services_total) : 0;
+        $client->project_expenses_total = ! empty($request->project_expenses_total) ? str_replace(['$', ','], '', $request->project_expenses_total) : 0;
+        $client->final_services_total = ! empty($request->final_services_total) ? str_replace(['$', ','], '', $request->final_services_total) : 0;
+        $client->final_billing_total = ! empty($request->final_billing_total) ? str_replace(['$', ','], '', $request->final_billing_total) : 0;
 
         if ($request->hasFile('file1')) {
             $file1 = $request->file('file1')->storeAs($this->filePath, $request->file('file1')->getClientOriginalName());
@@ -216,16 +213,16 @@ class HomeController extends Controller
             return response()->json($data);
         } else {
             flash('Updated successfully')->success();
+
             return redirect()->back()->with('success', $data['message']);
         }
     }
-
 
     public function detachFile($file, $id)
     {
         $client = Client::find($id);
 
-        Storage::disk('public')->delete($this->filePath . $file);
+        Storage::disk('public')->delete($this->filePath.$file);
 
         $client->{$file} = null;
         $client->save();
@@ -233,9 +230,10 @@ class HomeController extends Controller
         return Redirect()->back();
     }
 
-    function downloadFile($filename)
+    public function downloadFile($filename)
     {
-        $file = Storage::disk('public')->path($this->filePath . $filename);
+        $file = Storage::disk('public')->path($this->filePath.$filename);
+
         return response()->download($file);
     }
 
@@ -246,15 +244,15 @@ class HomeController extends Controller
 
         // remove the actual file
         if ($client->file1) {
-            Storage::disk(config('filesystems.default'))->delete($this->filePath . $client->file1);
+            Storage::disk(config('filesystems.default'))->delete($this->filePath.$client->file1);
         }
 
         if ($client->file2) {
-            Storage::disk(config('filesystems.default'))->delete($this->filePath . $client->file2);
+            Storage::disk(config('filesystems.default'))->delete($this->filePath.$client->file2);
         }
 
         if ($client->file3) {
-            Storage::disk(config('filesystems.default'))->delete($this->filePath . $client->file3);
+            Storage::disk(config('filesystems.default'))->delete($this->filePath.$client->file3);
         }
 
         flash(__('You have deleted successfully'))->success();
@@ -266,7 +264,7 @@ class HomeController extends Controller
     {
         $profile = Auth()->user();
         $content = [
-            'profile' => $profile
+            'profile' => $profile,
         ];
 
         return view('change_password', compact('content'));
@@ -277,11 +275,12 @@ class HomeController extends Controller
         $user = Auth::user();
 
         $validation = Validator::make($request->all(), [
-            'password' => 'required|confirmed'
+            'password' => 'required|confirmed',
         ]);
 
         if ($validation->fails()) {
             flash($validation->errors()->first())->error();
+
             return Redirect()->back();
         }
 
@@ -289,7 +288,7 @@ class HomeController extends Controller
         $user->save();
 
         flash(__('You have updated your password'))->success();
+
         return redirect()->back();
     }
-
 }

@@ -20,7 +20,6 @@ class ImportAudit extends Model
         'import_id' => 'string',
     ];
 
-
     public function user()
     {
         return $this->belongsTo(User::class);

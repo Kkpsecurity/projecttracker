@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use App\Imports\HB837Import;
+use PHPUnit\Framework\TestCase;
 
 class HB837ImportTest extends TestCase
 {
@@ -12,7 +12,7 @@ class HB837ImportTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->hb837Import = new HB837Import();
+        $this->hb837Import = new HB837Import;
     }
 
     /**

@@ -17,6 +17,7 @@ class ContactsSpreadsheetImport implements ToModel
             'phone' => $row[2],
             // ...existing mappings...
         ]);
+
         return $contact;
     }
 }

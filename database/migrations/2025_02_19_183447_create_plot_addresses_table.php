@@ -14,7 +14,7 @@ class CreatePlotAddressesTable extends Migration
     public function up()
     {
 
-        Schema::create('plots',     function (Blueprint $table) {
+        Schema::create('plots', function (Blueprint $table) {
             $table->id();
             $table->string('plot_name');
             $table->timestamps();

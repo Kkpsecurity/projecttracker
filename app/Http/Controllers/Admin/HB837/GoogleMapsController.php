@@ -22,7 +22,7 @@ class GoogleMapsController extends Controller
         if ($plot_id) {
             $selectedPlot = Plot::with('plotAddresses')->find($plot_id);
         } else {
-            $selectedPlot = new Plot();
+            $selectedPlot = new Plot;
         }
 
         // Get distinct macro clients for dropdown
@@ -39,7 +39,6 @@ class GoogleMapsController extends Controller
     /**
      * Store a newly created plot.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
@@ -100,15 +99,15 @@ class GoogleMapsController extends Controller
         return response()->json([
             'success' => true,
             'address' => $plotAddress->load('plot'),
-            'message' => 'Address added successfully!'
+            'message' => 'Address added successfully!',
         ]);
     }
 
     /**
      * Load addresses based on the selected plot or macro client.
      *
-     * @param \Illuminate\Http\Request $request
      * @method GET
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function loadAddresses(Request $request)
@@ -117,7 +116,7 @@ class GoogleMapsController extends Controller
         $macroClient = $request->query('selectedMacroClient');
 
         // Return an empty array if neither selection is provided.
-        if (!$plotId && !$macroClient) {
+        if (! $plotId && ! $macroClient) {
             return response()->json(['addresses' => []]);
         }
 
@@ -132,12 +131,13 @@ class GoogleMapsController extends Controller
     /**
      * Helper method: Get formatted addresses for a given plot.
      *
-     * @param int $plotId
+     * @param  int  $plotId
      * @return \Illuminate\Support\Collection
      */
     protected function getFormattedPlotAddresses($plotId)
     {
         $plot = Plot::with('plotAddresses')->findOrFail($plotId);
+
         return $plot->plotAddresses->map(function ($address) {
             return [
                 'id' => $address->id,
@@ -159,7 +159,7 @@ class GoogleMapsController extends Controller
      *
      * Note: Macro addresses might not have latitude and longitude. In such cases, those fields will be null.
      *
-     * @param string $macro
+     * @param  string  $macro
      * @return \Illuminate\Support\Collection
      */
     protected function getFormattedMacroAddresses($macro)
@@ -172,7 +172,7 @@ class GoogleMapsController extends Controller
             return [
                 'id' => $property->id,
                 'location_name' => $property->property_name,
-                'address' => trim($property->address . " " . $property->city . " " . $property->state . " " . $property->zip),
+                'address' => trim($property->address.' '.$property->city.' '.$property->state.' '.$property->zip),
                 'latitude' => null, // no lat field in HB837
                 'longitude' => null, // no lng field in HB837
                 'property_type' => 'existing', // Existing property from HB837
@@ -182,11 +182,9 @@ class GoogleMapsController extends Controller
         });
     }
 
-
     /**
      * Store a new address for a plot.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function addPlotAddress(Request $request)
@@ -198,7 +196,7 @@ class GoogleMapsController extends Controller
             'lng' => 'required|numeric',
         ]);
 
-        $plotAddress = new PlotAddress();
+        $plotAddress = new PlotAddress;
         $plotAddress->plot_id = $validatedData['plot_id'];
         $plotAddress->location_name = $validatedData['address'];
         $plotAddress->latitude = $validatedData['lat'];
@@ -208,11 +206,11 @@ class GoogleMapsController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function getMacroClientProperties (Request $request)
+    public function getMacroClientProperties(Request $request)
     {
         $macroClient = $request->query('macroClient');
 
-        if (!$macroClient) {
+        if (! $macroClient) {
             return response()->json(['properties' => []]);
         }
 
@@ -226,7 +224,7 @@ class GoogleMapsController extends Controller
     /**
      * Delete a specific plot address (AJAX version).
      *
-     * @param int $plotAddressId
+     * @param  int  $plotAddressId
      * @return \Illuminate\Http\JsonResponse
      */
     public function deleteAddressFromPlot($plotAddressId)
@@ -238,12 +236,12 @@ class GoogleMapsController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Address deleted successfully!',
-                'deleted_id' => $plotAddressId
+                'deleted_id' => $plotAddressId,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete address. ' . $e->getMessage()
+                'message' => 'Failed to delete address. '.$e->getMessage(),
             ], 500);
         }
     }
@@ -251,7 +249,7 @@ class GoogleMapsController extends Controller
     /**
      * Delete a plot and all its addresses.
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\RedirectResponse
      */
     public function deletePlotAndAddresses($id)
@@ -269,7 +267,6 @@ class GoogleMapsController extends Controller
     /**
      * Update an existing plot.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
@@ -292,14 +289,13 @@ class GoogleMapsController extends Controller
         return response()->json([
             'success' => true,
             'plot' => $plot,
-            'message' => 'Plot updated successfully!'
+            'message' => 'Plot updated successfully!',
         ]);
     }
 
     /**
      * Convert a custom plot to a client plot.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
@@ -323,7 +319,7 @@ class GoogleMapsController extends Controller
         return response()->json([
             'success' => true,
             'plot' => $plot,
-            'message' => 'Plot converted to client successfully!'
+            'message' => 'Plot converted to client successfully!',
         ]);
     }
 
@@ -376,7 +372,7 @@ class GoogleMapsController extends Controller
         return response()->json([
             'success' => true,
             'data' => $exportData,
-            'filename' => "plot_{$plot->id}_{$plot->plot_name}_" . now()->format('Y-m-d') . ".json"
+            'filename' => "plot_{$plot->id}_{$plot->plot_name}_".now()->format('Y-m-d').'.json',
         ]);
     }
 

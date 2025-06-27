@@ -2,65 +2,65 @@
 
 /**
  * HB837 Import/Export Pre-Test Script
- * 
+ *
  * This script verifies that all fields required for agent daily progress uploads
  * are properly mapped between import and export, ensuring data consistency.
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__.'/vendor/autoload.php';
 
 // Bootstrap Laravel without database connection for field analysis
-$app = require_once __DIR__ . '/bootstrap/app.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
 
 // Define required fields for agent operations
 $agentRequiredFields = [
     // Core property identification
     'property_name',
-    'address', 
+    'address',
     'city',
     'state',
     'zip',
-    
+
     // Property details
     'property_type',
     'units',
     'management_company',
-    
+
     // Contact information
     'property_manager_name',
     'property_manager_email',
     'phone',
-    
+
     // Status tracking (critical for agent progress)
     'report_status',
     'contracting_status',
-    
+
     // Consultant assignment
     'assigned_consultant_id', // mapped from 'Consultant Name'
-    
+
     // Scheduling and dates
     'scheduled_date_of_inspection',
     'report_submitted',
     'agreement_submitted',
     'billing_req_sent',
-    
+
     // Risk assessment
     'securitygauge_crime_risk',
-    
+
     // Financial information
     'quoted_price',
     'sub_fees_estimated_expenses',
     'project_net_profit',
-    
+
     // Client information
     'macro_client',
     'macro_contact',
     'macro_email',
-    
+
     // Notes (important for agent communication)
     'notes',
     'consultant_notes',
-    'financial_notes'
+    'financial_notes',
 ];
 
 // Import field mapping from HB837Import class
@@ -132,7 +132,7 @@ $exportHeaders = [
     'Macro Email',
     'Financial Notes',
     'Consultant Notes',
-    'Notes'
+    'Notes',
 ];
 
 echo "=== HB837 Import/Export Pre-Test Results ===\n\n";
@@ -165,7 +165,7 @@ foreach ($importFields as $dbField => $excelHeader) {
 echo "\n3. ORPHANED EXPORT HEADERS:\n";
 $orphanedHeaders = [];
 foreach ($exportHeaders as $header) {
-    if (!in_array($header, array_values($importFields))) {
+    if (! in_array($header, array_values($importFields))) {
         echo "   ⚠ '{$header}' in export but not in import mapping\n";
         $orphanedHeaders[] = $header;
     }
@@ -182,7 +182,7 @@ $criticalFields = [
     'SecurityGauge Crime Risk' => 'Agents update risk assessments',
     'Quoted Price' => 'Agents may update pricing',
     'Notes' => 'Agents add progress notes',
-    'Consultant Notes' => 'Agents communicate with office'
+    'Consultant Notes' => 'Agents communicate with office',
 ];
 
 foreach ($criticalFields as $field => $purpose) {
@@ -195,9 +195,9 @@ foreach ($criticalFields as $field => $purpose) {
 
 // Summary
 echo "\n=== SUMMARY ===\n";
-echo "Agent Required Fields Missing from Import: " . count($missingInImport) . "\n";
-echo "Import Fields Missing from Export: " . count($missingInExport) . "\n";
-echo "Orphaned Export Headers: " . count($orphanedHeaders) . "\n";
+echo 'Agent Required Fields Missing from Import: '.count($missingInImport)."\n";
+echo 'Import Fields Missing from Export: '.count($missingInExport)."\n";
+echo 'Orphaned Export Headers: '.count($orphanedHeaders)."\n";
 
 $isSystemReady = (count($missingInImport) === 0 && count($missingInExport) === 0);
 
@@ -206,7 +206,7 @@ if ($isSystemReady) {
     echo "✓ Agents can upload Excel files with daily progress\n";
     echo "✓ System will update existing records based on address matching\n";
     echo "✓ All critical workflow fields are available\n\n";
-    
+
     echo "NEXT STEPS:\n";
     echo "1. Test with a sample Excel file from an agent\n";
     echo "2. Verify that existing records are updated correctly\n";
@@ -214,15 +214,15 @@ if ($isSystemReady) {
     echo "4. Test the web interface import/export buttons\n";
 } else {
     echo "\n❌ SYSTEM NEEDS ATTENTION!\n";
-    
-    if (!empty($missingInImport)) {
+
+    if (! empty($missingInImport)) {
         echo "\nFIX: Add these fields to HB837Import \$fields array:\n";
         foreach ($missingInImport as $field) {
             echo "   '{$field}' => 'DEFINE_EXCEL_HEADER_NAME',\n";
         }
     }
-    
-    if (!empty($missingInExport)) {
+
+    if (! empty($missingInExport)) {
         echo "\nFIX: Add these headers to HB837Export headings() and collection():\n";
         foreach ($missingInExport as $header) {
             echo "   '{$header}'\n";

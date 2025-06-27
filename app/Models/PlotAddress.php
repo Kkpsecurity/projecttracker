@@ -51,8 +51,11 @@ class PlotAddress extends Model
 
     // Constants for status
     const STATUS_ACTIVE = 'active';
+
     const STATUS_INACTIVE = 'inactive';
+
     const STATUS_PENDING = 'pending';
+
     const STATUS_SOLD = 'sold';
 
     // Scopes
@@ -87,7 +90,7 @@ class PlotAddress extends Model
 
     public function getFormattedValueAttribute()
     {
-        return $this->property_value ? '$' . number_format((float) $this->property_value, 2) : null;
+        return $this->property_value ? '$'.number_format((float) $this->property_value, 2) : null;
     }
 
     public function plot()
@@ -95,4 +98,3 @@ class PlotAddress extends Model
         return $this->belongsTo(Plot::class);
     }
 }
-

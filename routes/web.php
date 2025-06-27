@@ -1,18 +1,16 @@
 <?php
 
-use Maatwebsite\Excel\Row;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Admin\HB837\HB837Controller;
-use App\Http\Controllers\Admin\Users\UserController;
-use App\Http\Controllers\Admin\Plots\PlotController;
-use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Admin\HB837\GoogleMapsController;
-use App\Http\Controllers\Admin\Services\BackupDBController;
 use App\Http\Controllers\Admin\Consultants\ConsultantController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\HB837\GoogleMapsController;
+use App\Http\Controllers\Admin\HB837\HB837Controller;
+use App\Http\Controllers\Admin\Services\BackupDBController;
+use App\Http\Controllers\Admin\Users\UserController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\HomeController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -126,7 +124,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     });
 
-
     // HB837 Routes
     Route::prefix('hb837')->name('hb837.')->group(function () {
         Route::get('/', [HB837Controller::class, 'index'])->name('index');
@@ -156,8 +153,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/test-backup-logic', [BackupDBController::class, 'testBackupLogic'])->name('test_backup_logic');
         Route::get('/test-import-logic', [BackupDBController::class, 'testImportLogic'])->name('test_import_logic');
 
-
-
         Route::post('/export', [HB837Controller::class, 'export'])->name('export');
         Route::get('/direct-export', [HB837Controller::class, 'direct_export'])->name('direct_export');
 
@@ -165,11 +160,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         Route::post('/purge', [HB837Controller::class, 'purge'])->name('purge');
 
-
     });
 
-
-  // User Management Routes
+    // User Management Routes
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');
@@ -220,7 +213,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             'message' => 'Test user created/found',
             'email' => $user->email,
             'name' => $user->name,
-            'login_info' => 'Email: admin@test.com, Password: password123'
+            'login_info' => 'Email: admin@test.com, Password: password123',
         ]);
     });
 

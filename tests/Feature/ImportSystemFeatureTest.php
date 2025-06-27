@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\HB837;
+use App\Models\User;
 use App\Services\ImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
 
 class ImportSystemFeatureTest extends TestCase
 {
@@ -65,7 +65,7 @@ class ImportSystemFeatureTest extends TestCase
 
         $response = $this->actingAs($this->user)
             ->post('/admin/hb837/import/preview', [
-                'file' => $file
+                'file' => $file,
             ]);
 
         $response->assertSessionHasErrors(['file']);
@@ -76,7 +76,7 @@ class ImportSystemFeatureTest extends TestCase
      */
     public function test_import_service_integration(): void
     {
-        $importService = new ImportService();
+        $importService = new ImportService;
         $this->assertInstanceOf(ImportService::class, $importService);
 
         // Test that service methods exist
@@ -94,7 +94,7 @@ class ImportSystemFeatureTest extends TestCase
 
         $response = $this->actingAs($this->user)
             ->post('/admin/hb837/import/preview', [
-                'file' => $file
+                'file' => $file,
             ]);
 
         // This will likely fail due to invalid file content, but tests the validation flow
@@ -123,7 +123,7 @@ class ImportSystemFeatureTest extends TestCase
     {
         // Test that we can track import audits
         $this->assertDatabaseMissing('import_audits', [
-            'user_id' => $this->user->id
+            'user_id' => $this->user->id,
         ]);
 
         // This would be populated during actual import process
@@ -135,7 +135,7 @@ class ImportSystemFeatureTest extends TestCase
      */
     public function test_import_error_handling(): void
     {
-        $importService = new ImportService();
+        $importService = new ImportService;
 
         // Test error handling with invalid file path
         try {
@@ -156,7 +156,7 @@ class ImportSystemFeatureTest extends TestCase
         $this->assertEquals(5, HB837::count());
 
         // Test that truncate mode can be set
-        $import = new \App\Imports\HB837Import();
+        $import = new \App\Imports\HB837Import;
         $result = $import->setTruncateMode(true);
         $this->assertInstanceOf(\App\Imports\HB837Import::class, $result);
     }
@@ -166,7 +166,7 @@ class ImportSystemFeatureTest extends TestCase
      */
     public function test_import_batch_processing(): void
     {
-        $import = new \App\Imports\HB837Import();
+        $import = new \App\Imports\HB837Import;
 
         // Test that counters are initialized properly
         $this->assertEquals(0, $import->importedCount);

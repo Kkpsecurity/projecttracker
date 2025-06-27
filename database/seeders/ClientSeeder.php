@@ -3,10 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\Client;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class ClientSeeder extends Seeder
 {
@@ -28,16 +28,18 @@ class ClientSeeder extends Seeder
         $jsonFile = storage_path('app/database/seeds/data/clients.json');
 
         // Check if the file exists
-        if (!File::exists($jsonFile)) {
+        if (! File::exists($jsonFile)) {
             $this->command->error("File not found: $jsonFile");
+
             return;
         }
 
         // Read and decode JSON
         $jsonData = json_decode(File::get($jsonFile), true);
 
-        if (!$jsonData) {
+        if (! $jsonData) {
             $this->command->error("Invalid JSON format in $jsonFile");
+
             return;
         }
 

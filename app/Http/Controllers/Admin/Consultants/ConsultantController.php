@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\Admin\Consultants;
 
+use App\Exports\ConsultantExport;
 use App\Http\Controllers\Controller;
 use App\Models\Consultant;
 use App\Models\HB837;
-use App\Exports\ConsultantExport;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -21,6 +20,7 @@ class ConsultantController extends Controller
     public function index()
     {
         $consultants = Consultant::paginate(10);
+
         return view('admin.consultants.show', compact('consultants'));
     }
 
@@ -51,6 +51,7 @@ class ConsultantController extends Controller
     public function edit($id)
     {
         $consultant = Consultant::findOrFail($id);
+
         return view('admin.consultants.edit', compact('consultant'));
     }
 
@@ -98,7 +99,7 @@ class ConsultantController extends Controller
     {
         $consultant = Consultant::find($id);
 
-        if (!$consultant) {
+        if (! $consultant) {
             return response()->json(['error' => 'Consultant not found.'], 404);
         }
 
@@ -130,12 +131,12 @@ class ConsultantController extends Controller
         try {
             $format = strtolower($request->get('format', 'excel')); // Default to Excel
             $includeFiles = $request->boolean('include_files', false);
-            $filename = 'consultants_' . date('Y-m-d_H-i-s');
+            $filename = 'consultants_'.date('Y-m-d_H-i-s');
 
-            Log::info("Exporting consultants", [
+            Log::info('Exporting consultants', [
                 'format' => $format,
                 'include_files' => $includeFiles,
-                'filename' => $filename
+                'filename' => $filename,
             ]);
 
             switch ($format) {
@@ -143,13 +144,13 @@ class ConsultantController extends Controller
                 case 'xlsx':
                     return Excel::download(
                         new ConsultantExport($includeFiles),
-                        $filename . '.xlsx'
+                        $filename.'.xlsx'
                     );
 
                 case 'csv':
                     return Excel::download(
                         new ConsultantExport($includeFiles),
-                        $filename . '.csv',
+                        $filename.'.csv',
                         \Maatwebsite\Excel\Excel::CSV
                     );
 
@@ -157,15 +158,17 @@ class ConsultantController extends Controller
                     return $this->exportJson();
 
                 default:
-                    Log::warning("Unsupported export format requested", ['format' => $format]);
-                    return back()->with('error', 'Unsupported export format: ' . $format);
+                    Log::warning('Unsupported export format requested', ['format' => $format]);
+
+                    return back()->with('error', 'Unsupported export format: '.$format);
             }
         } catch (\Exception $e) {
-            Log::error("Failed to export consultants data", [
+            Log::error('Failed to export consultants data', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            return back()->with('error', 'Export failed: ' . $e->getMessage());
+
+            return back()->with('error', 'Export failed: '.$e->getMessage());
         }
     }
 
@@ -178,7 +181,7 @@ class ConsultantController extends Controller
             // Retrieve all consultants data with relationships
             $consultants = Consultant::with('files')->get();
 
-            Log::info("Preparing JSON export", ['consultants_count' => $consultants->count()]);
+            Log::info('Preparing JSON export', ['consultants_count' => $consultants->count()]);
 
             // Define the storage path for the JSON file
             $jsonFilePath = 'database/seeds/data/consultants.json';
@@ -186,30 +189,30 @@ class ConsultantController extends Controller
             // Ensure the target directory exists
             $directory = dirname($jsonFilePath);
 
-            if (!Storage::disk('local')->exists($directory)) {
+            if (! Storage::disk('local')->exists($directory)) {
                 Storage::disk('local')->makeDirectory($directory);
-                Log::info("Created directory for JSON export", ['directory' => $directory]);
+                Log::info('Created directory for JSON export', ['directory' => $directory]);
             }
 
             // Convert data to pretty JSON format
             $jsonData = $consultants->toJson(JSON_PRETTY_PRINT);
 
             // Write the JSON file to storage
-            if (!Storage::disk('local')->put($jsonFilePath, $jsonData)) {
-                throw new \Exception("Failed to write JSON file to storage.");
+            if (! Storage::disk('local')->put($jsonFilePath, $jsonData)) {
+                throw new \Exception('Failed to write JSON file to storage.');
             }
 
-            Log::info("Consultants data exported successfully", ['path' => $jsonFilePath]);
+            Log::info('Consultants data exported successfully', ['path' => $jsonFilePath]);
 
             // Return download response
             $fullPath = Storage::disk('local')->path($jsonFilePath);
-            $downloadName = 'consultants_' . date('Y-m-d_H-i-s') . '.json';
+            $downloadName = 'consultants_'.date('Y-m-d_H-i-s').'.json';
 
             return response()->download($fullPath, $downloadName);
         } catch (\Exception $e) {
-            Log::error("Failed to export consultants JSON data", [
+            Log::error('Failed to export consultants JSON data', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
             throw $e;
         }

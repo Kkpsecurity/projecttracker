@@ -4,9 +4,9 @@ namespace App\Exports;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithTitle;
 
 class GenericTableExport implements FromCollection, WithHeadings, WithTitle
 {
@@ -37,7 +37,7 @@ class GenericTableExport implements FromCollection, WithHeadings, WithTitle
     public function title(): string
     {
         $safe = preg_replace('/[:\\\\\\/\\?\\*\\[\\]]/', '', $this->table);
+
         return substr($safe, 0, 31);
     }
-
 }

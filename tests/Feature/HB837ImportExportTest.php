@@ -2,36 +2,37 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
+use App\Exports\HB837Export;
+use App\Imports\HB837Import;
+use App\Models\Consultant;
 use App\Models\HB837;
 use App\Models\User;
-use App\Models\Consultant;
-use App\Imports\HB837Import;
-use App\Exports\HB837Export;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use Tests\TestCase;
 
 class HB837ImportExportTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
     protected User $user;
+
     protected Consultant $consultant;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Create test user and consultant
         $this->user = User::factory()->create();
         $this->consultant = Consultant::factory()->create([
             'first_name' => 'John',
-            'last_name' => 'Doe'
+            'last_name' => 'Doe',
         ]);
-        
+
         $this->actingAs($this->user);
     }
 
@@ -72,25 +73,25 @@ class HB837ImportExportTest extends TestCase
             'financial_notes' => 'Test financial notes',
             'consultant_notes' => 'Test consultant notes',
             'notes' => 'Test general notes',
-            'user_id' => $this->user->id
+            'user_id' => $this->user->id,
         ]);
 
         // Test export
         Excel::fake();
-        
-        $export = new HB837Export();
+
+        $export = new HB837Export;
         Excel::store($export, 'test_export.xlsx');
 
         Excel::assertStored('test_export.xlsx');
-        
+
         // Verify export contains all required fields
         $collection = $export->collection();
         $this->assertGreaterThan(0, $collection->count());
-        
+
         $headings = $export->headings();
         $requiredFields = [
             'Report Status',
-            'Contracting Status', 
+            'Contracting Status',
             'Property Name',
             'Address',
             'City',
@@ -106,9 +107,9 @@ class HB837ImportExportTest extends TestCase
             'Scheduled Date of Inspection',
             'SecurityGauge Crime Risk',
             'Quoted Price',
-            'Report Submitted'
+            'Report Submitted',
         ];
-        
+
         foreach ($requiredFields as $field) {
             $this->assertContains($field, $headings, "Missing required field: {$field}");
         }
@@ -126,13 +127,13 @@ class HB837ImportExportTest extends TestCase
             'zip' => '67890',
             'report_status' => 'not-started',
             'contracting_status' => 'quoted',
-            'user_id' => $this->user->id
+            'user_id' => $this->user->id,
         ]);
 
         // Create test CSV content with updated data
         $csvContent = implode("\n", [
             'Report Status,Contracting Status,Property Name,Property Type,Units,Address,City,County,State,Zip,Phone,Management Company,Property Manager Name,Property Manager Email,Regional Manager Name,Regional Manager Email,Owner Name,Consultant Name,Scheduled Date of Inspection,Report Submitted,Agreement Submitted,Billing Req Sent,SecurityGauge Crime Risk,Quoted Price,Sub Fees Estimated Expenses,Project Net Profit,Macro Client,Macro Contact,Macro Email,Financial Notes,Consultant Notes,Notes',
-            'in-progress,executed,Existing Property,garden,150,456 Existing St,Existing City,Test County,CA,67890,555-9999,Updated Management,Jane Updated,jane.updated@example.com,Bob Updated,bob.updated@example.com,Updated Owner,John Doe,2024-02-01,2024-02-05,2024-01-28,2024-02-10,high,7500.00,1500.00,6000.00,Big Client Updated,Big Contact Updated,big.updated@client.com,Updated financial notes,Updated consultant notes,Updated general notes'
+            'in-progress,executed,Existing Property,garden,150,456 Existing St,Existing City,Test County,CA,67890,555-9999,Updated Management,Jane Updated,jane.updated@example.com,Bob Updated,bob.updated@example.com,Updated Owner,John Doe,2024-02-01,2024-02-05,2024-01-28,2024-02-10,high,7500.00,1500.00,6000.00,Big Client Updated,Big Contact Updated,big.updated@client.com,Updated financial notes,Updated consultant notes,Updated general notes',
         ]);
 
         // Create temporary file
@@ -141,12 +142,12 @@ class HB837ImportExportTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('test_import.csv', $csvContent);
 
         // Import the file
-        $import = new HB837Import();
+        $import = new HB837Import;
         Excel::import($import, $file);
 
         // Verify the record was updated
         $updated = HB837::where('address', '456 Existing St')->first();
-        
+
         $this->assertEquals('in-progress', $updated->report_status);
         $this->assertEquals('executed', $updated->contracting_status);
         $this->assertEquals('garden', $updated->property_type);
@@ -155,7 +156,7 @@ class HB837ImportExportTest extends TestCase
         $this->assertEquals('Jane Updated', $updated->property_manager_name);
         $this->assertEquals('high', $updated->securitygauge_crime_risk);
         $this->assertEquals(7500.00, $updated->quoted_price);
-        
+
         // Verify counters
         $this->assertEquals(0, $import->importedCount); // No new records
         $this->assertEquals(1, $import->updatedCount);  // One updated record
@@ -169,7 +170,7 @@ class HB837ImportExportTest extends TestCase
         $csvContent = implode("\n", [
             'Report Status,Contracting Status,Property Name,Property Type,Units,Address,City,County,State,Zip,Phone,Management Company,Property Manager Name,Property Manager Email,Regional Manager Name,Regional Manager Email,Owner Name,Consultant Name,Scheduled Date of Inspection,Report Submitted,Agreement Submitted,Billing Req Sent,SecurityGauge Crime Risk,Quoted Price,Sub Fees Estimated Expenses,Project Net Profit,Macro Client,Macro Contact,Macro Email,Financial Notes,Consultant Notes,Notes',
             'quoted,quoted,New Property 1,midrise,200,789 New St,New City,New County,NY,11111,555-1111,New Management,New Manager,new@example.com,New Regional,regional@example.com,New Owner,John Doe,2024-03-01,,,,medium,8000.00,2000.00,6000.00,New Client,New Contact,new@client.com,New financial notes,New consultant notes,New general notes',
-            'active,executed,New Property 2,highrise,300,321 Another St,Another City,Another County,FL,22222,555-2222,Another Management,Another Manager,another@example.com,Another Regional,another.regional@example.com,Another Owner,John Doe,2024-03-15,2024-03-20,2024-03-10,2024-03-25,low,10000.00,2500.00,7500.00,Another Client,Another Contact,another@client.com,Another financial notes,Another consultant notes,Another general notes'
+            'active,executed,New Property 2,highrise,300,321 Another St,Another City,Another County,FL,22222,555-2222,Another Management,Another Manager,another@example.com,Another Regional,another.regional@example.com,Another Owner,John Doe,2024-03-15,2024-03-20,2024-03-10,2024-03-25,low,10000.00,2500.00,7500.00,Another Client,Another Contact,another@client.com,Another financial notes,Another consultant notes,Another general notes',
         ]);
 
         Storage::fake('local');
@@ -177,7 +178,7 @@ class HB837ImportExportTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('test_import_new.csv', $csvContent);
 
         // Import the file
-        $import = new HB837Import();
+        $import = new HB837Import;
         Excel::import($import, $file);
 
         // Verify new records were created
@@ -208,7 +209,7 @@ class HB837ImportExportTest extends TestCase
         $csvContent = implode("\n", [
             'Report Status,Contracting Status,Property Name,Property Type,Units,Address,City,County,State,Zip,Phone,Management Company,Property Manager Name,Property Manager Email,Regional Manager Name,Regional Manager Email,Owner Name,Consultant Name,Scheduled Date of Inspection,Report Submitted,Agreement Submitted,Billing Req Sent,SecurityGauge Crime Risk,Quoted Price,Sub Fees Estimated Expenses,Project Net Profit,Macro Client,Macro Contact,Macro Email,Financial Notes,Consultant Notes,Notes',
             'quoted,quoted,Valid Property,garden,100,123 Valid St,Valid City,Valid County,TX,12345,555-0000,Valid Management,Valid Manager,valid@example.com,Valid Regional,valid.regional@example.com,Valid Owner,John Doe,2024-04-01,,,,medium,5000.00,1000.00,4000.00,Valid Client,Valid Contact,valid@client.com,Valid financial notes,Valid consultant notes,Valid general notes',
-            'quoted,quoted,Invalid Property,garden,100,,Invalid City,Invalid County,TX,54321,555-1111,Invalid Management,Invalid Manager,invalid@example.com,Invalid Regional,invalid.regional@example.com,Invalid Owner,John Doe,2024-04-01,,,,medium,5000.00,1000.00,4000.00,Invalid Client,Invalid Contact,invalid@client.com,Invalid financial notes,Invalid consultant notes,Invalid general notes'
+            'quoted,quoted,Invalid Property,garden,100,,Invalid City,Invalid County,TX,54321,555-1111,Invalid Management,Invalid Manager,invalid@example.com,Invalid Regional,invalid.regional@example.com,Invalid Owner,John Doe,2024-04-01,,,,medium,5000.00,1000.00,4000.00,Invalid Client,Invalid Contact,invalid@client.com,Invalid financial notes,Invalid consultant notes,Invalid general notes',
         ]);
 
         Storage::fake('local');
@@ -216,7 +217,7 @@ class HB837ImportExportTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('test_validation.csv', $csvContent);
 
         // Import the file
-        $import = new HB837Import();
+        $import = new HB837Import;
         Excel::import($import, $file);
 
         // Verify only valid record was imported
@@ -239,13 +240,13 @@ class HB837ImportExportTest extends TestCase
         // Create additional consultant
         $consultant2 = Consultant::factory()->create([
             'first_name' => 'Jane',
-            'last_name' => 'Smith'
+            'last_name' => 'Smith',
         ]);
 
         $csvContent = implode("\n", [
             'Report Status,Contracting Status,Property Name,Property Type,Units,Address,City,County,State,Zip,Phone,Management Company,Property Manager Name,Property Manager Email,Regional Manager Name,Regional Manager Email,Owner Name,Consultant Name,Scheduled Date of Inspection,Report Submitted,Agreement Submitted,Billing Req Sent,SecurityGauge Crime Risk,Quoted Price,Sub Fees Estimated Expenses,Project Net Profit,Macro Client,Macro Contact,Macro Email,Financial Notes,Consultant Notes,Notes',
             'quoted,quoted,Consultant Test 1,garden,100,111 Consultant St,Test City,Test County,TX,12345,555-0001,Test Management,Test Manager,test@example.com,Test Regional,test.regional@example.com,Test Owner,John Doe,2024-05-01,,,,medium,5000.00,1000.00,4000.00,Test Client,Test Contact,test@client.com,Test financial notes,Test consultant notes,Test general notes',
-            'quoted,quoted,Consultant Test 2,garden,100,222 Consultant St,Test City,Test County,TX,12345,555-0002,Test Management,Test Manager,test@example.com,Test Regional,test.regional@example.com,Test Owner,Jane Smith,2024-05-01,,,,medium,5000.00,1000.00,4000.00,Test Client,Test Contact,test@client.com,Test financial notes,Test consultant notes,Test general notes'
+            'quoted,quoted,Consultant Test 2,garden,100,222 Consultant St,Test City,Test County,TX,12345,555-0002,Test Management,Test Manager,test@example.com,Test Regional,test.regional@example.com,Test Owner,Jane Smith,2024-05-01,,,,medium,5000.00,1000.00,4000.00,Test Client,Test Contact,test@client.com,Test financial notes,Test consultant notes,Test general notes',
         ]);
 
         Storage::fake('local');
@@ -253,7 +254,7 @@ class HB837ImportExportTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('test_consultant.csv', $csvContent);
 
         // Import the file
-        $import = new HB837Import();
+        $import = new HB837Import;
         Excel::import($import, $file);
 
         // Verify records were created with correct consultant assignments
@@ -303,25 +304,25 @@ class HB837ImportExportTest extends TestCase
             'financial_notes' => 'Consistency financial notes',
             'consultant_notes' => 'Consistency consultant notes',
             'notes' => 'Consistency general notes',
-            'user_id' => $this->user->id
+            'user_id' => $this->user->id,
         ]);
 
         // Export the record
-        $export = new HB837Export();
+        $export = new HB837Export;
         $exported = $export->collection()->first();
 
         // Verify all key fields are present in export
         $this->assertNotNull($exported);
-        
+
         // Import the exported data back
         $exportHeadings = $export->headings();
         $exportData = $exported;
-        
+
         // Create CSV from export
         $csvData = array_combine($exportHeadings, $exportData);
-        $csvContent = implode(',', $exportHeadings) . "\n";
-        $csvContent .= implode(',', array_map(function($value) {
-            return '"' . str_replace('"', '""', $value ?? '') . '"';
+        $csvContent = implode(',', $exportHeadings)."\n";
+        $csvContent .= implode(',', array_map(function ($value) {
+            return '"'.str_replace('"', '""', $value ?? '').'"';
         }, $exportData));
 
         // Delete the original record to test import
@@ -332,7 +333,7 @@ class HB837ImportExportTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('consistency_test.csv', $csvContent);
 
         // Import back
-        $import = new HB837Import();
+        $import = new HB837Import;
         Excel::import($import, $file);
 
         // Verify the record was recreated correctly

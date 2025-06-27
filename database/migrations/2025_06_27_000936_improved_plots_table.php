@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('client_contact_email')->nullable()->after('client_contact_name');
             $table->string('client_contact_phone')->nullable()->after('client_contact_email');
             $table->boolean('is_active')->default(true)->after('client_contact_phone');
-            
+
             // Add indexes for performance
             $table->index(['plot_type', 'is_active']);
             $table->index('plot_name');
@@ -35,7 +35,7 @@ return new class extends Migration
             // Remove indexes
             $table->dropIndex(['plot_type', 'is_active']);
             $table->dropIndex(['plot_name']);
-            
+
             // Remove added columns
             $table->dropColumn([
                 'description',
@@ -43,7 +43,7 @@ return new class extends Migration
                 'client_contact_name',
                 'client_contact_email',
                 'client_contact_phone',
-                'is_active'
+                'is_active',
             ]);
         });
     }

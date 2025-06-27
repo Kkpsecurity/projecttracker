@@ -19,7 +19,7 @@ class Consultant extends Model
         'assigned_light_meter',
         'lm_nist_expiration_date',
         'subcontractor_bonus_rate',
-        'notes'
+        'notes',
     ];
 
     // Cast the fields

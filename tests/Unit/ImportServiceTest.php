@@ -2,9 +2,8 @@
 
 namespace Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use App\Services\ImportService;
-use App\Imports\HB837Import;
+use PHPUnit\Framework\TestCase;
 
 class ImportServiceTest extends TestCase
 {
@@ -13,7 +12,7 @@ class ImportServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->importService = new ImportService();
+        $this->importService = new ImportService;
     }
 
     /**

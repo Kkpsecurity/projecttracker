@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers\Admin\Services;
 
-use App\Models\HB837;
-use App\Models\Backup;
-use App\Models\ImportAudit;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
+use App\Exports\DynamicBackupExport;
+use App\Http\Controllers\Controller;
 use App\Imports\HB837Import;
+use App\Models\Backup;
+use App\Models\HB837;
+use App\Models\ImportAudit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
-use App\Exports\DynamicBackupExport;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BackupDBController extends Controller
 {
@@ -51,19 +51,19 @@ class BackupDBController extends Controller
         if ($validator->fails()) {
             Log::warning('Backup validation failed', [
                 'errors' => $validator->errors()->toArray(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()->toArray()
+                'errors' => $validator->errors()->toArray(),
             ], 422);
         }
 
         try {
             // Generate a default name if none provided
-            $name = $request->input('name') ?: 'Backup_' . date('Y-m-d_H-i-s');
+            $name = $request->input('name') ?: 'Backup_'.date('Y-m-d_H-i-s');
 
             $config = [
                 'name' => $this->cleanFileName($name),
@@ -81,9 +81,10 @@ class BackupDBController extends Controller
 
         } catch (\Throwable $e) {
             Log::error('Backup failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Backup failed: ' . $e->getMessage()
+                'message' => 'Backup failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -103,7 +104,7 @@ class BackupDBController extends Controller
 
         $file = $request->file('csv_file');
 
-        if (!$file || !$file->isValid()) {
+        if (! $file || ! $file->isValid()) {
             return redirect()->back()->withErrors(['error' => 'No valid file uploaded.']);
         }
 
@@ -117,7 +118,7 @@ class BackupDBController extends Controller
         // --- Import Title Generation ---
         $importTitle = $request->input('import_title');
         if (empty($importTitle)) {
-            $importTitle = 'Import ' . date('Y-m-d');
+            $importTitle = 'Import '.date('Y-m-d');
             try {
                 $extension = strtolower($file->getClientOriginalExtension());
                 if (in_array($extension, ['csv', 'xlsx', 'xls'])) {
@@ -130,18 +131,18 @@ class BackupDBController extends Controller
                             if ($headers && $firstRow) {
                                 $addressIdx = array_search('address', array_map('strtolower', $headers));
                                 if ($addressIdx !== false && isset($firstRow[$addressIdx])) {
-                                    $importTitle .= ' [' . trim($firstRow[$addressIdx]) . ']';
+                                    $importTitle .= ' ['.trim($firstRow[$addressIdx]).']';
                                 }
                             }
                         }
                     } else {
-                        $data = \Maatwebsite\Excel\Facades\Excel::toArray(new \stdClass(), $file);
-                        if (!empty($data) && !empty($data[0]) && count($data[0]) > 1) {
+                        $data = \Maatwebsite\Excel\Facades\Excel::toArray(new \stdClass, $file);
+                        if (! empty($data) && ! empty($data[0]) && count($data[0]) > 1) {
                             $headers = $data[0][0];
                             $firstRow = $data[0][1];
                             $addressIdx = array_search('address', array_map('strtolower', $headers));
                             if ($addressIdx !== false && isset($firstRow[$addressIdx])) {
-                                $importTitle .= ' [' . trim($firstRow[$addressIdx]) . ']';
+                                $importTitle .= ' ['.trim($firstRow[$addressIdx]).']';
                             }
                         }
                     }
@@ -154,7 +155,7 @@ class BackupDBController extends Controller
         }
 
         try {
-            $import = new HB837Import();
+            $import = new HB837Import;
 
             // Use DB transaction for safety
             DB::beginTransaction();
@@ -162,7 +163,7 @@ class BackupDBController extends Controller
             try {
                 // Handle truncation with proper authorization INSIDE the transaction
                 if ($request->has('truncate') && $request->input('truncate') == 'on') {
-                    if (!auth()->user() || !(auth()->id() == 1 || auth()->id() == 2)) {
+                    if (! auth()->user() || ! (auth()->id() == 1 || auth()->id() == 2)) {
                         throw new \Exception('You do not have permission to truncate the HB837 table. This feature is restricted to administrators for debugging purposes.');
                     }
 
@@ -247,7 +248,7 @@ class BackupDBController extends Controller
                 'import_title' => $importTitle ?? null,
             ]);
 
-            return redirect()->back()->withErrors(['error' => 'Error importing file: ' . $e->getMessage()]);
+            return redirect()->back()->withErrors(['error' => 'Error importing file: '.$e->getMessage()]);
         }
     }
 
@@ -314,7 +315,7 @@ class BackupDBController extends Controller
         $totalSizeMB = round($totalSize / 1024 / 1024, 2);
 
         // Additional useful stats
-        $thisMonth = $backups->filter(function($backup) {
+        $thisMonth = $backups->filter(function ($backup) {
             return $backup->created_at && $backup->created_at->isCurrentMonth();
         })->count();
 
@@ -330,8 +331,12 @@ class BackupDBController extends Controller
 
         return [
             'total_backups' => $backups->total(),
-            'successful_backups' => $backups->filter(function($b) { return $b->status === 'completed'; })->count(),
-            'failed_backups' => $backups->filter(function($b) { return $b->status === 'failed'; })->count(),
+            'successful_backups' => $backups->filter(function ($b) {
+                return $b->status === 'completed';
+            })->count(),
+            'failed_backups' => $backups->filter(function ($b) {
+                return $b->status === 'failed';
+            })->count(),
             'this_month' => $thisMonth,
             'last_backup' => $lastBackup,
             'last_backup_ago' => $lastBackup,
@@ -344,7 +349,9 @@ class BackupDBController extends Controller
             'storage_used' => $storageUsed,
             'retention_period' => $retentionPeriod,
         ];
-    }    /**
+    }
+
+    /**
      * Get comprehensive system statistics for the dashboard
      */
     protected function getSystemStats(): array
@@ -422,7 +429,9 @@ class BackupDBController extends Controller
      */
     private function calculateDataHealthScore(int $totalRecords): int
     {
-        if ($totalRecords === 0) return 0;
+        if ($totalRecords === 0) {
+            return 0;
+        }
 
         $completeRecords = HB837::whereNotNull('property_name')
             ->whereNotNull('address')
@@ -450,7 +459,7 @@ class BackupDBController extends Controller
                     'timestamp' => $backup->created_at,
                     'status' => $backup->status,
                     'icon' => 'fa-download',
-                    'color' => 'success'
+                    'color' => 'success',
                 ];
             });
 
@@ -471,7 +480,7 @@ class BackupDBController extends Controller
                     'timestamp' => $import->created_at,
                     'status' => isset($changes['error']) ? 'failed' : 'success',
                     'icon' => 'fa-upload',
-                    'color' => isset($changes['error']) ? 'danger' : 'info'
+                    'color' => isset($changes['error']) ? 'danger' : 'info',
                 ];
             });
 
@@ -488,7 +497,7 @@ class BackupDBController extends Controller
                     'timestamp' => $project->updated_at,
                     'status' => $project->report_status,
                     'icon' => 'fa-building',
-                    'color' => 'primary'
+                    'color' => 'primary',
                 ];
             });
 
@@ -504,14 +513,14 @@ class BackupDBController extends Controller
     public function deleteFile(Request $request, string $uuid)
     {
         // Validate UUID format
-        if (!Str::isUuid($uuid)) {
+        if (! Str::isUuid($uuid)) {
             return redirect()->back()->with('error', 'Invalid backup identifier.');
         }
 
         $backup = Backup::where('uuid', $uuid)->firstOrFail();
 
         // Check user permissions (only creator or admin can delete)
-        if (auth()->id() !== $backup->user_id && !(auth()->id() == 1 || auth()->id() == 2)) {
+        if (auth()->id() !== $backup->user_id && ! (auth()->id() == 1 || auth()->id() == 2)) {
             return redirect()->back()->with('error', 'You do not have permission to delete this backup.');
         }
 
@@ -523,13 +532,14 @@ class BackupDBController extends Controller
                 logger()->info('Backup file deleted', [
                     'file_path' => $filePath,
                     'backup_id' => $backup->id,
-                    'deleted_by' => auth()->id()
+                    'deleted_by' => auth()->id(),
                 ]);
             } catch (\Exception $e) {
                 logger()->error('Failed to delete backup file', [
                     'file_path' => $filePath,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
+
                 return redirect()->back()->with('error', 'Failed to delete backup file.');
             }
         }
@@ -539,23 +549,22 @@ class BackupDBController extends Controller
         return redirect()->back()->with('success', 'Backup file deleted successfully.');
     }
 
-
     public function restore(string $uuid)
     {
         // Validate UUID format
-        if (!Str::isUuid($uuid)) {
+        if (! Str::isUuid($uuid)) {
             return redirect()->back()->with('error', 'Invalid backup identifier.');
         }
 
         // Only admin can restore
-        if (!(auth()->id() == 1 || auth()->id() == 2)) {
+        if (! (auth()->id() == 1 || auth()->id() == 2)) {
             return redirect()->back()->with('error', 'You do not have permission to restore backups. This feature is restricted to administrators.');
         }
 
         $backup = Backup::where('uuid', $uuid)->firstOrFail();
         $filePath = $backup->filename ? "backups/{$backup->filename}" : null;
 
-        if (!$filePath || !Storage::exists($filePath)) {
+        if (! $filePath || ! Storage::exists($filePath)) {
             return redirect()->back()->with('error', 'Backup file not found.');
         }
 
@@ -565,37 +574,41 @@ class BackupDBController extends Controller
         DB::beginTransaction();
 
         try {
-            $data = Excel::toArray(new \stdClass(), Storage::path($filePath));
+            $data = Excel::toArray(new \stdClass, Storage::path($filePath));
 
             foreach ($data as $sheetIndex => $sheet) {
-                if (empty($sheet)) continue;
+                if (empty($sheet)) {
+                    continue;
+                }
 
                 $headers = array_shift($sheet); // Remove headers
                 $table = $this->inferTableNameFromHeaders($headers, $sheetIndex);
 
-                if (!$table || empty($sheet)) {
+                if (! $table || empty($sheet)) {
                     logger()->warning('Skipped sheet during restore', [
                         'sheet_index' => $sheetIndex,
                         'inferred_table' => $table,
-                        'headers' => $headers
+                        'headers' => $headers,
                     ]);
+
                     continue;
                 }
 
                 // Validate table exists before truncating
-                if (!$this->tableExists($table)) {
+                if (! $this->tableExists($table)) {
                     logger()->warning('Table does not exist, skipping', ['table' => $table]);
+
                     continue;
                 }
 
                 DB::table($table)->truncate();
 
                 // Convert rows to associative arrays using headers
-                $rows = array_map(function($row) use ($headers) {
+                $rows = array_map(function ($row) use ($headers) {
                     return array_combine($headers, $row);
                 }, $sheet);
 
-                if (!empty($rows)) {
+                if (! empty($rows)) {
                     // Insert in chunks to avoid memory issues
                     $chunks = array_chunk($rows, 500);
                     foreach ($chunks as $chunk) {
@@ -627,7 +640,7 @@ class BackupDBController extends Controller
             logger()->info('Restore completed successfully', [
                 'imported' => $imported,
                 'backup_uuid' => $uuid,
-                'user_id' => auth()->id()
+                'user_id' => auth()->id(),
             ]);
 
             return redirect()->back()->with('success', $message);
@@ -639,7 +652,7 @@ class BackupDBController extends Controller
                 'error' => $e->getMessage(),
                 'backup_uuid' => $uuid,
                 'user_id' => auth()->id(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             // Create failed audit record
@@ -654,7 +667,7 @@ class BackupDBController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            return redirect()->back()->with('error', 'Restore failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Restore failed: '.$e->getMessage());
         }
     }
 
@@ -686,7 +699,7 @@ class BackupDBController extends Controller
 
         Log::warning('Could not infer table name from headers', [
             'headers' => $headers,
-            'sheet_index' => $sheetIndex
+            'sheet_index' => $sheetIndex,
         ]);
 
         return null;
@@ -698,37 +711,40 @@ class BackupDBController extends Controller
         if (method_exists($sheet, 'getTitle')) {
             return $sheet->getTitle();
         }
+
         return null;
     }
-
 
     public function download($filename)
     {
         $path = "backups/{$filename}";
 
-        if (!Storage::exists($path)) {
+        if (! Storage::exists($path)) {
             abort(404, 'Backup file not found');
         }
 
         return Storage::download($path, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 
     protected function countRecords(array $tables): int
     {
-        return array_reduce($tables, function($sum, $table) {
+        return array_reduce($tables, function ($sum, $table) {
             return $sum + DB::table($table)->count();
         }, 0);
     }
 
     protected function calculateSuccessRate($backups): int
     {
-        if ($backups->isEmpty()) return 0;
-        $successful = $backups->filter(function($b) {
+        if ($backups->isEmpty()) {
+            return 0;
+        }
+        $successful = $backups->filter(function ($b) {
             return ($b->changes['status'] ?? '') === 'completed';
         })->count();
+
         return intval(round(($successful / $backups->count()) * 100));
     }
 
@@ -742,7 +758,8 @@ class BackupDBController extends Controller
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $pow = $bytes > 0 ? floor(log($bytes, 1024)) : 0;
         $pow = min($pow, count($units) - 1);
-        return round($bytes / (1024 ** $pow), $precision) . ' ' . $units[$pow];
+
+        return round($bytes / (1024 ** $pow), $precision).' '.$units[$pow];
     }
 
     /**
@@ -755,8 +772,9 @@ class BackupDBController extends Controller
         } catch (\Exception $e) {
             logger()->error('Error checking table existence', [
                 'table' => $table,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -785,7 +803,7 @@ class BackupDBController extends Controller
                 'total_imports' => $systemStats['imports']['total_imports'],
                 'backup_success_rate' => $stats['success_rate'],
                 'data_health_score' => $systemStats['hb837']['data_health_score'],
-            ]
+            ],
         ]);
     }
 
@@ -797,7 +815,7 @@ class BackupDBController extends Controller
         $testData = [
             'name' => 'Test Backup',
             'tables' => ['hb837', 'consultants'],
-            'include_files' => true
+            'include_files' => true,
         ];
 
         $validator = Validator::make($testData, [
@@ -808,9 +826,9 @@ class BackupDBController extends Controller
 
         return response()->json([
             'test_data' => $testData,
-            'validation_passed' => !$validator->fails(),
+            'validation_passed' => ! $validator->fails(),
             'errors' => $validator->errors()->toArray(),
-            'message' => $validator->fails() ? 'Validation failed' : 'Validation passed'
+            'message' => $validator->fails() ? 'Validation failed' : 'Validation passed',
         ]);
     }
 
@@ -827,7 +845,7 @@ class BackupDBController extends Controller
         $requestData = [
             'name' => 'Test Manual Backup',
             'tables' => ['hb837', 'consultants'],
-            '_token' => csrf_token()
+            '_token' => csrf_token(),
         ];
 
         $request = new Request($requestData);
@@ -838,13 +856,13 @@ class BackupDBController extends Controller
             return response()->json([
                 'test_status' => 'success',
                 'result' => $result->getData(),
-                'status_code' => $result->getStatusCode()
+                'status_code' => $result->getStatusCode(),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'test_status' => 'error',
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -877,7 +895,7 @@ class BackupDBController extends Controller
             'timestamp' => now()->toDateTimeString(),
             'environment' => app()->environment(),
             'results' => $results,
-            'overall_status' => $this->determineOverallStatus($results)
+            'overall_status' => $this->determineOverallStatus($results),
         ]);
     }
 
@@ -886,18 +904,18 @@ class BackupDBController extends Controller
         $testCases = [
             'valid_with_name' => [
                 'name' => 'Test Backup',
-                'tables' => ['hb837', 'consultants']
+                'tables' => ['hb837', 'consultants'],
             ],
             'valid_without_name' => [
-                'tables' => ['hb837']
+                'tables' => ['hb837'],
             ],
             'invalid_no_tables' => [
                 'name' => 'Test',
-                'tables' => []
+                'tables' => [],
             ],
             'invalid_empty_tables' => [
-                'name' => 'Test'
-            ]
+                'name' => 'Test',
+            ],
         ];
 
         $results = [];
@@ -910,8 +928,8 @@ class BackupDBController extends Controller
 
             $results[$case] = [
                 'data' => $data,
-                'passed' => !$validator->fails(),
-                'errors' => $validator->errors()->toArray()
+                'passed' => ! $validator->fails(),
+                'errors' => $validator->errors()->toArray(),
             ];
         }
 
@@ -925,7 +943,7 @@ class BackupDBController extends Controller
             'backup@#$%' => 'backup',
             'My-File_Name' => 'My-File_Name',
             '123 Test!@#' => '123Test',
-            '' => ''
+            '' => '',
         ];
 
         $results = [];
@@ -935,7 +953,7 @@ class BackupDBController extends Controller
                 'input' => $input,
                 'expected' => $expected,
                 'actual' => $cleaned,
-                'passed' => $cleaned === $expected
+                'passed' => $cleaned === $expected,
             ];
         }
 
@@ -948,24 +966,24 @@ class BackupDBController extends Controller
         $name2 = '';
         $name3 = null;
 
-        $defaultName = 'Backup_' . date('Y-m-d_H-i-s');
+        $defaultName = 'Backup_'.date('Y-m-d_H-i-s');
 
         return [
             'with_name' => [
                 'input' => $name1,
                 'output' => $name1 ?: $defaultName,
-                'used_default' => false
+                'used_default' => false,
             ],
             'empty_string' => [
                 'input' => $name2,
                 'output' => $name2 ?: $defaultName,
-                'used_default' => true
+                'used_default' => true,
             ],
             'null_value' => [
                 'input' => $name3,
                 'output' => $name3 ?: $defaultName,
-                'used_default' => true
-            ]
+                'used_default' => true,
+            ],
         ];
     }
 
@@ -974,17 +992,17 @@ class BackupDBController extends Controller
         $testConfigs = [
             [
                 'name' => 'Test Backup',
-                'tables' => ['hb837', 'consultants']
+                'tables' => ['hb837', 'consultants'],
             ],
             [
                 'name' => '',
-                'tables' => ['hb837']
-            ]
+                'tables' => ['hb837'],
+            ],
         ];
 
         $results = [];
         foreach ($testConfigs as $index => $config) {
-            $name = $config['name'] ?: 'Backup_' . date('Y-m-d_H-i-s');
+            $name = $config['name'] ?: 'Backup_'.date('Y-m-d_H-i-s');
             $processedConfig = [
                 'name' => $this->cleanFileName($name),
                 'tables' => $config['tables'],
@@ -994,7 +1012,7 @@ class BackupDBController extends Controller
                 'input' => $config,
                 'processed' => $processedConfig,
                 'name_generated' => empty($config['name']),
-                'tables_count' => count($config['tables'])
+                'tables_count' => count($config['tables']),
             ];
         }
 
@@ -1026,7 +1044,7 @@ class BackupDBController extends Controller
             'timestamp' => now()->toDateTimeString(),
             'environment' => app()->environment(),
             'results' => $results,
-            'overall_status' => $this->determineOverallStatus($results)
+            'overall_status' => $this->determineOverallStatus($results),
         ]);
     }
 
@@ -1037,31 +1055,31 @@ class BackupDBController extends Controller
                 'csv_file' => [
                     'name' => 'test.csv',
                     'type' => 'text/csv',
-                    'size' => 1024
-                ]
+                    'size' => 1024,
+                ],
             ],
             'valid_xlsx' => [
                 'csv_file' => [
                     'name' => 'test.xlsx',
                     'type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    'size' => 2048
-                ]
+                    'size' => 2048,
+                ],
             ],
             'invalid_type' => [
                 'csv_file' => [
                     'name' => 'test.txt',
                     'type' => 'text/plain',
-                    'size' => 1024
-                ]
+                    'size' => 1024,
+                ],
             ],
             'too_large' => [
                 'csv_file' => [
                     'name' => 'test.csv',
                     'type' => 'text/csv',
-                    'size' => 11 * 1024 * 1024 // 11MB
-                ]
+                    'size' => 11 * 1024 * 1024, // 11MB
+                ],
             ],
-            'missing_file' => []
+            'missing_file' => [],
         ];
 
         $results = [];
@@ -1069,7 +1087,7 @@ class BackupDBController extends Controller
             // Simulate file validation rules
             $rules = [
                 'csv_file' => 'required|file|mimes:csv,xlsx,xls|max:10240',
-                'truncate' => 'sometimes|in:on'
+                'truncate' => 'sometimes|in:on',
             ];
 
             // Simulate validation (can't actually validate UploadedFile without real file)
@@ -1077,7 +1095,7 @@ class BackupDBController extends Controller
             $validMime = $hasFile && in_array($data['csv_file']['type'], [
                 'text/csv',
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/vnd.ms-excel'
+                'application/vnd.ms-excel',
             ]);
             $validSize = $hasFile && $data['csv_file']['size'] <= (10240 * 1024);
 
@@ -1086,7 +1104,7 @@ class BackupDBController extends Controller
                 'has_file' => $hasFile,
                 'valid_mime' => $validMime,
                 'valid_size' => $validSize,
-                'passed' => $hasFile && $validMime && $validSize
+                'passed' => $hasFile && $validMime && $validSize,
             ];
         }
 
@@ -1099,7 +1117,7 @@ class BackupDBController extends Controller
         $allowedMimes = [
             'text/csv',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/vnd.ms-excel'
+            'application/vnd.ms-excel',
         ];
 
         $testFiles = [
@@ -1121,7 +1139,7 @@ class BackupDBController extends Controller
                 'extension' => $extension,
                 'valid_extension' => $validExtension,
                 'valid_mime' => $validMime,
-                'passed' => $validExtension && $validMime
+                'passed' => $validExtension && $validMime,
             ];
         }
 
@@ -1134,7 +1152,7 @@ class BackupDBController extends Controller
             ['truncate' => 'on', 'expected_truncate' => true],
             ['truncate' => 'off', 'expected_truncate' => false],
             ['truncate' => null, 'expected_truncate' => false],
-            ['other_param' => 'value', 'expected_truncate' => false]
+            ['other_param' => 'value', 'expected_truncate' => false],
         ];
 
         $results = [];
@@ -1146,7 +1164,7 @@ class BackupDBController extends Controller
                 'input' => $config,
                 'should_truncate' => $shouldTruncate,
                 'expected' => $expected,
-                'passed' => $shouldTruncate === $expected
+                'passed' => $shouldTruncate === $expected,
             ];
         }
 
@@ -1160,7 +1178,7 @@ class BackupDBController extends Controller
         foreach ($results as $testType => $testResults) {
             if (is_array($testResults)) {
                 foreach ($testResults as $result) {
-                    if (isset($result['passed']) && !$result['passed']) {
+                    if (isset($result['passed']) && ! $result['passed']) {
                         $hasFailures = true;
                         break 2;
                     }
@@ -1186,7 +1204,7 @@ class BackupDBController extends Controller
             'enabled' => $enabled,
             'user_id' => auth()->id(),
             'user_name' => auth()->user()->name ?? 'Unknown',
-            'timestamp' => now()->toDateTimeString()
+            'timestamp' => now()->toDateTimeString(),
         ]);
 
         // Create audit record
@@ -1195,15 +1213,15 @@ class BackupDBController extends Controller
             'type' => 'cron_toggle',
             'changes' => [
                 'action' => $enabled ? 'enabled' : 'disabled',
-                'previous_state' => !$enabled,
+                'previous_state' => ! $enabled,
                 'new_state' => $enabled,
-                'message' => 'Auto backup ' . ($enabled ? 'enabled' : 'disabled'),
+                'message' => 'Auto backup '.($enabled ? 'enabled' : 'disabled'),
             ],
             'user_id' => auth()->id(),
         ]);
 
         $message = $enabled
-            ? 'Auto backup has been enabled. Backups will run daily at ' . config('backup.cron_time_at', '23:00')
+            ? 'Auto backup has been enabled. Backups will run daily at '.config('backup.cron_time_at', '23:00')
             : 'Auto backup has been disabled.';
 
         return redirect()->back()->with('success', $message);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Test script to verify the truncate import functionality
  * Run this from the Laravel project root: php test_truncate_import.php
@@ -11,8 +12,8 @@ $app = require_once 'bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-use App\Models\HB837;
 use App\Imports\HB837Import;
+use App\Models\HB837;
 
 echo "=== HB837 Truncate Import Test ===\n\n";
 
@@ -24,10 +25,10 @@ echo "Initial HB837 record count: {$initialCount}\n";
 echo "\n--- Testing Truncate Mode ---\n";
 
 // Create a test import instance
-$import = new HB837Import();
+$import = new HB837Import;
 
 // Test without truncate mode
-echo "Truncate mode: " . ($import->setTruncateMode(false) ? "Enabled" : "Disabled") . "\n";
+echo 'Truncate mode: '.($import->setTruncateMode(false) ? 'Enabled' : 'Disabled')."\n";
 
 // Test with truncate mode
 $import->setTruncateMode(true);
@@ -39,7 +40,7 @@ $truncateModeProperty = $reflection->getProperty('truncateMode');
 $truncateModeProperty->setAccessible(true);
 $isTruncateMode = $truncateModeProperty->getValue($import);
 
-echo "Truncate mode internal state: " . ($isTruncateMode ? "TRUE" : "FALSE") . "\n";
+echo 'Truncate mode internal state: '.($isTruncateMode ? 'TRUE' : 'FALSE')."\n";
 
 if ($isTruncateMode) {
     echo "✅ Truncate mode is working correctly!\n";
@@ -60,7 +61,7 @@ try {
     echo "Database connection working: ✅ (Current count: {$testCount})\n";
 
 } catch (Exception $e) {
-    echo "❌ Error testing HB837 truncate: " . $e->getMessage() . "\n";
+    echo '❌ Error testing HB837 truncate: '.$e->getMessage()."\n";
 }
 
 echo "\n=== Test Complete ===\n";

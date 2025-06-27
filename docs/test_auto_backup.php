@@ -1,8 +1,9 @@
 <?php
+
 // Test Auto Backup System
 
 echo "=== AUTO BACKUP SYSTEM TEST ===\n";
-echo "Date: " . date('Y-m-d H:i:s') . "\n\n";
+echo 'Date: '.date('Y-m-d H:i:s')."\n\n";
 
 // Test 1: Check configuration
 echo "📋 1. Testing Configuration...\n";
@@ -15,17 +16,17 @@ $configTests = [
 ];
 
 foreach ($configTests as $key => $value) {
-    echo "   $key: " . var_export($value, true) . "\n";
+    echo "   $key: ".var_export($value, true)."\n";
 }
 
 // Test 2: Check if command exists
 echo "\n📦 2. Testing Command Registration...\n";
 try {
-    $commands = shell_exec('cd "' . __DIR__ . '" && php artisan list | findstr "backup"');
+    $commands = shell_exec('cd "'.__DIR__.'" && php artisan list | findstr "backup"');
     echo "   Available backup commands:\n";
-    echo "   " . str_replace("\n", "\n   ", trim($commands)) . "\n";
+    echo '   '.str_replace("\n", "\n   ", trim($commands))."\n";
 } catch (Exception $e) {
-    echo "   ERROR: Could not list commands - " . $e->getMessage() . "\n";
+    echo '   ERROR: Could not list commands - '.$e->getMessage()."\n";
 }
 
 // Test 3: Test schedule configuration
@@ -36,15 +37,15 @@ $enableCron = config('backup.enable_cron', true);
 $enableCache = cache('backup_cron_enabled', true);
 $cronTime = config('backup.cron_time_at', '23:00');
 
-echo "   Config enabled: " . ($enableCron ? 'YES' : 'NO') . "\n";
-echo "   Cache enabled: " . ($enableCache ? 'YES' : 'NO') . "\n";
+echo '   Config enabled: '.($enableCron ? 'YES' : 'NO')."\n";
+echo '   Cache enabled: '.($enableCache ? 'YES' : 'NO')."\n";
 echo "   Scheduled time: $cronTime\n";
-echo "   Will run: " . (($enableCron && $enableCache) ? 'YES' : 'NO') . "\n";
+echo '   Will run: '.(($enableCron && $enableCache) ? 'YES' : 'NO')."\n";
 
 // Test 4: Check command help
 echo "\n🔧 4. Testing Command Structure...\n";
 try {
-    $help = shell_exec('cd "' . __DIR__ . '" && php artisan backup:auto --help');
+    $help = shell_exec('cd "'.__DIR__.'" && php artisan backup:auto --help');
     if (strpos($help, 'backup:auto') !== false) {
         echo "   ✅ Command structure is valid\n";
         echo "   ✅ Options include --tables parameter\n";
@@ -52,7 +53,7 @@ try {
         echo "   ❌ Command structure issue\n";
     }
 } catch (Exception $e) {
-    echo "   ERROR: " . $e->getMessage() . "\n";
+    echo '   ERROR: '.$e->getMessage()."\n";
 }
 
 // Test 5: Simulate toggle functionality
@@ -75,20 +76,20 @@ foreach ($toggleScenarios as $scenario) {
 echo "\n📁 6. Testing File System...\n";
 
 $backupDir = storage_path('app/backups');
-if (!is_dir($backupDir)) {
+if (! is_dir($backupDir)) {
     echo "   Creating backup directory: $backupDir\n";
     try {
         mkdir($backupDir, 0755, true);
         echo "   ✅ Backup directory created\n";
     } catch (Exception $e) {
-        echo "   ❌ Could not create backup directory: " . $e->getMessage() . "\n";
+        echo '   ❌ Could not create backup directory: '.$e->getMessage()."\n";
     }
 } else {
     echo "   ✅ Backup directory exists: $backupDir\n";
 }
 
 $writable = is_writable($backupDir);
-echo "   Directory writable: " . ($writable ? 'YES' : 'NO') . "\n";
+echo '   Directory writable: '.($writable ? 'YES' : 'NO')."\n";
 
 // Test 7: Check required classes/exports
 echo "\n🔍 7. Testing Dependencies...\n";
@@ -101,7 +102,7 @@ $dependencies = [
 ];
 
 foreach ($dependencies as $class => $exists) {
-    echo "   $class: " . ($exists ? '✅ EXISTS' : '❌ MISSING') . "\n";
+    echo "   $class: ".($exists ? '✅ EXISTS' : '❌ MISSING')."\n";
 }
 
 echo "\n=== AUTO BACKUP SYSTEM STATUS ===\n";
@@ -109,10 +110,18 @@ echo "\n=== AUTO BACKUP SYSTEM STATUS ===\n";
 // Determine overall status
 $criticalIssues = [];
 
-if (!$enableCron) $criticalIssues[] = "Config backup.enable_cron is disabled";
-if (!class_exists('App\Exports\DynamicBackupExport')) $criticalIssues[] = "DynamicBackupExport class missing";
-if (!class_exists('App\Models\Backup')) $criticalIssues[] = "Backup model missing";
-if (!$writable) $criticalIssues[] = "Backup directory not writable";
+if (! $enableCron) {
+    $criticalIssues[] = 'Config backup.enable_cron is disabled';
+}
+if (! class_exists('App\Exports\DynamicBackupExport')) {
+    $criticalIssues[] = 'DynamicBackupExport class missing';
+}
+if (! class_exists('App\Models\Backup')) {
+    $criticalIssues[] = 'Backup model missing';
+}
+if (! $writable) {
+    $criticalIssues[] = 'Backup directory not writable';
+}
 
 if (empty($criticalIssues)) {
     echo "🎉 AUTO BACKUP SYSTEM: READY\n";
@@ -127,7 +136,7 @@ if (empty($criticalIssues)) {
     echo "3. Backups will run daily at $cronTime\n";
     echo "4. Ensure your server has cron jobs enabled\n";
     echo "5. Add this to your crontab:\n";
-    echo "   * * * * * cd " . __DIR__ . " && php artisan schedule:run >> /dev/null 2>&1\n";
+    echo '   * * * * * cd '.__DIR__." && php artisan schedule:run >> /dev/null 2>&1\n";
 } else {
     echo "⚠️ AUTO BACKUP SYSTEM: ISSUES FOUND\n";
     foreach ($criticalIssues as $issue) {
@@ -135,5 +144,4 @@ if (empty($criticalIssues)) {
     }
 }
 
-echo "\n" . str_repeat("=", 50) . "\n";
-?>
+echo "\n".str_repeat('=', 50)."\n";

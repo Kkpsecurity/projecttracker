@@ -1,9 +1,11 @@
-<?php namespace App\Console\Commands;
+<?php
+
+namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class ImportDB extends Command
 {
@@ -27,7 +29,7 @@ class ImportDB extends Command
             $tableName = pathinfo($file, PATHINFO_FILENAME);
 
             // Skip tables based on options
-            if (!empty($includeTables) && !in_array($tableName, $includeTables)) {
+            if (! empty($includeTables) && ! in_array($tableName, $includeTables)) {
                 continue;
             }
             if (in_array($tableName, $skipTables)) {
@@ -42,6 +44,7 @@ class ImportDB extends Command
 
             if (empty($data)) {
                 $this->warn("No data found in $file.");
+
                 continue;
             }
 

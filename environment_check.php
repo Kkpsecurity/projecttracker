@@ -1,17 +1,17 @@
 <?php
+
 /**
  * Environment Check Script for Laravel Upgrade
  * Run this script to check current environment status
  *
  * Usage: php environment_check.php
  */
-
 echo "🚀 LARAVEL UPGRADE - ENVIRONMENT CHECK\n";
 echo "=====================================\n\n";
 
 // PHP Version Check
 echo "📋 PHP VERSION:\n";
-echo "Current PHP: " . PHP_VERSION . "\n";
+echo 'Current PHP: '.PHP_VERSION."\n";
 $phpMajor = PHP_MAJOR_VERSION;
 $phpMinor = PHP_MINOR_VERSION;
 
@@ -28,11 +28,11 @@ echo "\n";
 echo "📋 LARAVEL VERSION:\n";
 try {
     // Check composer.json for Laravel version
-    $composerPath = __DIR__ . '/composer.json';
+    $composerPath = __DIR__.'/composer.json';
     if (file_exists($composerPath)) {
         $composer = json_decode(file_get_contents($composerPath), true);
         $laravelVersion = $composer['require']['laravel/framework'] ?? 'Unknown';
-        echo "Composer Laravel: " . $laravelVersion . "\n";
+        echo 'Composer Laravel: '.$laravelVersion."\n";
 
         if (strpos($laravelVersion, '^7') === 0) {
             echo "⏳ Laravel Version: Ready for upgrade process (Laravel 7)\n";
@@ -56,13 +56,13 @@ echo "\n";
 // Database Check
 echo "📋 DATABASE STATUS:\n";
 try {
-    $dbPath = __DIR__ . '/database/database.sqlite';
+    $dbPath = __DIR__.'/database/database.sqlite';
     if (file_exists($dbPath)) {
         $size = round(filesize($dbPath) / 1024, 2);
         echo "✅ Database: SQLite file exists ({$size} KB)\n";
 
         // Check if backup exists
-        $backupPath = __DIR__ . '/database/database_backup_pre_upgrade.sqlite';
+        $backupPath = __DIR__.'/database/database_backup_pre_upgrade.sqlite';
         if (file_exists($backupPath)) {
             echo "✅ Backup: Pre-upgrade backup exists\n";
         } else {
@@ -88,7 +88,7 @@ $requiredExtensions = [
     'json' => 'JSON handling',
     'curl' => 'HTTP requests',
     'zip' => 'File compression',
-    'gd' => 'Image processing (for PDF/Excel)'
+    'gd' => 'Image processing (for PDF/Excel)',
 ];
 
 $allExtensionsOk = true;
@@ -110,8 +110,8 @@ echo "\n";
 
 // Storage Permissions
 echo "📋 STORAGE PERMISSIONS:\n";
-$storageWritable = is_writable(__DIR__ . '/storage');
-$logsWritable = is_writable(__DIR__ . '/storage/logs');
+$storageWritable = is_writable(__DIR__.'/storage');
+$logsWritable = is_writable(__DIR__.'/storage/logs');
 
 if ($storageWritable && $logsWritable) {
     echo "✅ Storage: Writable\n";
@@ -122,10 +122,10 @@ echo "\n";
 
 // Memory and Time Limits
 echo "📋 PHP CONFIGURATION:\n";
-echo "Memory Limit: " . ini_get('memory_limit') . "\n";
-echo "Max Execution Time: " . ini_get('max_execution_time') . "s\n";
-echo "Upload Max Filesize: " . ini_get('upload_max_filesize') . "\n";
-echo "Post Max Size: " . ini_get('post_max_size') . "\n";
+echo 'Memory Limit: '.ini_get('memory_limit')."\n";
+echo 'Max Execution Time: '.ini_get('max_execution_time')."s\n";
+echo 'Upload Max Filesize: '.ini_get('upload_max_filesize')."\n";
+echo 'Post Max Size: '.ini_get('post_max_size')."\n";
 echo "\n";
 
 // Overall Status
@@ -141,5 +141,5 @@ if ($phpMajor >= 8 && $phpMinor >= 1 && $allExtensionsOk && $storageWritable) {
 }
 
 echo "\n";
-echo "📅 Check completed: " . date('Y-m-d H:i:s') . "\n";
+echo '📅 Check completed: '.date('Y-m-d H:i:s')."\n";
 echo "🔄 Re-run this script after making environment changes\n";

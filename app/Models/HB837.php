@@ -2,11 +2,7 @@
 
 namespace App\Models;
 
-
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\File;
-use App\Models\HB837File;
 
 class HB837 extends Model
 {
@@ -32,7 +28,7 @@ class HB837 extends Model
         'financial_notes',
         'consultant_notes',
         'securitygauge_crime_risk',
-        "notes",
+        'notes',
         'property_manager_name',
         'property_manager_email',
         'regional_manager_name',
@@ -45,7 +41,7 @@ class HB837 extends Model
         'macro_client',
         'macro_contact',
         'macro_email',
-        'user_id'
+        'user_id',
     ];
 
     public function client()
@@ -79,5 +75,4 @@ class HB837 extends Model
             ->groupBy('macro_client', 'macro_contact', 'macro_email')
             ->get();
     }
-
 }

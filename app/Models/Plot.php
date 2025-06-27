@@ -31,7 +31,9 @@ class Plot extends Model
 
     // Constants for plot types
     const TYPE_CUSTOM = 'custom';
+
     const TYPE_PROSPECT = 'prospect';
+
     const TYPE_CLIENT = 'client';
 
     // Scopes
