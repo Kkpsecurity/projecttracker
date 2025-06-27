@@ -80,12 +80,12 @@
                     <!-- Tab Navigation -->
                     <div class="nav-tabs-custom">
                         <ul class="nav nav-tabs" role="tablist">
-                            <?php $__currentLoopData = $tabs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $tab): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php $__currentLoopData = $tabs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $tabData): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <li class="nav-item">
                                     <a href="<?php echo e(route('admin.hb837.tabs', ['tab' => $key])); ?>" 
                                        class="nav-link <?php echo e($active_tab == $key ? 'active' : ''); ?>">
-                                        <i class="<?php echo e($tab['icon']); ?>"></i>
-                                        <?php echo e($tab['name']); ?>
+                                        <i class="<?php echo e($tabData['icon']); ?>"></i>
+                                        <?php echo e($tabData['name']); ?>
 
                                     </a>
                                 </li>
