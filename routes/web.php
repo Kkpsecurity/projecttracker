@@ -128,6 +128,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::prefix('hb837')->name('hb837.')->group(function () {
         Route::get('/', [HB837Controller::class, 'index'])->name('index');
         Route::get('/tabs/{tab}', [HB837Controller::class, 'index'])->name('tabs');
+        Route::post('/datatable/{tab?}', [HB837Controller::class, 'datatable'])->name('datatable');
+        Route::get('/export/{tab?}', [HB837Controller::class, 'export'])->name('export');
         Route::get('/create', [HB837Controller::class, 'create'])->name('create');
         Route::post('/store', [HB837Controller::class, 'store'])->name('store');
         Route::delete('/destroy/{id}', [HB837Controller::class, 'deleteRecord'])->name('destroy');

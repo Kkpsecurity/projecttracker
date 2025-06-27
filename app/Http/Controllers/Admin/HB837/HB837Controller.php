@@ -19,7 +19,8 @@ class HB837Controller extends Controller
 {
     public function index(Request $request, $tab = 'active')
     {
-        $tab = in_array($tab = Str::lower($tab), ['active', 'quoted', 'completed', 'closed']) ? $tab : 'quoted';
+        $tab = in_array($tab = Str::lower($tab), ['active', 'quoted', 'completed', 'closed']) ? $tab : 'active';
+        $tabDisplayName = ucfirst($tab); // Convert to title case for view
 
         $sort = in_array($request->get('sort'), $this->sortableColumns(), true)
             ? $request->get('sort')
@@ -48,6 +49,7 @@ class HB837Controller extends Controller
         return view('admin.hb837.hb837_new', [
             'collection' => $projects,
             'tab' => $tab,
+            'active_tab' => $tabDisplayName, // Add this for view display
             'savedDate' => $savedDate,
             'sort' => $sort,
             'direction' => $direction,
@@ -518,5 +520,175 @@ class HB837Controller extends Controller
         $pdf = Pdf::loadHTML($html);
 
         return $pdf->stream('report.pdf');
+    }
+
+    /**
+     * DataTables AJAX endpoint for HB837 records
+     */
+    public function datatable(Request $request, $tab = 'active')
+    {
+        $tab = in_array($tab = Str::lower($tab), ['active', 'quoted', 'completed', 'closed']) ? $tab : 'active';
+
+        $query = HB837::query()->with(['consultant']);
+        $this->applyTabFilters($query, $tab);
+
+        // Handle DataTables search
+        if ($request->filled('search.value')) {
+            $search = $request->input('search.value');
+            $query->where(function($q) use ($search) {
+                $q->where('property_name', 'ILIKE', "%{$search}%")
+                  ->orWhere('owner_name', 'ILIKE', "%{$search}%")
+                  ->orWhere('address', 'ILIKE', "%{$search}%")
+                  ->orWhere('city', 'ILIKE', "%{$search}%")
+                  ->orWhere('state', 'ILIKE', "%{$search}%")
+                  ->orWhere('report_status', 'ILIKE', "%{$search}%")
+                  ->orWhere('securitygauge_crime_risk', 'ILIKE', "%{$search}%")
+                  ->orWhereHas('consultant', function($q) use ($search) {
+                      $q->where('name', 'ILIKE', "%{$search}%");
+                  });
+            });
+        }
+
+        // Handle individual column search
+        if ($request->filled('columns')) {
+            foreach ($request->input('columns') as $index => $column) {
+                if (!empty($column['search']['value'])) {
+                    $searchValue = $column['search']['value'];
+                    switch ($index) {
+                        case 1: // property_name
+                            $query->where('property_name', 'ILIKE', "%{$searchValue}%");
+                            break;
+                        case 2: // owner_name
+                            $query->where('owner_name', 'ILIKE', "%{$searchValue}%");
+                            break;
+                        case 3: // address
+                            $query->where('address', 'ILIKE', "%{$searchValue}%");
+                            break;
+                        case 5: // report_status
+                            $query->where('report_status', 'ILIKE', "%{$searchValue}%");
+                            break;
+                        case 6: // crime_risk
+                            $query->where('securitygauge_crime_risk', 'ILIKE', "%{$searchValue}%");
+                            break;
+                    }
+                }
+            }
+        }
+
+        // Handle sorting
+        if ($request->filled('order')) {
+            $orderColumn = $request->input('order.0.column');
+            $orderDir = $request->input('order.0.dir');
+            
+            $columns = ['id', 'property_name', 'owner_name', 'address', 'consultant', 'report_status', 'securitygauge_crime_risk', 'updated_at', 'actions'];
+            
+            if (isset($columns[$orderColumn])) {
+                $column = $columns[$orderColumn];
+                if ($column === 'consultant') {
+                    $query->leftJoin('consultants', 'hb837.assigned_consultant_id', '=', 'consultants.id')
+                          ->orderBy('consultants.name', $orderDir)
+                          ->select('hb837.*');
+                } else {
+                    $query->orderBy($column, $orderDir);
+                }
+            }
+        } else {
+            $query->orderBy('updated_at', 'desc');
+        }
+
+        // Get total count before pagination
+        $totalRecords = HB837::count();
+        $filteredRecords = $query->count();
+
+        // Apply pagination
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 25);
+        
+        if ($length != -1) {
+            $query->offset($start)->limit($length);
+        }
+
+        $records = $query->get();
+
+        // Format data for DataTables
+        $data = $records->map(function ($record) {
+            return [
+                'id' => '<span class="table-id">#' . $record->id . '</span>',
+                'property_name' => '<strong>' . htmlspecialchars($record->property_name ?? '') . '</strong>',
+                'owner_name' => htmlspecialchars($record->owner_name ?? 'N/A'),
+                'address' => $this->formatAddress($record),
+                'consultant' => $this->formatConsultant($record),
+                'report_status' => $this->formatStatus($record->report_status ?? 'unknown'),
+                'crime_risk' => $this->formatCrimeRisk($record->securitygauge_crime_risk),
+                'updated_at' => '<small class="text-muted">' . $record->updated_at->diffForHumans() . '</small>',
+                'actions' => $this->formatActions($record)
+            ];
+        });
+
+        return response()->json([
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data' => $data
+        ]);
+    }
+
+    private function formatAddress($record)
+    {
+        return '<div class="table-address">' .
+               htmlspecialchars($record->address ?? '') . '<br>' .
+               '<small class="text-muted">' . 
+               htmlspecialchars(($record->city ?? '') . ', ' . ($record->state ?? '') . ' ' . ($record->zip ?? '')) .
+               '</small></div>';
+    }
+
+    private function formatConsultant($record)
+    {
+        if ($record->consultant && $record->consultant->name) {
+            return '<span class="table-badge badge-info">' . htmlspecialchars($record->consultant->name) . '</span>';
+        }
+        return '<span class="text-muted">Unassigned</span>';
+    }
+
+    private function formatStatus($status)
+    {
+        $status = $status ?? 'unknown';
+        $badgeClass = match(strtolower($status)) {
+            'active' => 'success',
+            'quoted' => 'warning', 
+            'completed' => 'info',
+            default => 'secondary'
+        };
+        
+        return '<span class="table-badge badge-' . $badgeClass . '">' . htmlspecialchars($status) . '</span>';
+    }
+
+    private function formatCrimeRisk($risk)
+    {
+        if (!$risk) {
+            return '<span class="text-muted">N/A</span>';
+        }
+        
+        $class = match(strtolower($risk)) {
+            'low' => 'risk-low',
+            'medium' => 'risk-medium', 
+            'high' => 'risk-high',
+            default => 'text-muted'
+        };
+        
+        return '<span class="' . $class . '"><i class="fas fa-circle"></i> ' . ucfirst($risk) . '</span>';
+    }
+
+    private function formatActions($record)
+    {
+        return '<div class="btn-group btn-group-sm">' .
+               '<a href="' . route('admin.hb837.edit', $record->id) . '" class="btn btn-info btn-sm" title="Edit">' .
+               '<i class="fas fa-edit"></i></a>' .
+               '<a href="' . route('admin.hb837.report', $record->id) . '" class="btn btn-primary btn-sm" title="View Report">' .
+               '<i class="fas fa-file-alt"></i></a>' .
+               '<form method="POST" action="' . route('admin.hb837.destroy', $record->id) . '" style="display: inline;">' .
+               csrf_field() . method_field('DELETE') .
+               '<button type="submit" class="btn btn-danger btn-sm btn-delete" title="Delete">' .
+               '<i class="fas fa-trash"></i></button></form></div>';
     }
 }

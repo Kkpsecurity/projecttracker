@@ -18,7 +18,8 @@
 
 @section('main_content')
     @php
-        $active_tab = Request()->segment(4) ?? 'Active';
+        // Use the active_tab passed from controller, or determine from URL as fallback
+        $active_tab = $active_tab ?? ucfirst(strtolower(Request()->segment(4) ?? 'active'));
         $tabs = [
             'Active' => [
                 'icon' => 'fas fa-play-circle',
@@ -41,6 +42,11 @@
                 'class' => 'btn-secondary'
             ],
         ];
+        
+        // Ensure active_tab exists in tabs array, fallback to 'Active'
+        if (!isset($tabs[$active_tab])) {
+            $active_tab = 'Active';
+        }
     @endphp
 
     <div class="row">
@@ -103,90 +109,11 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($collection as $record)
-                                    <tr>
-                                        <td><span class="table-id">#{{ $record->id }}</span></td>
-                                        <td><strong>{{ $record->property_name }}</strong></td>
-                                        <td>{{ $record->owner_name }}</td>
-                                        <td>
-                                            <div class="table-address">
-                                                {{ $record->address }}<br>
-                                                <small class="text-muted">{{ $record->city }}, {{ $record->state }} {{ $record->zip }}</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            @if($record->consultant)
-                                                <span class="table-badge badge-info">{{ $record->consultant->name }}</span>
-                                            @else
-                                                <span class="text-muted">Unassigned</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <span class="table-badge badge-{{ strtolower($record->report_status) === 'active' ? 'success' : (strtolower($record->report_status) === 'quoted' ? 'warning' : (strtolower($record->report_status) === 'completed' ? 'info' : 'secondary')) }}">
-                                                {{ $record->report_status }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            @if($record->securitygauge_crime_risk)
-                                                <span class="risk-{{ strtolower($record->securitygauge_crime_risk) }}">
-                                                    <i class="fas fa-circle"></i>
-                                                    {{ ucfirst($record->securitygauge_crime_risk) }}
-                                                </span>
-                                            @else
-                                                <span class="text-muted">N/A</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ $record->updated_at->diffForHumans() }}
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="{{ route('admin.hb837.edit', $record->id) }}" 
-                                                   class="btn btn-info btn-sm" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="{{ route('admin.hb837.report', $record->id) }}" 
-                                                   class="btn btn-success btn-sm" title="Report">
-                                                    <i class="fas fa-file-pdf"></i>
-                                                </a>
-                                                <form action="{{ route('admin.hb837.destroy', $record->id) }}" 
-                                                      method="POST" style="display: inline;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-sm btn-delete" title="Delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="9" class="text-center text-muted py-4">
-                                            <i class="fas fa-inbox fa-2x mb-3 text-muted"></i>
-                                            <br>
-                                            <div class="text-muted">No HB837 records found for this status.</div>
-                                            <br>
-                                            <a href="{{ route('admin.hb837.create') }}" class="btn btn-success btn-sm mt-2">
-                                                <i class="fas fa-plus"></i> Add First Record
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforelse
+                                {{-- DataTables will populate this via AJAX --}}
                             </tbody>
                         </table>
                     </div>
                 </div>
-
-                @if(isset($collection) && method_exists($collection, 'hasPages') && $collection->hasPages())
-                    <div class="card-footer">
-                        <div class="pagination-wrapper">
-                            {{ $collection->appends(request()->query())->links('custom.pagination') }}
-                        </div>
-                    </div>
-                @endif
             </div>
         </div>
     </div>
@@ -444,18 +371,57 @@
                 $('#export_import_modal').modal('show');
             };
             
-            // Initialize DataTable with basic features
-            $('#hb837-table').DataTable({
+            // Initialize DataTable with advanced features
+            var table = $('#hb837-table').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ route('admin.hb837.datatable', $tab ?? 'active') }}",
+                    "type": "POST",
+                    "data": function(d) {
+                        d._token = $('meta[name="csrf-token"]').attr('content');
+                        d.tab = '{{ $tab ?? "active" }}';
+                    }
+                },
+                "columns": [
+                    {"data": "id", "name": "id", "searchable": false},
+                    {"data": "property_name", "name": "property_name"},
+                    {"data": "owner_name", "name": "owner_name"},
+                    {"data": "address", "name": "address", "orderable": false},
+                    {"data": "consultant", "name": "consultant.name", "orderable": false},
+                    {"data": "report_status", "name": "report_status"},
+                    {"data": "crime_risk", "name": "securitygauge_crime_risk"},
+                    {"data": "updated_at", "name": "updated_at"},
+                    {"data": "actions", "name": "actions", "searchable": false, "orderable": false}
+                ],
+                "order": [[ 7, "desc" ]], // Sort by updated_at by default
+                "pageLength": 25,
+                "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                 "responsive": true,
-                "lengthChange": false,
                 "autoWidth": false,
-                "searching": true,
-                "ordering": true,
-                "info": true,
-                "paging": false, // Disable DataTable pagination since we're using Laravel pagination
-                "order": [[ 7, "desc" ]], // Sort by updated column by default
-                "columnDefs": [
-                    { "orderable": false, "targets": 8 } // Disable ordering on actions column
+                "language": {
+                    "processing": '<i class="fas fa-spinner fa-spin"></i> Loading...',
+                    "emptyTable": '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-3"></i><br>No HB837 records found for this status.<br><a href="{{ route('admin.hb837.create') }}" class="btn btn-success btn-sm mt-2"><i class="fas fa-plus"></i> Add First Record</a></div>',
+                    "zeroRecords": '<div class="text-center text-muted py-4"><i class="fas fa-search fa-2x mb-3"></i><br>No matching records found.</div>'
+                },
+                "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                       '<"row"<"col-sm-12"tr>>' +
+                       '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                "buttons": [
+                    {
+                        text: '<i class="fas fa-download"></i> Export',
+                        className: 'btn btn-primary btn-sm',
+                        action: function() {
+                            window.open('{{ route('admin.hb837.export', $tab ?? 'active') }}', '_blank');
+                        }
+                    },
+                    {
+                        text: '<i class="fas fa-upload"></i> Import',
+                        className: 'btn btn-success btn-sm',
+                        action: function() {
+                            openImportModal();
+                        }
+                    }
                 ]
             });
             
