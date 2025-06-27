@@ -9,7 +9,9 @@ class AddConsultantNotesTohb837 extends Migration
     public function up()
     {
         Schema::table('hb837', function (Blueprint $table) {
-            $table->text('consultant_notes')->nullable()->after('notes');
+            if (!Schema::hasColumn('hb837', 'consultant_notes')) {
+                $table->text('consultant_notes')->nullable()->after('notes');
+            }
         });
     }
 

@@ -27,7 +27,7 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.3'
+        php-version: '8.4'
         extensions: mbstring, dom, fileinfo, pgsql, zip, bcmath, gd
         coverage: xdebug
 
@@ -93,7 +93,7 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.3'
+        php-version: '8.4'
 
     - name: Install dependencies
       run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
@@ -116,7 +116,7 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.3'
+        php-version: '8.4'
 
     - name: Setup Node.js
       uses: actions/setup-node@v4

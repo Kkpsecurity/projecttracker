@@ -169,9 +169,9 @@
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <tr>
                                         <td colspan="9" class="text-center text-muted py-4">
-                                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                                            <i class="fas fa-inbox fa-2x mb-3 text-muted"></i>
                                             <br>
-                                            No HB837 records found for this status.
+                                            <div class="text-muted">No HB837 records found for this status.</div>
                                             <br>
                                             <a href="<?php echo e(route('admin.hb837.create')); ?>" class="btn btn-success btn-sm mt-2">
                                                 <i class="fas fa-plus"></i> Add First Record
@@ -186,8 +186,10 @@
 
                 <?php if(isset($collection) && method_exists($collection, 'hasPages') && $collection->hasPages()): ?>
                     <div class="card-footer">
-                        <?php echo e($collection->appends(request()->query())->links()); ?>
+                        <div class="pagination-wrapper">
+                            <?php echo e($collection->appends(request()->query())->links('custom.pagination')); ?>
 
+                        </div>
                     </div>
                 <?php endif; ?>
             </div>
@@ -296,6 +298,49 @@
         .risk-low { color: #28a745; }
         .risk-medium { color: #ffc107; }
         .risk-high { color: #dc3545; }
+        
+        /* Fix pagination styling */
+        .pagination-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .pagination {
+            margin: 0;
+        }
+        
+        .pagination .page-link {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+            border-color: #dee2e6;
+        }
+        
+        .pagination .page-link:hover {
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+        }
+        
+        .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        
+        /* Fix any large icons in pagination */
+        .pagination .page-link i,
+        .pagination .page-link svg {
+            font-size: 0.875rem !important;
+            width: 1rem !important;
+            height: 1rem !important;
+        }
+        
+        /* Ensure no oversized icons anywhere in the table area */
+        .card-footer i,
+        .card-footer svg {
+            font-size: 1rem !important;
+            max-width: 1rem !important;
+            max-height: 1rem !important;
+        }
     </style>
 <?php $__env->stopSection(); ?>
 
