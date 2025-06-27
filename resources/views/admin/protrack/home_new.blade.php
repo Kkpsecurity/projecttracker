@@ -80,8 +80,8 @@
                     </div>
 
                     <!-- Projects Table -->
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
+                    <div class="table-responsive-modern">
+                        <table class="table table-modern table-compact" id="protrack-table">
                             <thead>
                                 <tr>
                                     <th>Corporate Name</th>
@@ -94,60 +94,11 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($clients as $client)
-                                    <tr>
-                                        <td><strong>{{ $client->corporate_name }}</strong></td>
-                                        <td>{{ $client->client_name }}</td>
-                                        <td>{{ $client->project_name }}</td>
-                                        <td>
-                                            <span class="badge badge-{{ $client->status == 'Active' ? 'success' : 'secondary' }}">
-                                                {{ $client->status }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-info">{{ $client->quick_status }}</span>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ $client->updated_at->diffForHumans() }}
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="{{ route('admin.home.detail', $client->id) }}" 
-                                                   class="btn btn-info btn-sm" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ route('admin.home.detail', $client->id) }}" 
-                                                   class="btn btn-warning btn-sm" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="{{ route('admin.home.detail.delete', $client->id) }}" 
-                                                   class="btn btn-danger btn-sm btn-delete" title="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="text-center text-muted py-4">
-                                            <i class="fas fa-inbox fa-3x mb-3"></i>
-                                            <br>
-                                            No projects found for this category.
-                                        </td>
-                                    </tr>
-                                @endforelse
+                                <!-- DataTables will populate this -->
                             </tbody>
                         </table>
                     </div>
                 </div>
-
-                @if($clients->hasPages())
-                    <div class="card-footer">
-                        {{ $clients->appends(request()->query())->links() }}
-                    </div>
-                @endif
             </div>
         </div>
     </div>
@@ -222,6 +173,7 @@
 @stop
 
 @section('custom_css')
+    <link rel="stylesheet" href="//cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
     <style>
         .nav-tabs-custom {
             background: #fff;
@@ -251,15 +203,76 @@
             border-top: none;
             background-color: #f8f9fa;
             font-weight: 600;
+            font-size: 0.875rem;
         }
         
         .btn-group-sm > .btn {
             margin: 0 1px;
         }
+        
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-new-lead { background-color: #17a2b8; color: white; }
+        .status-proposal-sent { background-color: #ffc107; color: #212529; }
+        .status-contracting-now { background-color: #fd7e14; color: white; }
+        .status-active { background-color: #28a745; color: white; }
+        .status-completed { background-color: #007bff; color: white; }
+        .status-closed { background-color: #dc3545; color: white; }
+        
+        /* DataTables pagination styling */
+        .pagination-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .pagination {
+            margin: 0;
+        }
+        
+        .pagination .page-link {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+            border-color: #dee2e6;
+        }
+        
+        .pagination .page-link:hover {
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+        }
+        
+        .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        
+        /* Control table icons */
+        .table i:not(.fa-2x):not(.fa-3x) {
+            font-size: 0.875rem;
+        }
+        
+        /* Action button icons */
+        .btn-group-sm .btn i {
+            font-size: 0.75rem;
+        }
+        
+        /* Empty state styling */
+        .table .fa-2x {
+            font-size: 2rem !important;
+            color: #6c757d;
+        }
     </style>
 @stop
 
 @section('custom_js')
+    <script src="//cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+    <script src="//cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
     <script>
         $(document).ready(function() {
             // Auto-focus on first input when modal opens
@@ -291,6 +304,53 @@
             $('#create_project input, #create_project select').on('input change', function() {
                 $(this).removeClass('is-invalid');
             });
+            
+            // Initialize DataTable with advanced features
+            var table = $('#protrack-table').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ route('admin.home.datatable') }}",
+                    "type": "POST",
+                    "data": function(d) {
+                        d._token = $('meta[name="csrf-token"]').attr('content');
+                        d.tab = '{{ $active_tab ?? "opp" }}';
+                    }
+                },
+                "columns": [
+                    {"data": "corporate_name", "name": "corporate_name"},
+                    {"data": "client_name", "name": "client_name"},
+                    {"data": "project_name", "name": "project_name"},
+                    {"data": "status", "name": "status"},
+                    {"data": "quick_status", "name": "quick_status"},
+                    {"data": "updated_at", "name": "updated_at"},
+                    {"data": "actions", "name": "actions", "searchable": false, "orderable": false}
+                ],
+                "order": [[ 5, "desc" ]], // Sort by updated_at by default
+                "pageLength": 25,
+                "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                "responsive": true,
+                "autoWidth": false,
+                "language": {
+                    "processing": '<i class="fas fa-spinner fa-spin"></i> Loading...',
+                    "emptyTable": '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-3"></i><br>No ProTrack projects found for this status.<br><button type="button" class="btn btn-success btn-sm mt-2" data-toggle="modal" data-target="#create_project"><i class="fas fa-plus"></i> Add First Project</button></div>',
+                    "zeroRecords": '<div class="text-center text-muted py-4"><i class="fas fa-search fa-2x mb-3"></i><br>No matching projects found.</div>'
+                },
+                "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                       '<"row"<"col-sm-12"tr>>' +
+                       '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
+            });
+            
+            // Confirm deletion
+            $(document).on('click', '.btn-delete', function(e) {
+                if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Refresh table when tab changes (since we're using server-side routing for tabs)
+            // This will be handled by the page reload when clicking tab links
         });
     </script>
 @stop

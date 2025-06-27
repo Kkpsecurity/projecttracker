@@ -56,6 +56,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::prefix('home')->name('home.')->group(function () {
         Route::get('/', [HomeController::class, 'index'])->name('index');
         Route::get('/tabs/{tab}', [HomeController::class, 'index'])->name('tabs');
+        Route::post('/datatable/{tab?}', [HomeController::class, 'datatable'])->name('datatable');
         Route::post('/process_new', [HomeController::class, 'process'])->name('process_new');
         Route::get('/detail/{id}', [HomeController::class, 'detail'])->name('detail');
         Route::post('/detail/update', [HomeController::class, 'detailProcess'])->name('detail.update');
