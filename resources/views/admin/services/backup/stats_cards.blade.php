@@ -143,14 +143,21 @@
             </div>
             <div class="card-body">
                 <div class="row text-center">
-                    <div class="col-6">
+                    <div class="col-4">
                         <div class="p-3">
                             <i class="fa fa-users fa-2x text-primary mb-2"></i>
                             <h5 class="mb-0">{{ $systemStats['system_counts']['consultants'] ?? 0 }}</h5>
                             <small class="text-muted">Consultants</small>
                         </div>
                     </div>
-                    <div class="col-6">
+                    <div class="col-4">
+                        <div class="p-3">
+                            <i class="fa fa-user-tie fa-2x text-success mb-2"></i>
+                            <h5 class="mb-0">{{ $systemStats['system_counts']['owners'] ?? 0 }}</h5>
+                            <small class="text-muted">Owners</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
                         <div class="p-3">
                             <i class="fa fa-user-shield fa-2x text-info mb-2"></i>
                             <h5 class="mb-0">{{ $systemStats['system_counts']['users'] ?? 0 }}</h5>

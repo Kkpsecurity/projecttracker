@@ -7,50 +7,19 @@
         "watch-poll": "npm run watch -- --watch-poll",
         "hot": "cross-env NODE_ENV=development node_modules/webpack-dev-server/bin/webpack-dev-server.js --inline --hot --config=node_modules/laravel-mix/setup/webpack.config.js",
         "prod": "npm run production",
-        "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
-        "prepare": "husky install",
-        "lint": "eslint resources/js --ext .js,.vue",
-        "lint:fix": "eslint resources/js --ext .js,.vue --fix",
-        "format": "prettier --write \"resources/js/**/*.{js,vue}\" \"resources/views/**/*.blade.php\"",
-        "test": "php artisan test",
-        "test:coverage": "php artisan test --coverage",
-        "security-check": "composer audit"
+        "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js"
     },
     "devDependencies": {
         "axios": "^0.19",
         "bootstrap": "^4.0.0",
         "cross-env": "^7.0",
-        "eslint": "^8.57.1",
-        "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-vue": "^9.33.0",
-        "husky": "^8.0.3",
         "jquery": "^3.2",
         "laravel-mix": "^5.0.1",
-        "lint-staged": "^15.5.2",
         "lodash": "^4.17.13",
         "popper.js": "^1.12",
-        "prettier": "^3.6.2",
         "resolve-url-loader": "^3.1.0",
         "sass": "^1.15.2",
         "sass-loader": "^8.0.0",
         "vue-template-compiler": "^2.6.13"
-    },
-    "lint-staged": {
-        "*.{js,vue}": [
-            "eslint --fix",
-            "prettier --write"
-        ],
-        "*.blade.php": [
-            "prettier --write --parser=php"
-        ],
-        "*.php": [
-            "php ./vendor/bin/pint"
-        ]
-    },
-    "husky": {
-        "hooks": {
-            "pre-commit": "lint-staged",
-            "pre-push": "npm run test"
-        }
     }
 }

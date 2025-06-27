@@ -18,13 +18,13 @@ return [
         'report_status' => 'not-started',
     ],
 
+
     'property_types' => ['garden', 'midrise', 'highrise', 'industrial', 'bungalo'],
     'contracting_statuses' => ['executed', 'quoted', 'started', 'closed'],
     'report_statuses' => ['not-started', 'in-progress', 'in-review', 'completed'],
 
-    'map_api_key' => env('APP_ENV') === 'local'
-        ? env('GOOGLE_MAPS_API_KEY_DEV', env('GOOGLE_MAPS_API_KEY'))
-        : env('GOOGLE_MAPS_API_KEY'),
+
+    'map_api_key' => env('GOOGLE_MAPS_API_KEY'),
 
     'tab_mapping' => [
         'active' => [
@@ -48,10 +48,6 @@ return [
         2 => 'Moderate',
         3 => 'Elevated',
         4 => 'High',
-        5 => 'Severe',
-    ],
-
-    // Development configuration
-    'enable_maps' => env('ENABLE_GOOGLE_MAPS', true),
-    'maps_development_mode' => env('MAPS_DEVELOPMENT_MODE', false),
+        5 => 'Severe'
+    ]
 ];

@@ -81,128 +81,46 @@
 
 @section('content')
     @php
-        // Controller return vars: $plots, $selectedPlot, $macroClients
+        // Controller return vars: $plots, $selectedPlot
         $selectedPlotId = request()->get('selectedPlotId'); // Fetch from query string
         $selectedMacroClient = request()->get('macro_client');
+
+        // Get distinct macro clients
+        $macroClients = \App\Models\HB837::select('macro_client')->distinct()->get();
+        $macroClients = $macroClients->filter(function ($client) {
+            return !empty($client->macro_client);
+        });
     @endphp
 
     <div class="container-fluid p-3">
         @include('admin.hb837.partials.header')
 
-        <!-- Main Map Interface -->
+        0
         <div class="row mt-3">
-            <div class="col-lg-9 col-md-8">
+            <div class="col-9">
                 <div class="map-container">
                     <div id="map"></div>
-                    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+                    <div class="map-loading" id="map-loading" style="display: none;">
                         <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading map...</span>
+                            <span class="visually-hidden">Loading...</span>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Map Controls -->
-                <div class="d-flex justify-content-between align-items-center mt-2">
-                    <div class="btn-group" role="group">
-                        <button id="reset-zoom" class="btn btn-outline-primary btn-sm">
-                            <i class="fa fa-home"></i> Reset View
-                        </button>
-                        <button id="toggle-satellite" class="btn btn-outline-secondary btn-sm">
-                            <i class="fa fa-satellite"></i> Satellite
-                        </button>
-                        <button id="cluster-markers" class="btn btn-outline-info btn-sm">
-                            <i class="fa fa-layer-group"></i> Cluster
-                        </button>
-                    </div>
-                    
-                    <div class="map-stats" id="map-stats">
-                        <small class="text-muted">
-                            <span id="marker-count">0</span> properties displayed
-                        </small>
+                    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-3 col-md-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">Property Addresses</h6>
-                        <div class="btn-group btn-group-sm">
-                            <button id="reset-zoom-sidebar" class="btn btn-outline-primary btn-sm" title="Reset Map View">
-                                <i class="fa fa-home"></i>
-                            </button>
-                            <button class="sidebar-toggle btn btn-outline-secondary btn-sm d-lg-none" title="Toggle Sidebar">
-                                <i class="fa fa-bars"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="card-body p-0">
-                        <!-- Address Type Filter -->
-                        <div class="p-3 border-bottom">
-                            <div class="btn-group btn-group-sm w-100" role="group">
-                                <input type="radio" class="btn-check" name="address-filter" id="filter-all" value="all" checked>
-                                <label class="btn btn-outline-primary" for="filter-all">All</label>
-                                
-                                <input type="radio" class="btn-check" name="address-filter" id="filter-plot" value="plot">
-                                <label class="btn btn-outline-success" for="filter-plot">Custom</label>
-                                
-                                <input type="radio" class="btn-check" name="address-filter" id="filter-macro" value="macro">
-                                <label class="btn btn-outline-info" for="filter-macro">Existing</label>
-                            </div>
-                        </div>
-                        
-                        <!-- Address List -->
-                        <div id="address-list-container" class="overflow-auto" style="max-height: 50vh;">
-                            <ul id="address-list" class="list-group list-group-flush">
-                                <!-- Addresses will be populated by JavaScript -->
-                            </ul>
-                        </div>
-                        
-                        <!-- Empty State -->
-                        <div id="empty-state" class="text-center p-4 text-muted" style="display: none;">
-                            <i class="fa fa-map-marker-alt fa-2x mb-2"></i>
-                            <p class="mb-0">No addresses to display</p>
-                            <small>Select a plot or macro client above</small>
-                        </div>
-                    </div>
+            <div class="col-3 bg-light p-0 m-0">
+                <div class="list-group-header d-flex justify-content-between align-items-center p-3">
+                    <h5>Addresses</h5>
+                    <button id="reset-zoom" class="btn btn-sm btn-primary">
+                        <i class="fa fa-refresh"></i>
+                    </button>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Quick Stats Dashboard -->
-        <div class="row mt-3">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-md-3">
-                                <div class="stat-item">
-                                    <h4 class="text-primary mb-1" id="stat-total-plots">{{ $plots->count() }}</h4>
-                                    <small class="text-muted">Total Plots</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="stat-item">
-                                    <h4 class="text-success mb-1" id="stat-custom-plots">{{ $plots->where('plot_type', 'custom')->count() }}</h4>
-                                    <small class="text-muted">Custom Plots</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="stat-item">
-                                    <h4 class="text-info mb-1" id="stat-prospect-plots">{{ $plots->where('plot_type', 'prospect')->count() }}</h4>
-                                    <small class="text-muted">Prospects</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="stat-item">
-                                    <h4 class="text-warning mb-1" id="stat-client-plots">{{ $plots->where('plot_type', 'client')->count() }}</h4>
-                                    <small class="text-muted">Clients</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <ul id="address-list" class="list-group m-0 p-0"></ul>
             </div>
         </div>
     </div>
@@ -222,8 +140,6 @@
             selectedPlotId: @json($selectedPlotId ?? null),
             selectedMacroClient: @json($selectedMacroClient ?? null),
             csrfToken: "{{ csrf_token() }}",
-            mapsEnabled: {{ config('hb837.enable_maps') ? 'true' : 'false' }},
-            developmentMode: {{ config('hb837.maps_development_mode') ? 'true' : 'false' }},
 
             // URLs from your original config
             addAddressUrl: "{{ route('admin.mapplots.address.store') }}",
@@ -243,49 +159,7 @@
                 maxZoom: 18
             }
         };
-
-        // Global error handler for Google Maps API
-        window.gm_authFailure = function() {
-            console.error('Google Maps API authentication failed');
-            window.MapPlotConfig.mapsEnabled = false;
-            showMapError('Authentication Failed', 'The Google Maps API key is not properly configured for this domain. Please contact your administrator.');
-        };
-
-        // Error display function
-        function showMapError(title, message) {
-            document.getElementById('map').innerHTML = `
-                <div class="d-flex align-items-center justify-content-center h-100 bg-light">
-                    <div class="text-center p-4">
-                        <div class="alert alert-warning" role="alert">
-                            <h5 class="alert-heading">${title}</h5>
-                            <p class="mb-0">${message}</p>
-                            <hr>
-                            <p class="mb-0 small">
-                                <strong>For developers:</strong> 
-                                Add <code>{{ request()->getSchemeAndHttpHost() }}/*</code> to your Google Cloud Console API restrictions.
-                            </p>
-                        </div>
-                        <button class="btn btn-primary" onclick="location.reload()">
-                            <i class="fa fa-refresh"></i> Retry
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
     </script>
-    
-    @if(config('hb837.enable_maps'))
-        <script async defer 
-                src="https://maps.googleapis.com/maps/api/js?key={{ config('hb837.map_api_key') }}&libraries=places&callback=initializeGoogleMaps"
-                onerror="showMapError('Failed to Load', 'Could not load Google Maps API. Please check your internet connection.')">
-        </script>
-    @else
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                showMapError('Maps Disabled', 'Google Maps is currently disabled in development mode.');
-            });
-        </script>
-    @endif
-    
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ config('hb837.map_api_key') }}&libraries=places"></script>
     <script src="{{ asset('js/google-maps.js') }}"></script>
 @endsection

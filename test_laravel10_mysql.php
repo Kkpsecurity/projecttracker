@@ -1,9 +1,9 @@
 <?php
 
 // Test Laravel 10 + MySQL Configuration
-require __DIR__.'/vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
-$app = require_once __DIR__.'/bootstrap/app.php';
+$app = require_once __DIR__ . '/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
@@ -34,7 +34,7 @@ try {
 
     // Test 3: Database Connection
     $dbName = config('database.connections.mysql.database');
-    echo "\n3. Database: ".config('database.default')." ($dbName)\n";
+    echo "\n3. Database: " . config('database.default') . " ($dbName)\n";
 
     // Test connection
     DB::connection()->getPdo();
@@ -59,7 +59,7 @@ try {
     echo "\n9. Cache Test:\n";
     cache(['laravel10_test' => 'Laravel 10 Test']);
     $cacheValue = cache('laravel10_test');
-    echo '   Cache Value: '.($cacheValue === 'Laravel 10 Test' ? '✅ Working' : '❌ Failed')."\n";
+    echo "   Cache Value: " . ($cacheValue === 'Laravel 10 Test' ? '✅ Working' : '❌ Failed') . "\n";
 
     // Test 9: Laravel 10 Features Check
     echo "\n10. Laravel 10 Features:\n";
@@ -79,15 +79,15 @@ try {
         $validator = validator(['email' => 'test@example.com'], ['email' => 'required|email']);
         echo "   ✅ Validation system working\n";
     } catch (Exception $e) {
-        echo '   ❌ Validation system error: '.$e->getMessage()."\n";
+        echo "   ❌ Validation system error: " . $e->getMessage() . "\n";
     }
 
     echo "\n✅ Laravel 10 upgrade appears successful!\n";
     echo "🚀 Ready for AdminLTE integration and final testing.\n";
 
 } catch (Exception $e) {
-    echo '❌ ERROR: '.$e->getMessage()."\n";
-    echo "Stack trace:\n".$e->getTraceAsString()."\n";
+    echo "❌ ERROR: " . $e->getMessage() . "\n";
+    echo "Stack trace:\n" . $e->getTraceAsString() . "\n";
 }
 
 echo "\n=== Test Complete ===\n";

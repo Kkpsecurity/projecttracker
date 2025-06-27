@@ -23,7 +23,6 @@ class GooglePlotManager {
     // Main initialization function.
     async init() {
         this.initMapPage();
-        this.initEnhancedFeatures(); // Initialize our new features
 
         try {
             const data = await this.getMapData();
@@ -95,15 +94,10 @@ class GooglePlotManager {
             });
         }
 
-        // Attach reset button listeners.
+        // Attach reset button listener.
         const resetBtn = document.getElementById("reset-zoom");
         if (resetBtn) {
             resetBtn.addEventListener("click", () => this.resetZoom());
-        }
-
-        const resetBtnSidebar = document.getElementById("reset-zoom-sidebar");
-        if (resetBtnSidebar) {
-            resetBtnSidebar.addEventListener("click", () => this.resetZoom());
         }
 
         // Attach your filter events, autocomplete, etc.
@@ -123,9 +117,6 @@ class GooglePlotManager {
 
         this.setupAutocomplete();
         console.log("Map page initialized and filters reset.");
-
-        // Enhanced plot management features
-        this.initEnhancedFeatures();
     }
 
     // Helper: Attach event listener to a dropdown.
@@ -410,61 +401,45 @@ class GooglePlotManager {
     /**
      * Delete address from the map.
      */
-    deleteAddress(addressId) {
-        if (!confirm("Are you sure you want to delete this address?")) {
+    deleteAddress(addressId, listItem) {
+        if (!addressId) {
+            console.error("Error: Missing address ID for deletion.");
+            alert("Unable to delete address. Missing ID.");
             return;
         }
 
-        const deleteUrl = this.config.deleteAddressUrl.replace(
-            ":id",
-            addressId
-        );
+        if (
+            !confirm(
+                "Are you sure you want to delete this address? This action cannot be undone."
+            )
+        ) {
+            return;
+        }
 
-        fetch(deleteUrl, {
+        fetch(`/admin/mapplots/plot-address/delete/${addressId}`, {
             method: "POST",
             headers: {
+                "X-CSRF-TOKEN": window.MapPlotConfig.csrfToken,
                 "Content-Type": "application/json",
-                "X-CSRF-TOKEN": this.config.csrfToken,
             },
         })
-            .then((response) => response.json())
+            .then((response) => {
+                if (!response.ok) throw new Error("Failed to delete address.");
+                return response.json();
+            })
             .then((data) => {
                 if (data.success) {
-                    this.showNotification(
-                        "Address deleted successfully!",
-                        "success"
-                    );
-                    // Remove the address from the list
-                    const addressElement = document.querySelector(
-                        `[data-address-id="${addressId}"]`
-                    );
-                    if (addressElement) {
-                        addressElement.remove();
-                    }
-                    // Remove marker from map
-                    const markerIndex = this.markers.findIndex(
-                        (marker) => marker.addressData?.id === addressId
-                    );
-                    if (markerIndex > -1) {
-                        this.markers[markerIndex].setMap(null);
-                        this.markers.splice(markerIndex, 1);
-                    }
-                    // Update counter
-                    this.updateMarkerCount(this.markers.length);
+                    console.log("Address deleted:", data);
+                    listItem.remove();
+                    // refresh map
+                    this.callApiEndpoint();
                 } else {
-                    this.showNotification(
-                        "Failed to delete address: " +
-                            (data.message || "Unknown error"),
-                        "error"
-                    );
+                    throw new Error(data.message || "Unknown error");
                 }
             })
             .catch((error) => {
-                console.error("Delete error:", error);
-                this.showNotification(
-                    "Failed to delete address: " + error.message,
-                    "error"
-                );
+                console.error("Error deleting address:", error);
+                alert("Failed to delete address. Please try again.");
             });
     }
 
@@ -567,23 +542,19 @@ class GooglePlotManager {
         const addresses = Array.isArray(data) ? data : data?.addresses || [];
 
         if (addresses.length === 0) {
-            document.getElementById("empty-state").style.display = "block";
+            sidebarElement.innerHTML =
+                "<li class='list-group-item text-center text-muted'>No addresses available</li>";
             return;
-        } else {
-            document.getElementById("empty-state").style.display = "none";
         }
-
-        // Update marker count
-        this.updateMarkerCount(addresses.length);
 
         addresses.forEach((item) => {
             console.log("Processing item:", item);
             const li = document.createElement("li");
 
-            li.className = "list-group-item address-item";
+            li.className =
+                "list-group-item p-3 border rounded shadow-sm bg-light mb-2 d-flex flex-column";
             li.style.cursor = "pointer";
             li.dataset.addressId = item.id;
-            li.dataset.type = item.type || "unknown"; // For filtering
 
             const coordinates =
                 typeof item.latitude === "number" &&
@@ -593,140 +564,44 @@ class GooglePlotManager {
                       )}`
                     : "Coordinates pending";
 
-            // Determine if this is a custom plot address (can be deleted)
-            const isCustomPlotAddress = item.type === "plot";
-
-            // Get type badge
-            const typeBadge = this.getTypeBadge(item.type, item.property_type);
-
-            // Get status indicator
-            const statusIndicator = this.getStatusIndicator(item.status);
+            const showDeleteButton =
+                item.location_name && item.location_name.startsWith("Plot:");
 
             li.innerHTML = `
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1 text-dark">
-                            ${item.location_name || "Address"}
-                            ${typeBadge}
-                        </h6>
-                        <p class="mb-1 text-muted small">${item.address}</p>
-                        <div class="d-flex flex-wrap gap-2 mt-1">
-                            <small class="text-secondary">
-                                <i class="fa fa-map-marker-alt"></i> ${coordinates}
-                            </small>
-                            ${statusIndicator}
-                            ${
-                                item.property_value
-                                    ? `<small class="text-success"><i class="fa fa-dollar-sign"></i> ${item.property_value}</small>`
-                                    : ""
-                            }
-                        </div>
-                        ${
-                            item.description
-                                ? `<small class="text-info mt-1 d-block"><i class="fa fa-info-circle"></i> ${item.description}</small>`
-                                : ""
-                        }
-                    </div>
-                    <div class="d-flex flex-column gap-1">
-                        <button class="btn btn-sm btn-outline-primary show-map-btn" title="Center on map">
-                            <i class="fa fa-crosshairs"></i>
-                        </button>
-                        ${
-                            isCustomPlotAddress
-                                ? `
-                            <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete address">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        `
-                                : ""
-                        }
-                    </div>
-                </div>
-            `;
-
-            // Attach event handlers
-            li.querySelector(".show-map-btn")?.addEventListener(
-                "click",
-                (e) => {
-                    e.stopPropagation();
-                    this.showPlotOnMap(item);
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 text-primary">${
+                    item.location_name || "Address"
+                }</h6>
+                ${
+                    showDeleteButton
+                        ? `<button class="btn btn-sm text-dark delete-btn" title="Delete Address">
+                            <i class="fa fa-trash"></i>
+                        </button>`
+                        : ""
                 }
-            );
+            </div>
+            <p class="mb-1 text-muted">${item.address}</p>
+            <small class="text-secondary">${coordinates}</small>
+            <div class="d-flex justify-content-end mt-2">
+                <button class="btn btn-sm btn-outline-primary show-map-btn">
+                    <i class="fa fa-map"></i> Show on Map
+                </button>
+            </div>
+        `;
 
-            if (isCustomPlotAddress) {
-                li.querySelector(".delete-btn")?.addEventListener(
-                    "click",
-                    (e) => {
-                        e.stopPropagation();
-                        this.deleteAddress(item.id);
-                    }
-                );
-            }
+            // ⏬ Attach event handlers *after* DOM is ready
+            li.querySelector(".show-map-btn")?.addEventListener("click", () => {
+                plotManager.showPlotOnMap(item);
+            });
 
-            // Click on item to center on map
-            li.addEventListener("click", () => {
-                this.showPlotOnMap(item);
-                // Add selected class
-                document
-                    .querySelectorAll(".address-item")
-                    .forEach((el) => el.classList.remove("selected"));
-                li.classList.add("selected");
+            li.querySelector(".delete-btn")?.addEventListener("click", () => {
+                plotManager.deleteAddress(item.id, li);
             });
 
             sidebarElement.appendChild(li);
         });
-    }
 
-    getTypeBadge(type, propertyType) {
-        let badgeClass = "secondary";
-        let badgeText = "Unknown";
-
-        switch (type) {
-            case "plot":
-                badgeClass = "success";
-                badgeText = "Custom";
-                break;
-            case "macro":
-                badgeClass = "info";
-                badgeText = "Existing";
-                break;
-        }
-
-        if (propertyType) {
-            badgeText += ` (${propertyType})`;
-        }
-
-        return `<span class="badge bg-${badgeClass} ms-2">${badgeText}</span>`;
-    }
-
-    getStatusIndicator(status) {
-        if (!status) return "";
-
-        let iconClass = "fa-circle";
-        let textClass = "text-secondary";
-
-        switch (status) {
-            case "active":
-                iconClass = "fa-check-circle";
-                textClass = "text-success";
-                break;
-            case "pending":
-                iconClass = "fa-clock";
-                textClass = "text-warning";
-                break;
-            case "sold":
-                iconClass = "fa-handshake";
-                textClass = "text-info";
-                break;
-            case "inactive":
-                iconClass = "fa-times-circle";
-                textClass = "text-danger";
-                break;
-        }
-
-        return `<small class="${textClass}"><i class="fa ${iconClass}"></i> ${
-            status.charAt(0).toUpperCase() + status.slice(1)
-        }</small>`;
+        console.log("Sidebar updated.");
     }
 
     /**
@@ -783,235 +658,6 @@ class GooglePlotManager {
             );
         }
     }
-
-    // Enhanced plot management features
-    initEnhancedFeatures() {
-        // Address type filtering
-        const filterButtons = document.querySelectorAll(
-            'input[name="address-filter"]'
-        );
-        filterButtons.forEach((button) => {
-            button.addEventListener("change", (e) => {
-                this.filterAddressesByType(e.target.value);
-            });
-        });
-
-        // Export functionality (removed from sidebar, can be added elsewhere if needed)
-        const exportBtn = document.getElementById("export-data");
-        if (exportBtn) {
-            exportBtn.addEventListener("click", () => {
-                this.exportPlotData();
-            });
-        }
-
-        // Map control buttons
-        const toggleSatelliteBtn = document.getElementById("toggle-satellite");
-        if (toggleSatelliteBtn) {
-            toggleSatelliteBtn.addEventListener("click", () => {
-                this.toggleMapType();
-            });
-        }
-
-        const clusterBtn = document.getElementById("cluster-markers");
-        if (clusterBtn) {
-            clusterBtn.addEventListener("click", () => {
-                this.toggleMarkerClustering();
-            });
-        }
-
-        // Edit plot functionality
-        const editPlotBtn = document.getElementById("edit-plot-btn");
-        if (editPlotBtn) {
-            editPlotBtn.addEventListener("click", () => {
-                this.openEditPlotModal();
-            });
-        }
-
-        // Convert to client functionality
-        const convertBtn = document.getElementById("convert-to-client-btn");
-        if (convertBtn) {
-            convertBtn.addEventListener("click", () => {
-                this.openConvertToClientModal();
-            });
-        }
-
-        // Load statistics
-        this.loadPlotStatistics();
-    }
-
-    filterAddressesByType(type) {
-        const addressItems = document.querySelectorAll(
-            "#address-list .list-group-item"
-        );
-        let visibleCount = 0;
-
-        addressItems.forEach((item) => {
-            const addressType = item.dataset.type;
-            const shouldShow = type === "all" || addressType === type;
-
-            item.style.display = shouldShow ? "block" : "none";
-            if (shouldShow) visibleCount++;
-        });
-
-        // Update marker visibility on map
-        this.markers.forEach((marker) => {
-            const markerType = marker.addressData?.type;
-            const shouldShow = type === "all" || markerType === type;
-            marker.setVisible(shouldShow);
-        });
-
-        // Update counter
-        this.updateMarkerCount(visibleCount);
-    }
-
-    updateMarkerCount(count) {
-        const counterElement = document.getElementById("marker-count");
-        if (counterElement) {
-            counterElement.textContent = count;
-        }
-    }
-
-    exportPlotData() {
-        const selectedPlotId = this.getSelectedPlotId();
-        if (!selectedPlotId) {
-            this.showNotification("Please select a plot to export", "warning");
-            return;
-        }
-
-        fetch(`/admin/mapplots/${selectedPlotId}/export`)
-            .then((response) => response.json())
-            .then((data) => {
-                if (data.success) {
-                    // Download the data as JSON
-                    const blob = new Blob(
-                        [JSON.stringify(data.data, null, 2)],
-                        {
-                            type: "application/json",
-                        }
-                    );
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = data.filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-
-                    this.showNotification(
-                        "Plot data exported successfully!",
-                        "success"
-                    );
-                } else {
-                    this.showNotification(
-                        "Failed to export plot data",
-                        "error"
-                    );
-                }
-            })
-            .catch((error) => {
-                console.error("Export error:", error);
-                this.showNotification(
-                    "Export failed: " + error.message,
-                    "error"
-                );
-            });
-    }
-
-    toggleMapType() {
-        if (!this.map) return;
-
-        const currentType = this.map.getMapTypeId();
-        const newType = currentType === "satellite" ? "roadmap" : "satellite";
-        this.map.setMapTypeId(newType);
-
-        const btn = document.getElementById("toggle-satellite");
-        if (btn) {
-            btn.innerHTML =
-                newType === "satellite"
-                    ? '<i class="fa fa-road"></i> Road View'
-                    : '<i class="fa fa-satellite"></i> Satellite';
-        }
-    }
-
-    toggleMarkerClustering() {
-        // Implement marker clustering toggle
-        if (this.markerCluster) {
-            this.markerCluster.clearMarkers();
-            this.markerCluster = null;
-            this.markers.forEach((marker) => marker.setMap(this.map));
-        } else {
-            this.enableMarkerClustering();
-        }
-    }
-
-    enableMarkerClustering() {
-        // Note: This requires the MarkerClusterer library
-        if (typeof MarkerClusterer !== "undefined" && this.markers.length > 0) {
-            this.markerCluster = new MarkerClusterer(this.map, this.markers, {
-                imagePath:
-                    "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m",
-            });
-        }
-    }
-
-    loadPlotStatistics() {
-        fetch("/admin/mapplots/statistics")
-            .then((response) => response.json())
-            .then((stats) => {
-                this.updateStatisticElements(stats);
-            })
-            .catch((error) => {
-                console.error("Failed to load statistics:", error);
-            });
-    }
-
-    updateStatisticElements(stats) {
-        const elements = {
-            "stat-total-plots": stats.total_plots,
-            "stat-custom-plots": stats.plots_by_type.custom,
-            "stat-prospect-plots": stats.plots_by_type.prospect,
-            "stat-client-plots": stats.plots_by_type.client,
-        };
-
-        Object.entries(elements).forEach(([id, value]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = value || 0;
-            }
-        });
-    }
-
-    showNotification(message, type = "info") {
-        // Create a simple notification system
-        const notification = document.createElement("div");
-        notification.className = `alert alert-${
-            type === "error" ? "danger" : type
-        } alert-dismissible fade show position-fixed`;
-        notification.style.cssText =
-            "top: 20px; right: 20px; z-index: 9999; min-width: 300px;";
-        notification.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-
-        document.body.appendChild(notification);
-
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 5000);
-    }
-
-    getSelectedPlotId() {
-        return this.formElements.plotSelect
-            ? this.formElements.plotSelect.value
-            : null;
-    }
-
-    // ...existing code...
 }
 
 // Helper to initialize the manager after Google Maps API is loaded.
@@ -1021,24 +667,10 @@ function initializePlotManager() {
         window.plotManager = new GooglePlotManager(config);
     } catch (e) {
         console.error("Error initializing map:", e);
-        showMapError(
-            "Initialization Error",
-            "Failed to initialize the map system: " + e.message
-        );
     }
 }
 
-// Global callback function for Google Maps API
-window.initializeGoogleMaps = function () {
-    console.log("Google Maps API loaded successfully");
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initializePlotManager);
-    } else {
-        initializePlotManager();
-    }
-};
-
-// Wait for both DOM and Google Maps API to be ready (fallback method).
+// Wait for both DOM and Google Maps API to be ready.
 function waitForGoogleMapsAndInit() {
     if (typeof google !== "undefined" && google.maps) {
         initializePlotManager();
@@ -1047,25 +679,4 @@ function waitForGoogleMapsAndInit() {
     }
 }
 
-// Use the callback method if available, otherwise use polling
-if (!window.MapPlotConfig || window.MapPlotConfig.mapsEnabled !== false) {
-    document.addEventListener("DOMContentLoaded", function () {
-        // If Google Maps hasn't loaded in 10 seconds, show error
-        setTimeout(function () {
-            if (typeof google === "undefined" || !google.maps) {
-                showMapError(
-                    "Loading Timeout",
-                    "Google Maps API failed to load within the expected time."
-                );
-            }
-        }, 10000);
-    });
-} else {
-    // Maps are disabled, show appropriate message
-    document.addEventListener("DOMContentLoaded", function () {
-        showMapError(
-            "Maps Disabled",
-            "Google Maps is currently disabled in the configuration."
-        );
-    });
-}
+document.addEventListener("DOMContentLoaded", waitForGoogleMapsAndInit);

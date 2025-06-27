@@ -14,9 +14,9 @@ return [
     |
     */
 
-    'title' => 'Project Tracker',
+    'title' => 'AdminLTE 3',
     'title_prefix' => '',
-    'title_postfix' => ' | Admin',
+    'title_postfix' => '',
 
     /*
     |--------------------------------------------------------------------------
@@ -63,12 +63,12 @@ return [
     |
     */
 
-    'logo' => '<b>Project</b>Tracker',
+    'logo' => '<b>Admin</b>LTE',
     'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'Project Tracker',
+    'logo_img_alt' => 'Admin Logo',
 
     /*
     |--------------------------------------------------------------------------
@@ -256,13 +256,13 @@ return [
     |
     */
 
-    'use_route_url' => true,
-    'dashboard_url' => 'admin.dashboard',
-    'logout_url' => 'admin.logout',
-    'login_url' => 'admin.login',
+    'use_route_url' => false,
+    'dashboard_url' => 'home',
+    'logout_url' => 'logout',
+    'login_url' => 'login',
     'register_url' => 'register',
-    'password_reset_url' => 'admin.password.request',
-    'password_email_url' => 'admin.password.email',
+    'password_reset_url' => 'password/reset',
+    'password_email_url' => 'password/email',
     'profile_url' => false,
     'disable_darkmode_routes' => false,
 
@@ -315,101 +315,82 @@ return [
             'type' => 'sidebar-menu-search',
             'text' => 'search',
         ],
-
-        // Dashboard
         [
-            'text' => 'Dashboard',
-            'route' => 'admin.dashboard',
-            'icon' => 'fas fa-tachometer-alt',
-            'active' => ['admin/dashboard', 'admin', 'admin/'],
+            'text' => 'blog',
+            'url' => 'admin/blog',
+            'can' => 'manage-blog',
         ],
-
-        // Project Management Section
-        ['header' => 'PROJECT MANAGEMENT'],
         [
-            'text' => 'ProTrack Projects',
-            'route' => 'admin.home.index',
-            'icon' => 'fas fa-project-diagram',
+            'text' => 'pages',
+            'url' => 'admin/pages',
+            'icon' => 'far fa-fw fa-file',
+            'label' => 4,
+            'label_color' => 'success',
+        ],
+        ['header' => 'account_settings'],
+        [
+            'text' => 'profile',
+            'url' => 'admin/settings',
+            'icon' => 'fas fa-fw fa-user',
+        ],
+        [
+            'text' => 'change_password',
+            'url' => 'admin/settings',
+            'icon' => 'fas fa-fw fa-lock',
+        ],
+        [
+            'text' => 'multilevel',
+            'icon' => 'fas fa-fw fa-share',
             'submenu' => [
                 [
-                    'text' => 'All Projects',
-                    'route' => 'admin.home.index',
-                    'icon' => 'fas fa-list',
+                    'text' => 'level_one',
+                    'url' => '#',
                 ],
                 [
-                    'text' => 'Opportunities',
-                    'url' => '/admin/home/tabs/opp',
-                    'icon' => 'fas fa-file-alt',
+                    'text' => 'level_one',
+                    'url' => '#',
+                    'submenu' => [
+                        [
+                            'text' => 'level_two',
+                            'url' => '#',
+                        ],
+                        [
+                            'text' => 'level_two',
+                            'url' => '#',
+                            'submenu' => [
+                                [
+                                    'text' => 'level_three',
+                                    'url' => '#',
+                                ],
+                                [
+                                    'text' => 'level_three',
+                                    'url' => '#',
+                                ],
+                            ],
+                        ],
+                    ],
                 ],
                 [
-                    'text' => 'Active Projects',
-                    'url' => '/admin/home/tabs/active',
-                    'icon' => 'fas fa-play-circle',
-                ],
-                [
-                    'text' => 'Completed Projects',
-                    'url' => '/admin/home/tabs/completed',
-                    'icon' => 'fas fa-check-circle',
-                ],
-                [
-                    'text' => 'Closed Projects',
-                    'url' => '/admin/home/tabs/closed',
-                    'icon' => 'fas fa-times-circle',
+                    'text' => 'level_one',
+                    'url' => '#',
                 ],
             ],
         ],
-
-        // HB837 Section
+        ['header' => 'labels'],
         [
-            'text' => 'HB837 Management',
-            'icon' => 'fas fa-building',
-            'submenu' => [
-                [
-                    'text' => 'View HB837 Records',
-                    'route' => 'admin.hb837.index',
-                    'icon' => 'fas fa-list',
-                ],
-                [
-                    'text' => 'Add New Record',
-                    'route' => 'admin.hb837.create',
-                    'icon' => 'fas fa-plus',
-                ],
-                [
-                    'text' => 'Backup & Services',
-                    'route' => 'admin.hb837.backup.dashboard',
-                    'icon' => 'fas fa-database',
-                ],
-            ],
+            'text' => 'important',
+            'icon_color' => 'red',
+            'url' => '#',
         ],
-
-        // Map Tools
         [
-            'text' => 'Plot Maps',
-            'route' => 'admin.mapplots.index',
-            'icon' => 'fas fa-map-marked-alt',
+            'text' => 'warning',
+            'icon_color' => 'yellow',
+            'url' => '#',
         ],
-
-        // Data Management Section
-        ['header' => 'DATA MANAGEMENT'],
         [
-            'text' => 'Consultants',
-            'route' => 'admin.consultants.index',
-            'icon' => 'fas fa-user-tie',
-        ],
-
-        // User Management Section (Admin only)
-        [
-            'text' => 'User Management',
-            'route' => 'admin.users.index',
-            'icon' => 'fas fa-users-cog',
-        ],
-
-        // Account Management
-        ['header' => 'ACCOUNT'],
-        [
-            'text' => 'Change Password',
-            'route' => 'admin.profile.change_password',
-            'icon' => 'fas fa-key',
+            'text' => 'information',
+            'icon_color' => 'cyan',
+            'url' => '#',
         ],
     ],
 

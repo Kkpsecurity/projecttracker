@@ -1,53 +1,49 @@
-<?php
-
+<?php 
 namespace App\Exports;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
 class ConsultantExport implements FromCollection, WithHeadings, WithTitle
 {
-    protected bool $includeFiles;
+    protected bool $included_files;
 
-    public function __construct(bool $includeFiles = false)
+    public function __construct(bool $included_files = false)
     {
-        $this->includeFiles = $includeFiles;
+        $this->included_files = $included_files;
     }
 
     public function collection(): Collection
     {
-        $data = $this->includeFiles
+        $data = $this->included_files
             ? $this->consultantsWithFiles()
             : $this->consultantsOnly();
 
-        Log::info('Exporting consultants: '.$data->count());
+        \Log::info('Exporting consultants: ' . $data->count());
 
         return $data;
     }
 
     protected function consultantsOnly(): Collection
     {
-        return DB::table('consultants')->get()->map(function ($row) {
-            return [
-                $row->id,
-                $row->first_name ?? '',
-                $row->last_name ?? '',
-                $row->email ?? '',
-                $row->dba_company_name ?? '',
-                $row->mailing_address ?? '',
-                $row->fcp_expiration_date ?? '',
-                $row->assigned_light_meter ?? '',
-                $row->lm_nist_expiration_date ?? '',
-                $row->subcontractor_bonus_rate ?? '',
-                $row->notes ?? '',
-                $row->created_at ?? '',
-                $row->updated_at ?? '',
-            ];
-        });
+        return DB::table('consultants')->get()->map(fn($row) => [
+            $row->id,
+            $row->first_name,
+            $row->last_name,
+            $row->email,
+            $row->dba_company_name,
+            $row->mailing_address,
+            $row->fcp_expiration_date,
+            $row->assigned_light_meter,
+            $row->lm_nist_expiration_date,
+            $row->subcontractor_bonus_rate,
+            $row->notes,
+            $row->created_at,
+            $row->updated_at,
+        ]);
     }
 
     protected function consultantsWithFiles(): Collection
@@ -74,27 +70,25 @@ class ConsultantExport implements FromCollection, WithHeadings, WithTitle
                 'consultant_files.file_size'
             )
             ->get()
-            ->map(function ($row) {
-                return [
-                    $row->id,
-                    $row->first_name ?? '',
-                    $row->last_name ?? '',
-                    $row->email ?? '',
-                    $row->dba_company_name ?? '',
-                    $row->mailing_address ?? '',
-                    $row->fcp_expiration_date ?? '',
-                    $row->assigned_light_meter ?? '',
-                    $row->lm_nist_expiration_date ?? '',
-                    $row->subcontractor_bonus_rate ?? '',
-                    $row->notes ?? '',
-                    $row->created_at ?? '',
-                    $row->updated_at ?? '',
-                    $row->file_type ?? '',
-                    $row->original_filename ?? '',
-                    $row->file_path ?? '',
-                    $row->file_size ?? '',
-                ];
-            });
+            ->map(fn($row) => [
+                $row->id,
+                $row->first_name,
+                $row->last_name,
+                $row->email,
+                $row->dba_company_name,
+                $row->mailing_address,
+                $row->fcp_expiration_date,
+                $row->assigned_light_meter,
+                $row->lm_nist_expiration_date,
+                $row->subcontractor_bonus_rate,
+                $row->notes,
+                $row->created_at,
+                $row->updated_at,
+                $row->file_type,
+                $row->original_filename,
+                $row->file_path,
+                $row->file_size,
+            ]);
     }
 
     public function headings(): array
@@ -115,7 +109,7 @@ class ConsultantExport implements FromCollection, WithHeadings, WithTitle
             'Updated At',
         ];
 
-        if ($this->includeFiles) {
+        if ($this->included_files) {
             $headings[] = 'File Type';
             $headings[] = 'Original Filename';
             $headings[] = 'File Path';

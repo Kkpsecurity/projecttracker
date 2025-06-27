@@ -2,25 +2,33 @@
 
 namespace App\Http\Controllers\Admin\HB837;
 
-use App\Http\Controllers\Controller;
-use App\Models\Client;
-use App\Models\Consultant;
 use App\Models\HB837;
+use App\Models\Owner;
+use App\Models\Client;
 use App\Models\HB837File;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
+use App\Models\Consultant;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Exports\HB837Export;
+use App\Imports\HB837Import;
+use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 
 class HB837Controller extends Controller
 {
+
+
     public function index(Request $request, $tab = 'active')
     {
-        $tab = in_array($tab = Str::lower($tab), ['active', 'quoted', 'completed', 'closed']) ? $tab : 'active';
-        $tabDisplayName = ucfirst($tab); // Convert to title case for view
+        $tab = in_array($tab = Str::lower($tab), ['active', 'quoted', 'completed', 'closed']) ? $tab : 'quoted';
 
         $sort = in_array($request->get('sort'), $this->sortableColumns(), true)
             ? $request->get('sort')
@@ -46,21 +54,14 @@ class HB837Controller extends Controller
             ? date('Y-m-d H:i:s', Storage::lastModified($backupPath))
             : null;
 
-        return view('admin.hb837.hb837_new', [
-            'collection' => $projects,
+        return view('admin.hb837.hb837', [
+            'hb837' => $projects,
             'tab' => $tab,
-            'active_tab' => $tabDisplayName, // Add this for view display
             'savedDate' => $savedDate,
             'sort' => $sort,
             'direction' => $direction,
             'num_rows' => $numRows,
-            'search' => $request->get('search'),
-            'stats' => [
-                'total' => HB837::count(),
-                'active' => HB837::where('report_status', 'Active')->count(),
-                'quoted' => HB837::where('contracting_status', 'quoted')->count(),
-                'completed' => HB837::where('report_status', 'completed')->count(),
-            ],
+            'search' => $request->get('search')
         ]);
     }
 
@@ -81,7 +82,7 @@ class HB837Controller extends Controller
             'agreement_submitted',
             'contracting_status',
             'billing_req_sent',
-            'report_submitted',
+            'report_submitted'
         ];
     }
 
@@ -116,9 +117,9 @@ class HB837Controller extends Controller
         }
     }
 
-    // #################################
+    //#################################
     // Create and Store HB837 Project
-    // #################################
+    //#################################
 
     public function create()
     {
@@ -176,6 +177,13 @@ class HB837Controller extends Controller
             $validated['assigned_consultant_id'] = null;
         }
 
+        // Resolve or create owner ID
+        if (!empty($validated['owner_name'])) {
+            $validated['owner_id'] = Owner::firstOrCreate([
+                'name' => trim($validated['owner_name'])
+            ])->id;
+        }
+
         // Calculate net profit
         $validated['project_net_profit'] = $validated['quoted_price'] && $validated['sub_fees_estimated_expenses']
             ? $validated['quoted_price'] - $validated['sub_fees_estimated_expenses']
@@ -184,7 +192,6 @@ class HB837Controller extends Controller
         $hb837 = HB837::create($validated);
 
         session()->flash('success', 'Record created successfully!');
-
         return redirect()->to("admin/hb837/{$hb837->id}/edit/general");
     }
 
@@ -193,17 +200,16 @@ class HB837Controller extends Controller
         return $value !== '' ? floatval(preg_replace('/[^\d.]/', '', $value)) : null;
     }
 
-    // #################################
+    //#################################
     // Edit and Update HB837 Project
-    // #################################
+    //#################################
 
     /**
      * Show the edit form for a specific HB837 project.
-     *
      * @method GET
      *
-     * @param  int  $id
-     * @param  string  $tab
+     * @param int $id
+     * @param string $tab
      * @return \Illuminate\View\View
      */
     public function edit($id, $tab = 'general')
@@ -258,8 +264,9 @@ class HB837Controller extends Controller
         // Load record and relationships
         $hb837 = HB837::with('files')->findOrFail($id);
 
-        // Optional: preload consultant list, clients, etc.
+        // Optional: preload consultant list, clients, owners, etc.
         $clients = Client::all();
+        $owners = Owner::all();
         $consultants = Consultant::all(['id', 'first_name', 'last_name']);
 
         // Ensure valid tab
@@ -268,17 +275,19 @@ class HB837Controller extends Controller
         return view('admin.hb837.edit-hb837', [
             'hb837' => $hb837,
             'clients' => $clients,
+            'owners' => $owners,
             'consultants' => $consultants,
             'tabFields' => $fields[$tab],
-            'tab' => $tab,
+            'tab' => $tab
         ]);
     }
 
+
     /**
+     * @param \Illuminate\Http\Request $request
      * @method POST
-     *
-     * @param  mixed  $id
-     * @param  mixed  $tab
+     * @param mixed $id
+     * @param mixed $tab
      * @return RedirectResponse
      */
     public function update(Request $request, $id, $tab)
@@ -300,6 +309,7 @@ class HB837Controller extends Controller
                 abort(404, 'Invalid tab specified.');
         }
     }
+
 
     protected function updateGeneral(Request $request, $id)
     {
@@ -338,7 +348,7 @@ class HB837Controller extends Controller
         $validatedData = $request->validate(Arr::only($rules, $fields));
 
         // if no assigned_consultant_id is provided, set it to null
-        if ($validatedData['assigned_consultant_id'] == '-1') {
+        if ($validatedData['assigned_consultant_id'] == "-1") {
             $validatedData['assigned_consultant_id'] = null;
         }
 
@@ -346,9 +356,9 @@ class HB837Controller extends Controller
         $hb837->update($validatedData);
 
         session()->flash('success', 'General section updated successfully!');
-
-        return redirect()->to('admin/hb837/'.$hb837->id.'/edit/general');
+        return redirect()->to('admin/hb837/' . $hb837->id . '/edit/general');
     }
+
 
     protected function updateAddress(Request $request, $id)
     {
@@ -366,7 +376,6 @@ class HB837Controller extends Controller
         $hb837->update($validatedData);
 
         session()->flash('success', 'Address section updated successfully!');
-
         return redirect()->to("admin/hb837/{$hb837->id}/edit/address");
     }
 
@@ -383,12 +392,17 @@ class HB837Controller extends Controller
 
         $validatedData = $request->validate($rules);
 
+        // If owner_name is set, assign or create owner_id
+        if (!empty($validatedData['owner_name'])) {
+            $owner = Owner::firstOrCreate(['name' => trim($validatedData['owner_name'])]);
+            $validatedData['owner_id'] = $owner->id;
+        }
+
         $hb837 = HB837::findOrFail($id);
         $hb837->update($validatedData);
 
         session()->flash('success', 'Contacts section updated successfully!');
-
-        return redirect()->to('admin/hb837/'.$hb837->id.'/edit/contacts');
+        return redirect()->to('admin/hb837/' . $hb837->id . '/edit/contacts');
     }
 
     protected function updateFinancials(Request $request, $id)
@@ -424,7 +438,6 @@ class HB837Controller extends Controller
         $hb837->update($validatedData);
 
         session()->flash('success', 'Financial section updated successfully!');
-
         return redirect()->to("admin/hb837/{$hb837->id}/edit/financials");
     }
 
@@ -459,15 +472,15 @@ class HB837Controller extends Controller
                     $file->delete();
 
                 } catch (\Exception $e) {
-                    return back()->withErrors(['error' => 'Error deleting file: '.$file->filename.' - '.$e->getMessage()]);
+                    return back()->withErrors(['error' => 'Error deleting file: ' . $file->filename . ' - ' . $e->getMessage()]);
                 }
             }
         }
 
         session()->flash('success', 'Files updated successfully!');
-
-        return redirect()->to('admin/hb837/'.$hb837->id.'/edit/files');
+        return redirect()->to('admin/hb837/' . $hb837->id . '/edit/files');
     }
+
 
     public function deleteFile($id)
     {
@@ -479,7 +492,7 @@ class HB837Controller extends Controller
             try {
                 File::delete(storage_path("app/{$file->file_path}"));
             } catch (\Exception $e) {
-                return back()->withErrors(['error' => 'Error deleting file: '.$e->getMessage()]);
+                return back()->withErrors(['error' => 'Error deleting file: ' . $e->getMessage()]);
             }
         }
 
@@ -489,6 +502,7 @@ class HB837Controller extends Controller
         // Redirect back with success message
         return back()->with('success', 'File deleted successfully.');
     }
+
 
     protected function updateNotes(Request $request, $id)
     {
@@ -509,7 +523,6 @@ class HB837Controller extends Controller
         $hb837->save();
 
         session()->flash('success', 'Notes updated successfully!');
-
         return redirect()->to("admin/hb837/{$hb837->id}/edit/notes");
     }
 
@@ -518,177 +531,7 @@ class HB837Controller extends Controller
         $hb837 = HB837::findOrFail($id);
         $html = view('admin.hb837.report', compact('hb837'))->render();
         $pdf = Pdf::loadHTML($html);
-
         return $pdf->stream('report.pdf');
     }
-
-    /**
-     * DataTables AJAX endpoint for HB837 records
-     */
-    public function datatable(Request $request, $tab = 'active')
-    {
-        $tab = in_array($tab = Str::lower($tab), ['active', 'quoted', 'completed', 'closed']) ? $tab : 'active';
-
-        $query = HB837::query()->with(['consultant']);
-        $this->applyTabFilters($query, $tab);
-
-        // Handle DataTables search
-        if ($request->filled('search.value')) {
-            $search = $request->input('search.value');
-            $query->where(function($q) use ($search) {
-                $q->where('property_name', 'ILIKE', "%{$search}%")
-                  ->orWhere('owner_name', 'ILIKE', "%{$search}%")
-                  ->orWhere('address', 'ILIKE', "%{$search}%")
-                  ->orWhere('city', 'ILIKE', "%{$search}%")
-                  ->orWhere('state', 'ILIKE', "%{$search}%")
-                  ->orWhere('report_status', 'ILIKE', "%{$search}%")
-                  ->orWhere('securitygauge_crime_risk', 'ILIKE', "%{$search}%")
-                  ->orWhereHas('consultant', function($q) use ($search) {
-                      $q->where('name', 'ILIKE', "%{$search}%");
-                  });
-            });
-        }
-
-        // Handle individual column search
-        if ($request->filled('columns')) {
-            foreach ($request->input('columns') as $index => $column) {
-                if (!empty($column['search']['value'])) {
-                    $searchValue = $column['search']['value'];
-                    switch ($index) {
-                        case 1: // property_name
-                            $query->where('property_name', 'ILIKE', "%{$searchValue}%");
-                            break;
-                        case 2: // owner_name
-                            $query->where('owner_name', 'ILIKE', "%{$searchValue}%");
-                            break;
-                        case 3: // address
-                            $query->where('address', 'ILIKE', "%{$searchValue}%");
-                            break;
-                        case 5: // report_status
-                            $query->where('report_status', 'ILIKE', "%{$searchValue}%");
-                            break;
-                        case 6: // crime_risk
-                            $query->where('securitygauge_crime_risk', 'ILIKE', "%{$searchValue}%");
-                            break;
-                    }
-                }
-            }
-        }
-
-        // Handle sorting
-        if ($request->filled('order')) {
-            $orderColumn = $request->input('order.0.column');
-            $orderDir = $request->input('order.0.dir');
-            
-            $columns = ['id', 'property_name', 'owner_name', 'address', 'consultant', 'report_status', 'securitygauge_crime_risk', 'updated_at', 'actions'];
-            
-            if (isset($columns[$orderColumn])) {
-                $column = $columns[$orderColumn];
-                if ($column === 'consultant') {
-                    $query->leftJoin('consultants', 'hb837.assigned_consultant_id', '=', 'consultants.id')
-                          ->orderBy('consultants.name', $orderDir)
-                          ->select('hb837.*');
-                } else {
-                    $query->orderBy($column, $orderDir);
-                }
-            }
-        } else {
-            $query->orderBy('updated_at', 'desc');
-        }
-
-        // Get total count before pagination
-        $totalRecords = HB837::count();
-        $filteredRecords = $query->count();
-
-        // Apply pagination
-        $start = $request->input('start', 0);
-        $length = $request->input('length', 25);
-        
-        if ($length != -1) {
-            $query->offset($start)->limit($length);
-        }
-
-        $records = $query->get();
-
-        // Format data for DataTables
-        $data = $records->map(function ($record) {
-            return [
-                'id' => '<span class="table-id">#' . $record->id . '</span>',
-                'property_name' => '<strong>' . htmlspecialchars($record->property_name ?? '') . '</strong>',
-                'owner_name' => htmlspecialchars($record->owner_name ?? 'N/A'),
-                'address' => $this->formatAddress($record),
-                'consultant' => $this->formatConsultant($record),
-                'report_status' => $this->formatStatus($record->report_status ?? 'unknown'),
-                'crime_risk' => $this->formatCrimeRisk($record->securitygauge_crime_risk),
-                'updated_at' => '<small class="text-muted">' . $record->updated_at->diffForHumans() . '</small>',
-                'actions' => $this->formatActions($record)
-            ];
-        });
-
-        return response()->json([
-            'draw' => intval($request->input('draw')),
-            'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $filteredRecords,
-            'data' => $data
-        ]);
-    }
-
-    private function formatAddress($record)
-    {
-        return '<div class="table-address">' .
-               htmlspecialchars($record->address ?? '') . '<br>' .
-               '<small class="text-muted">' . 
-               htmlspecialchars(($record->city ?? '') . ', ' . ($record->state ?? '') . ' ' . ($record->zip ?? '')) .
-               '</small></div>';
-    }
-
-    private function formatConsultant($record)
-    {
-        if ($record->consultant && $record->consultant->name) {
-            return '<span class="table-badge badge-info">' . htmlspecialchars($record->consultant->name) . '</span>';
-        }
-        return '<span class="text-muted">Unassigned</span>';
-    }
-
-    private function formatStatus($status)
-    {
-        $status = $status ?? 'unknown';
-        $badgeClass = match(strtolower($status)) {
-            'active' => 'success',
-            'quoted' => 'warning', 
-            'completed' => 'info',
-            default => 'secondary'
-        };
-        
-        return '<span class="table-badge badge-' . $badgeClass . '">' . htmlspecialchars($status) . '</span>';
-    }
-
-    private function formatCrimeRisk($risk)
-    {
-        if (!$risk) {
-            return '<span class="text-muted">N/A</span>';
-        }
-        
-        $class = match(strtolower($risk)) {
-            'low' => 'risk-low',
-            'medium' => 'risk-medium', 
-            'high' => 'risk-high',
-            default => 'text-muted'
-        };
-        
-        return '<span class="' . $class . '"><i class="fas fa-circle"></i> ' . ucfirst($risk) . '</span>';
-    }
-
-    private function formatActions($record)
-    {
-        return '<div class="btn-group btn-group-sm">' .
-               '<a href="' . route('admin.hb837.edit', $record->id) . '" class="btn btn-info btn-sm" title="Edit">' .
-               '<i class="fas fa-edit"></i></a>' .
-               '<a href="' . route('admin.hb837.report', $record->id) . '" class="btn btn-primary btn-sm" title="View Report">' .
-               '<i class="fas fa-file-alt"></i></a>' .
-               '<form method="POST" action="' . route('admin.hb837.destroy', $record->id) . '" style="display: inline;">' .
-               csrf_field() . method_field('DELETE') .
-               '<button type="submit" class="btn btn-danger btn-sm btn-delete" title="Delete">' .
-               '<i class="fas fa-trash"></i></button></form></div>';
-    }
 }
+

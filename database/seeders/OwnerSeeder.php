@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\Owner;
-use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class OwnerSeeder extends Seeder
 {
@@ -134,6 +134,6 @@ class OwnerSeeder extends Seeder
             Owner::create($owner);
         }
 
-        $this->command->info('Owner data seeded successfully - '.count($owners).' records created.');
+        $this->command->info('Owner data seeded successfully - ' . count($owners) . ' records created.');
     }
 }

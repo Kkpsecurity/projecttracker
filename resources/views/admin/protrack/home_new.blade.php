@@ -17,8 +17,7 @@
 @stop
 
 @section('main_content')
-    @php 
-        $clients = $content['clients']; 
+    @php
         $active_tab = Request()->segment(4) ?? 'opp';
         $tabs = [
             'opp' => [
@@ -69,7 +68,7 @@
                         <ul class="nav nav-tabs" role="tablist">
                             @foreach($tabs as $key => $tab)
                                 <li class="nav-item">
-                                    <a href="{{ route('admin.home.tabs', ['tab' => $key]) }}" 
+                                    <a href="{{ route('admin.home.tabs', ['tab' => $key]) }}"
                                        class="nav-link {{ $active_tab == $key ? 'active' : '' }}">
                                         <i class="{{ $tab['icon'] }}"></i>
                                         {{ $tab['name'] }}
@@ -80,8 +79,8 @@
                     </div>
 
                     <!-- Projects Table -->
-                    <div class="table-responsive-modern">
-                        <table class="table table-modern table-compact" id="protrack-table">
+                    <div class="table-responsive">
+                        <table id="protrack-table" class="table table-striped table-hover w-100">
                             <thead>
                                 <tr>
                                     <th>Corporate Name</th>
@@ -93,9 +92,6 @@
                                     <th width="120">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <!-- DataTables will populate this -->
-                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -156,7 +152,7 @@
                         </div>
                         <div class="form-group">
                             <label for="quick_status">Quick Status</label>
-                            <input type="text" name="quick_status" id="quick_status" class="form-control" 
+                            <input type="text" name="quick_status" id="quick_status" class="form-control"
                                    placeholder="Brief status description">
                         </div>
                     </div>
@@ -173,117 +169,168 @@
 @stop
 
 @section('custom_css')
-    <link rel="stylesheet" href="//cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
+
     <style>
         .nav-tabs-custom {
             background: #fff;
             border-bottom: 1px solid #dee2e6;
         }
-        
+
         .nav-tabs .nav-link {
             border-radius: 0;
             border: none;
             border-bottom: 3px solid transparent;
             color: #6c757d;
         }
-        
+
         .nav-tabs .nav-link:hover {
             border-bottom-color: #007bff;
             color: #007bff;
         }
-        
+
         .nav-tabs .nav-link.active {
             background-color: transparent;
             color: #007bff;
             border-bottom-color: #007bff;
             font-weight: bold;
         }
-        
+
         .table th {
             border-top: none;
             background-color: #f8f9fa;
             font-weight: 600;
-            font-size: 0.875rem;
         }
-        
+
         .btn-group-sm > .btn {
             margin: 0 1px;
         }
-        
-        .status-badge {
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
+
+        /* DataTables specific styles */
+        .dataTables_wrapper {
+            padding: 20px;
         }
-        
-        .status-new-lead { background-color: #17a2b8; color: white; }
-        .status-proposal-sent { background-color: #ffc107; color: #212529; }
-        .status-contracting-now { background-color: #fd7e14; color: white; }
-        .status-active { background-color: #28a745; color: white; }
-        .status-completed { background-color: #007bff; color: white; }
-        .status-closed { background-color: #dc3545; color: white; }
-        
-        /* DataTables pagination styling */
-        .pagination-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+
+        .dataTables_filter {
+            margin-bottom: 15px;
         }
-        
-        .pagination {
-            margin: 0;
+
+        .dataTables_filter input {
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            padding: 6px 12px;
         }
-        
-        .pagination .page-link {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.75rem;
-            border-color: #dee2e6;
+
+        .dataTables_length select {
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            padding: 4px 8px;
         }
-        
-        .pagination .page-link:hover {
-            background-color: #e9ecef;
-            border-color: #dee2e6;
+
+        .dataTables_info {
+            color: #6c757d;
         }
-        
-        .pagination .page-item.active .page-link {
+
+        .page-link {
+            color: #007bff;
+        }
+
+        .page-item.active .page-link {
             background-color: #007bff;
             border-color: #007bff;
-        }
-        
-        /* Control table icons */
-        .table i:not(.fa-2x):not(.fa-3x) {
-            font-size: 0.875rem;
-        }
-        
-        /* Action button icons */
-        .btn-group-sm .btn i {
-            font-size: 0.75rem;
-        }
-        
-        /* Empty state styling */
-        .table .fa-2x {
-            font-size: 2rem !important;
-            color: #6c757d;
         }
     </style>
 @stop
 
 @section('custom_js')
-    <script src="//cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-    <script src="//cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
+
     <script>
         $(document).ready(function() {
+            // Get current tab from URL
+            const urlSegments = window.location.pathname.split('/');
+            const currentTab = urlSegments[urlSegments.length - 1] || 'opp';
+
+            // Initialize DataTable
+            const protackTable = $('#protrack-table').DataTable({
+                processing: true,
+                serverSide: true,
+                responsive: true,
+                ajax: {
+                    url: '{{ route("admin.home.datatable") }}',
+                    type: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: function(d) {
+                        d.tab = currentTab;
+                        return d;
+                    }
+                },
+                columns: [
+                    { data: 'corporate_name', name: 'corporate_name' },
+                    { data: 'client_name', name: 'client_name' },
+                    { data: 'project_name', name: 'project_name' },
+                    { data: 'status', name: 'status', orderable: false },
+                    { data: 'quick_status', name: 'quick_status', orderable: false },
+                    { data: 'updated_at', name: 'updated_at' },
+                    { data: 'actions', name: 'actions', orderable: false, searchable: false }
+                ],
+                order: [[5, 'desc']], // Order by updated_at descending
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                language: {
+                    processing: '<div class="d-flex justify-content-center"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div></div>',
+                    emptyTable: '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-3x mb-3"></i><br>No projects found for this category.</div>',
+                    zeroRecords: '<div class="text-center text-muted py-4"><i class="fas fa-search fa-3x mb-3"></i><br>No matching projects found.</div>'
+                },
+                drawCallback: function(settings) {
+                    // Re-initialize tooltips after table redraw
+                    $('[title]').tooltip();
+                }
+            });
+
+            // Handle tab changes - reload DataTable with new tab data
+            $('.nav-link[href*="/admin/home/tabs/"]').on('click', function(e) {
+                e.preventDefault();
+                const href = $(this).attr('href');
+                const newTab = href.split('/').pop();
+
+                // Update active tab
+                $('.nav-link').removeClass('active');
+                $(this).addClass('active');
+
+                // Update tab header
+                const icon = $(this).find('i').attr('class');
+                const name = $(this).text().trim();
+                $('.card-title i').attr('class', icon);
+                $('.card-title').html('<i class="' + icon + '"></i> ' + name);
+
+                // Reload DataTable with new tab
+                protackTable.ajax.url('{{ route("admin.home.datatable") }}?tab=' + newTab).load();
+
+                // Update URL without page reload
+                window.history.pushState({}, '', href);
+            });
+
             // Auto-focus on first input when modal opens
             $('#create_project').on('shown.bs.modal', function () {
                 $('#corporate_name').focus();
             });
-            
+
             // Handle form submission
             $('#create_project form').on('submit', function(e) {
                 let hasErrors = false;
-                
+
                 // Simple validation
                 $(this).find('[required]').each(function() {
                     if (!$(this).val().trim()) {
@@ -293,64 +340,36 @@
                         $(this).removeClass('is-invalid');
                     }
                 });
-                
+
                 if (hasErrors) {
                     e.preventDefault();
                     toastr.error('Please fill in all required fields.');
+                } else {
+                    // If form is valid, show success message and reload table after submission
+                    $(this).on('submit', function() {
+                        setTimeout(function() {
+                            protackTable.ajax.reload();
+                        }, 1000);
+                    });
                 }
             });
-            
+
             // Remove validation styling on input
             $('#create_project input, #create_project select').on('input change', function() {
                 $(this).removeClass('is-invalid');
             });
-            
-            // Initialize DataTable with advanced features
-            var table = $('#protrack-table').DataTable({
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ route('admin.home.datatable') }}",
-                    "type": "POST",
-                    "data": function(d) {
-                        d._token = $('meta[name="csrf-token"]').attr('content');
-                        d.tab = '{{ $active_tab ?? "opp" }}';
-                    }
-                },
-                "columns": [
-                    {"data": "corporate_name", "name": "corporate_name"},
-                    {"data": "client_name", "name": "client_name"},
-                    {"data": "project_name", "name": "project_name"},
-                    {"data": "status", "name": "status"},
-                    {"data": "quick_status", "name": "quick_status"},
-                    {"data": "updated_at", "name": "updated_at"},
-                    {"data": "actions", "name": "actions", "searchable": false, "orderable": false}
-                ],
-                "order": [[ 5, "desc" ]], // Sort by updated_at by default
-                "pageLength": 25,
-                "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-                "responsive": true,
-                "autoWidth": false,
-                "language": {
-                    "processing": '<i class="fas fa-spinner fa-spin"></i> Loading...',
-                    "emptyTable": '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-3"></i><br>No ProTrack projects found for this status.<br><button type="button" class="btn btn-success btn-sm mt-2" data-toggle="modal" data-target="#create_project"><i class="fas fa-plus"></i> Add First Project</button></div>',
-                    "zeroRecords": '<div class="text-center text-muted py-4"><i class="fas fa-search fa-2x mb-3"></i><br>No matching projects found.</div>'
-                },
-                "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                       '<"row"<"col-sm-12"tr>>' +
-                       '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
-            });
-            
-            // Confirm deletion
+
+            // Handle delete buttons with confirmation
             $(document).on('click', '.btn-delete', function(e) {
-                if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-                    e.preventDefault();
-                    return false;
+                e.preventDefault();
+                const deleteUrl = $(this).attr('href');
+
+                if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+                    // You can implement the delete functionality here
+                    // For now, just reload the table
+                    protackTable.ajax.reload();
                 }
             });
-            
-            // Refresh table when tab changes (since we're using server-side routing for tabs)
-            // This will be handled by the page reload when clicking tab links
         });
     </script>
 @stop

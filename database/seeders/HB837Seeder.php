@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Models\Consultant;
 use App\Models\HB837;
-use App\Models\Owner;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Models\Consultant;
+use App\Models\Owner;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class HB837Seeder extends Seeder
 {
@@ -32,20 +32,17 @@ class HB837Seeder extends Seeder
         $owners = Owner::all();
 
         if ($users->isEmpty()) {
-            $this->command->error('Please run UserSeeder first - no users found');
-
+            $this->command->error("Please run UserSeeder first - no users found");
             return;
         }
 
         if ($consultants->isEmpty()) {
-            $this->command->error('Please run ConsultantSeeder first - no consultants found');
-
+            $this->command->error("Please run ConsultantSeeder first - no consultants found");
             return;
         }
 
         if ($owners->isEmpty()) {
-            $this->command->error('Please run OwnerSeeder first - no owners found');
-
+            $this->command->error("Please run OwnerSeeder first - no owners found");
             return;
         }
 
@@ -241,6 +238,6 @@ class HB837Seeder extends Seeder
             HB837::create($record);
         }
 
-        $this->command->info('HB837 data seeded successfully - '.count($hb837Records).' records created.');
+        $this->command->info('HB837 data seeded successfully - ' . count($hb837Records) . ' records created.');
     }
 }

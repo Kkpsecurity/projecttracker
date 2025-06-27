@@ -2,7 +2,11 @@
 
 namespace App\Models;
 
+
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\File;
+use App\Models\HB837File;
 
 class HB837 extends Model
 {
@@ -12,6 +16,7 @@ class HB837 extends Model
         'report_status',
         'property_name',
         'management_company',
+        'owner_id',
         'owner_name',
         'property_type',
         'units',
@@ -26,9 +31,8 @@ class HB837 extends Model
         'report_submitted',
         'billing_req_sent',
         'financial_notes',
-        'consultant_notes',
         'securitygauge_crime_risk',
-        'notes',
+        "notes",
         'property_manager_name',
         'property_manager_email',
         'regional_manager_name',
@@ -41,7 +45,7 @@ class HB837 extends Model
         'macro_client',
         'macro_contact',
         'macro_email',
-        'user_id',
+        'user_id'
     ];
 
     public function client()
@@ -69,10 +73,16 @@ class HB837 extends Model
         return $this->belongsTo(Consultant::class, 'assigned_consultant_id', 'id');
     }
 
+    public function owner()
+    {
+        return $this->belongsTo(Owner::class, 'owner_id', 'id');
+    }
+
     public function getAddressesGroupedByMacroClient()
     {
         return $this->select('macro_client', 'macro_contact', 'macro_email')
             ->groupBy('macro_client', 'macro_contact', 'macro_email')
             ->get();
     }
+
 }

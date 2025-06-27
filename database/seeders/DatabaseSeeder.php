@@ -19,7 +19,6 @@ class DatabaseSeeder extends Seeder
                 PostgreSQLToMySQLDataSeeder::class,
             ]);
             $this->command->info('✅ PostgreSQL data migration completed!');
-
             return;
         }
 

@@ -7,29 +7,7 @@
             <div class="card shadow" style="margin-top: 250px;">
                 <div class="card-header">{{ __('Login') }}</div>
                 <div class="card-body">
-                    @if ($errors->any())
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    @if (session('status'))
-                        <div class="alert alert-success">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
-                    @if (session('error'))
-                        <div class="alert alert-danger">
-                            {{ session('error') }}
-                        </div>
-                    @endif
-
-                    <form method="POST" action="{{ route('admin.login.submit') }}">
+                    <form method="POST" action="{{ route('admin.login') }}">
                         @csrf
 
                         <div class="form-group row">

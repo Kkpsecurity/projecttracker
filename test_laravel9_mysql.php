@@ -1,9 +1,9 @@
 <?php
 
 // Test Laravel 9 + MySQL Configuration
-require __DIR__.'/vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
-$app = require_once __DIR__.'/bootstrap/app.php';
+$app = require_once __DIR__ . '/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
@@ -25,7 +25,7 @@ try {
 
     // Test 2: Database Connection
     $dbName = config('database.connections.mysql.database');
-    echo "\n2. Database: ".config('database.default')." ($dbName)\n";    // Test connection
+    echo "\n2. Database: " . config('database.default') . " ($dbName)\n";    // Test connection
     DB::connection()->getPdo();
     echo "3. MySQL Connection: ✅ SUCCESS\n";
 
@@ -46,14 +46,14 @@ try {
     echo "\n8. Cache Test:\n";
     cache(['test_key' => 'Laravel 9 Test']);
     $cacheValue = cache('test_key');
-    echo '   Cache Value: '.($cacheValue === 'Laravel 9 Test' ? '✅ Working' : '❌ Failed')."\n";
+    echo "   Cache Value: " . ($cacheValue === 'Laravel 9 Test' ? '✅ Working' : '❌ Failed') . "\n";
 
     echo "\n✅ Laravel 9 upgrade appears successful!\n";
     echo "🚀 Ready for further testing and Laravel 10 upgrade.\n";
 
 } catch (Exception $e) {
-    echo '❌ ERROR: '.$e->getMessage()."\n";
-    echo "Stack trace:\n".$e->getTraceAsString()."\n";
+    echo "❌ ERROR: " . $e->getMessage() . "\n";
+    echo "Stack trace:\n" . $e->getTraceAsString() . "\n";
 }
 
 echo "\n=== Test Complete ===\n";

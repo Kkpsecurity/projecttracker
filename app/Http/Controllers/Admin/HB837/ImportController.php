@@ -18,7 +18,7 @@ class ImportController extends Controller
     public function preview(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv',
+            'file' => 'required|file|mimes:xlsx,xls,csv'
         ]);
 
         $file = $request->file('file');
@@ -26,12 +26,11 @@ class ImportController extends Controller
 
         try {
             $preview = $this->importService->previewImport($path);
-
             return response()->json($preview);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Preview failed',
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -40,13 +39,13 @@ class ImportController extends Controller
     {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv',
-            'confirmed' => 'sometimes|boolean',
+            'confirmed' => 'sometimes|boolean'
         ]);
 
-        if (! $request->confirmed) {
+        if (!$request->confirmed) {
             return response()->json([
                 'error' => 'Confirmation required',
-                'message' => 'Please confirm the import after preview',
+                'message' => 'Please confirm the import after preview'
             ], 400);
         }
 
@@ -55,12 +54,11 @@ class ImportController extends Controller
 
         try {
             $result = $this->importService->executeImport($path);
-
             return response()->json($result);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Import failed',
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ], 500);
         }
     }

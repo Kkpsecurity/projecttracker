@@ -1,16 +1,18 @@
 <?php
 
-use App\Http\Controllers\Admin\Consultants\ConsultantController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\HB837\GoogleMapsController;
-use App\Http\Controllers\Admin\HB837\HB837Controller;
-use App\Http\Controllers\Admin\Services\BackupDBController;
-use App\Http\Controllers\Admin\Users\UserController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\HomeController;
+use Maatwebsite\Excel\Row;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\HB837\HB837Controller;
+use App\Http\Controllers\Admin\Users\UserController;
+use App\Http\Controllers\Admin\Owners\OwnerController;
+use App\Http\Controllers\Admin\Plots\PlotController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Admin\HB837\GoogleMapsController;
+use App\Http\Controllers\Admin\Services\BackupDBController;
+use App\Http\Controllers\Admin\Consultants\ConsultantController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,7 +35,7 @@ Route::get('login', function () {
  */
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [LoginController::class, 'login'])->name('login.submit');
+    Route::post('login', [LoginController::class, 'login']);
     Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
     // Password Reset Routes
@@ -48,15 +50,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
  */
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
 
-    // Dashboard Route
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('/', function () {
+        return redirect()->route('admin.home.index');
+    })->name('dashboard');
 
     // ProTrack Dashboard Routes
     Route::prefix('home')->name('home.')->group(function () {
         Route::get('/', [HomeController::class, 'index'])->name('index');
         Route::get('/tabs/{tab}', [HomeController::class, 'index'])->name('tabs');
-        Route::post('/datatable/{tab?}', [HomeController::class, 'datatable'])->name('datatable');
+        Route::post('/datatable', [HomeController::class, 'datatable'])->name('datatable');
         Route::post('/process_new', [HomeController::class, 'process'])->name('process_new');
         Route::get('/detail/{id}', [HomeController::class, 'detail'])->name('detail');
         Route::post('/detail/update', [HomeController::class, 'detailProcess'])->name('detail.update');
@@ -107,30 +109,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             ->where('macro_client', '.*')
             ->name('macro_client_properties');
 
-        // New enhanced routes
-        Route::put('/{plot}', [GoogleMapsController::class, 'update'])
-            ->where('plot', '[0-9]+')
-            ->name('update');
-
-        Route::post('/{plot}/convert-to-client', [GoogleMapsController::class, 'convertToClient'])
-            ->where('plot', '[0-9]+')
-            ->name('convert_to_client');
-
-        Route::get('/{plot}/export', [GoogleMapsController::class, 'exportPlotData'])
-            ->where('plot', '[0-9]+')
-            ->name('export');
-
-        Route::get('/statistics', [GoogleMapsController::class, 'getPlotStatistics'])
-            ->name('statistics');
-
     });
+
 
     // HB837 Routes
     Route::prefix('hb837')->name('hb837.')->group(function () {
         Route::get('/', [HB837Controller::class, 'index'])->name('index');
         Route::get('/tabs/{tab}', [HB837Controller::class, 'index'])->name('tabs');
-        Route::post('/datatable/{tab?}', [HB837Controller::class, 'datatable'])->name('datatable');
-        Route::get('/export/{tab?}', [HB837Controller::class, 'export'])->name('export');
         Route::get('/create', [HB837Controller::class, 'create'])->name('create');
         Route::post('/store', [HB837Controller::class, 'store'])->name('store');
         Route::delete('/destroy/{id}', [HB837Controller::class, 'deleteRecord'])->name('destroy');
@@ -156,6 +141,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/test-backup-logic', [BackupDBController::class, 'testBackupLogic'])->name('test_backup_logic');
         Route::get('/test-import-logic', [BackupDBController::class, 'testImportLogic'])->name('test_import_logic');
 
+
+
         Route::post('/export', [HB837Controller::class, 'export'])->name('export');
         Route::get('/direct-export', [HB837Controller::class, 'direct_export'])->name('direct_export');
 
@@ -163,9 +150,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         Route::post('/purge', [HB837Controller::class, 'purge'])->name('purge');
 
+
     });
 
-    // User Management Routes
+
+  // User Management Routes
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');
@@ -189,35 +178,18 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::post('/detach/{id}', [ConsultantController::class, 'detachConsultants'])->name('detach');
     });
 
-    // Test route for CSRF debugging
-    Route::get('/test-csrf', function () {
-        return response()->json([
-            'session_id' => session()->getId(),
-            'csrf_token' => csrf_token(),
-            'session_token' => session()->token(),
-            'app_url' => config('app.url'),
-            'session_driver' => config('session.driver'),
-            'session_cookie' => config('session.cookie'),
-        ]);
+    // Owner Routes
+    Route::prefix('owners')->name('owners.')->group(function () {
+        Route::get('/', [OwnerController::class, 'index'])->name('index');
+        Route::get('/create', [OwnerController::class, 'create'])->name('create');
+        Route::post('/store', [OwnerController::class, 'store'])->name('store');
+        Route::get('/edit/{id}', [OwnerController::class, 'edit'])->name('edit');
+        Route::put('/update/{id}', [OwnerController::class, 'update'])->name('update');
+        Route::delete('/destroy/{owner}', [OwnerController::class, 'destroy'])->name('destroy');
+        Route::get('/get/{id}', [OwnerController::class, 'owner_detail'])->name('get');
+        // Export
+        Route::get('/export', [OwnerController::class, 'export'])->name('export');
+
+        Route::post('/detach/{id}', [OwnerController::class, 'detachOwners'])->name('detach');
     });
-
-    // Test route to create admin user
-    Route::get('/create-test-user', function () {
-        $user = \App\Models\User::firstOrCreate(
-            ['email' => 'admin@test.com'],
-            [
-                'name' => 'Test Admin',
-                'password' => \Hash::make('password123'),
-                'email_verified_at' => now(),
-            ]
-        );
-
-        return response()->json([
-            'message' => 'Test user created/found',
-            'email' => $user->email,
-            'name' => $user->name,
-            'login_info' => 'Email: admin@test.com, Password: password123',
-        ]);
-    });
-
 });

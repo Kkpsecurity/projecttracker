@@ -13,18 +13,7 @@ return new class extends Migration
     {
         Schema::create('plots', function (Blueprint $table) {
             $table->id();
-            $table->string('plot_name');
-            $table->text('description')->nullable();
-            $table->enum('plot_type', ['custom', 'prospect', 'client'])->default('custom');
-            $table->string('client_contact_name')->nullable();
-            $table->string('client_contact_email')->nullable();
-            $table->string('client_contact_phone')->nullable();
-            $table->boolean('is_active')->default(true);
             $table->timestamps();
-
-            // Indexes for performance
-            $table->index(['plot_type', 'is_active']);
-            $table->index('plot_name');
         });
     }
 
