@@ -18,7 +18,8 @@
 
 <?php $__env->startSection('main_content'); ?>
     <?php
-        $active_tab = Request()->segment(4) ?? 'Active';
+        // Use the active_tab passed from controller, or determine from URL as fallback
+        $active_tab = $active_tab ?? ucfirst(strtolower(Request()->segment(4) ?? 'active'));
         $tabs = [
             'Active' => [
                 'icon' => 'fas fa-play-circle',
@@ -41,6 +42,11 @@
                 'class' => 'btn-secondary'
             ],
         ];
+        
+        // Ensure active_tab exists in tabs array, fallback to 'Active'
+        if (!isset($tabs[$active_tab])) {
+            $active_tab = 'Active';
+        }
     ?>
 
     <div class="row">

@@ -80,12 +80,12 @@
                     <!-- Tab Navigation -->
                     <div class="nav-tabs-custom">
                         <ul class="nav nav-tabs" role="tablist">
-                            @foreach($tabs as $key => $tab)
+                            @foreach($tabs as $key => $tabData)
                                 <li class="nav-item">
                                     <a href="{{ route('admin.hb837.tabs', ['tab' => $key]) }}" 
                                        class="nav-link {{ $active_tab == $key ? 'active' : '' }}">
-                                        <i class="{{ $tab['icon'] }}"></i>
-                                        {{ $tab['name'] }}
+                                        <i class="{{ $tabData['icon'] }}"></i>
+                                        {{ $tabData['name'] }}
                                     </a>
                                 </li>
                             @endforeach
