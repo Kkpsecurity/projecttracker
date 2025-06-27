@@ -2,23 +2,24 @@ name: Laravel CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master, develop ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     
     services:
-      mysql:
-        image: mysql:8.0
+      postgres:
+        image: postgres:15
         env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: projecttracker_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: projecttracker_test
         ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+          - 5432:5432
+        options: --health-cmd="pg_isready -U postgres" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
     - uses: actions/checkout@v4
@@ -26,8 +27,8 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.1'
-        extensions: mbstring, dom, fileinfo, mysql, zip, bcmath, gd
+        php-version: '8.3'
+        extensions: mbstring, dom, fileinfo, pgsql, zip, bcmath, gd
         coverage: xdebug
 
     - name: Setup Node.js
@@ -55,11 +56,11 @@ jobs:
 
     - name: Configure environment for testing
       run: |
-        echo "DB_CONNECTION=mysql" >> .env
+        echo "DB_CONNECTION=pgsql" >> .env
         echo "DB_HOST=127.0.0.1" >> .env
-        echo "DB_PORT=3306" >> .env
+        echo "DB_PORT=5432" >> .env
         echo "DB_DATABASE=projecttracker_test" >> .env
-        echo "DB_USERNAME=root" >> .env
+        echo "DB_USERNAME=postgres" >> .env
         echo "DB_PASSWORD=password" >> .env
 
     - name: Run database migrations
@@ -92,7 +93,7 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.1'
+        php-version: '8.3'
 
     - name: Install dependencies
       run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
@@ -107,7 +108,7 @@ jobs:
   deploy:
     needs: [test, security]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     
     steps:
     - uses: actions/checkout@v4
@@ -115,7 +116,7 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.1'
+        php-version: '8.3'
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
