@@ -11,13 +11,6 @@
       0 => 'Barryvdh\\DomPDF\\ServiceProvider',
     ),
   ),
-  'jeroennoten/laravel-adminlte' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'JeroenNoten\\LaravelAdminLte\\AdminLteServiceProvider',
-    ),
-  ),
   'laracasts/flash' => 
   array (
     'aliases' => 
@@ -84,6 +77,17 @@
     'providers' => 
     array (
       0 => 'Spatie\\LaravelIgnition\\IgnitionServiceProvider',
+    ),
+  ),
+  'yajra/laravel-datatables-oracle' => 
+  array (
+    'aliases' => 
+    array (
+      'DataTables' => 'Yajra\\DataTables\\Facades\\DataTables',
+    ),
+    'providers' => 
+    array (
+      0 => 'Yajra\\DataTables\\DataTablesServiceProvider',
     ),
   ),
 );

@@ -33,31 +33,10 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
-        $oppStatus = ['New Lead', 'Proposal Sent', 'Contracting Now'];
-        $activeStatus = ['Active'];
-        $closedStatus = ['Closed'];
-        $completedStatus = ['Completed'];
+        // No need to query clients here - DataTables will handle via AJAX
+        $content = [];
 
-        $segment = $request->segment(4);
-        if ($segment == 'opp') {
-            $status = $oppStatus;
-        } elseif ($segment == 'active') {
-            $status = $activeStatus;
-        } elseif ($segment == 'closed') {
-            $status = $closedStatus;
-        } elseif ($segment == 'completed') {
-            $status = $completedStatus;
-        } else {
-            $status = $oppStatus;
-        }
-
-        $clients = Client::whereIn('quick_status', $status)->orderBy('updated_at', 'desc')->paginate(10);
-
-        $content = [
-            'clients' => $clients
-        ];
-
-        return view('admin.protrack.home', compact('content'));
+        return view('admin.protrack.home_new', compact('content'));
     }
 
     public function process(Request $request)
@@ -292,4 +271,143 @@ class HomeController extends Controller
         return redirect()->back();
     }
 
+    /**
+     * DataTables AJAX endpoint for ProTrack projects
+     */
+    public function datatable(Request $request)
+    {
+        $oppStatus = ['New Lead', 'Proposal Sent', 'Contracting Now'];
+        $activeStatus = ['Active'];
+        $closedStatus = ['Closed'];
+        $completedStatus = ['Completed'];
+
+        $tab = $request->input('tab', 'opp');
+
+        // Determine status array based on tab
+        switch ($tab) {
+            case 'active':
+                $status = $activeStatus;
+                break;
+            case 'closed':
+                $status = $closedStatus;
+                break;
+            case 'completed':
+                $status = $completedStatus;
+                break;
+            default:
+                $status = $oppStatus;
+                break;
+        }
+
+        $query = Client::whereIn('quick_status', $status);
+
+        // Handle DataTables search
+        if ($request->filled('search.value')) {
+            $search = $request->input('search.value');
+            $query->where(function ($q) use ($search) {
+                $q->where('corporate_name', 'ILIKE', "%{$search}%")
+                    ->orWhere('client_name', 'ILIKE', "%{$search}%")
+                    ->orWhere('project_name', 'ILIKE', "%{$search}%")
+                    ->orWhere('status', 'ILIKE', "%{$search}%")
+                    ->orWhere('quick_status', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        // Handle sorting
+        if ($request->filled('order')) {
+            $orderColumn = $request->input('order.0.column');
+            $orderDir = $request->input('order.0.dir');
+
+            $columns = ['corporate_name', 'client_name', 'project_name', 'status', 'quick_status', 'updated_at'];
+
+            if (isset($columns[$orderColumn])) {
+                $query->orderBy($columns[$orderColumn], $orderDir);
+            }
+        } else {
+            $query->orderBy('updated_at', 'desc');
+        }
+
+        // Get total counts before pagination
+        $totalRecords = Client::count();
+        $filteredRecords = $query->count();
+
+        // Apply pagination
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 25);
+
+        if ($length != -1) {
+            $query->offset($start)->limit($length);
+        }
+
+        $records = $query->get();
+
+        // Format data for DataTables
+        $data = $records->map(function ($record) {
+            return [
+                'corporate_name' => '<strong>' . e($record->corporate_name) . '</strong>',
+                'client_name' => e($record->client_name),
+                'project_name' => e($record->project_name),
+                'status' => $this->formatStatus($record->status),
+                'quick_status' => $this->formatQuickStatus($record->quick_status),
+                'updated_at' => '<small class="text-muted">' . $record->updated_at->diffForHumans() . '</small>',
+                'actions' => $this->formatProTrackActions($record)
+            ];
+        });
+
+        return response()->json([
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data' => $data
+        ]);
+    }
+
+    /**
+     * Format status badge for ProTrack
+     */
+    private function formatStatus($status)
+    {
+        $status = $status ?? 'Unknown';
+        $badgeClass = match (strtolower($status)) {
+            'active' => 'success',
+            'completed' => 'primary',
+            'closed' => 'secondary',
+            default => 'info'
+        };
+
+        return '<span class="badge badge-' . $badgeClass . '">' . e($status) . '</span>';
+    }
+
+    /**
+     * Format quick status badge for ProTrack
+     */
+    private function formatQuickStatus($quickStatus)
+    {
+        $quickStatus = $quickStatus ?? 'Unknown';
+        $badgeClass = match (strtolower($quickStatus)) {
+            'new lead' => 'warning',
+            'proposal sent' => 'info',
+            'contracting now' => 'primary',
+            'active' => 'success',
+            'completed' => 'primary',
+            'closed' => 'secondary',
+            default => 'light'
+        };
+
+        return '<span class="badge badge-' . $badgeClass . '">' . e($quickStatus) . '</span>';
+    }
+
+    /**
+     * Format action buttons for ProTrack
+     */
+    private function formatProTrackActions($record)
+    {
+        return '<div class="btn-group btn-group-sm">' .
+            '<a href="' . route('admin.home.detail', $record->id) . '" class="btn btn-info btn-sm" title="View Details">' .
+            '<i class="fas fa-eye"></i></a>' .
+            '<a href="' . route('admin.home.detail', $record->id) . '" class="btn btn-warning btn-sm" title="Edit">' .
+            '<i class="fas fa-edit"></i></a>' .
+            '<a href="' . route('admin.home.detail.delete', $record->id) . '" class="btn btn-danger btn-sm btn-delete" title="Delete">' .
+            '<i class="fas fa-trash"></i></a></div>';
+    }
 }

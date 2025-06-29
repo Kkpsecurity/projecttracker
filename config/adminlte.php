@@ -315,82 +315,75 @@ return [
             'type' => 'sidebar-menu-search',
             'text' => 'search',
         ],
+
+        // Main Navigation
+        ['header' => 'PROJECT MANAGEMENT'],
         [
-            'text' => 'blog',
-            'url' => 'admin/blog',
-            'can' => 'manage-blog',
+            'text' => 'Dashboard',
+            'route' => 'dashboard',
+            'icon' => 'fas fa-tachometer-alt',
+            'active' => ['dashboard', 'home'],
         ],
         [
-            'text' => 'pages',
-            'url' => 'admin/pages',
-            'icon' => 'far fa-fw fa-file',
-            'label' => 4,
-            'label_color' => 'success',
-        ],
-        ['header' => 'account_settings'],
-        [
-            'text' => 'profile',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-user',
-        ],
-        [
-            'text' => 'change_password',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-lock',
-        ],
-        [
-            'text' => 'multilevel',
-            'icon' => 'fas fa-fw fa-share',
+            'text' => 'Admin Center',
+            'icon' => 'fas fa-cogs',
             'submenu' => [
                 [
-                    'text' => 'level_one',
-                    'url' => '#',
+                    'text' => 'User Management',
+                    'route' => 'admin.users.index',
+                    'icon' => 'fas fa-users-cog',
+                    'active' => ['admin/users*'],
                 ],
                 [
-                    'text' => 'level_one',
-                    'url' => '#',
-                    'submenu' => [
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                        ],
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                            'submenu' => [
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                            ],
-                        ],
-                    ],
+                    'text' => 'System Settings',
+                    'route' => 'admin.settings.index',
+                    'icon' => 'fas fa-sliders-h',
+                    'active' => ['admin/settings*'],
                 ],
                 [
-                    'text' => 'level_one',
-                    'url' => '#',
+                    'text' => 'Activity Logs',
+                    'route' => 'admin.logs.index',
+                    'icon' => 'fas fa-list-alt',
+                    'active' => ['admin/logs*'],
                 ],
             ],
         ],
-        ['header' => 'labels'],
         [
-            'text' => 'important',
-            'icon_color' => 'red',
-            'url' => '#',
+            'text' => 'HB837 Projects',
+            'route' => 'hb837.index',
+            'icon' => 'fas fa-project-diagram',
+            'active' => ['hb837*'],
         ],
         [
-            'text' => 'warning',
-            'icon_color' => 'yellow',
-            'url' => '#',
+            'text' => 'Consultants',
+            'route' => 'consultants.index',
+            'icon' => 'fas fa-users',
+            'active' => ['consultants*'],
+        ],
+
+        ['header' => 'ANALYTICS & REPORTS'],
+        [
+            'text' => 'Analytics',
+            'route' => 'dashboard.analytics',
+            'icon' => 'fas fa-chart-line',
+        ],
+
+        ['header' => 'ACCOUNT MANAGEMENT'],
+        [
+            'text' => 'Account Dashboard',
+            'route' => 'account.dashboard',
+            'icon' => 'fas fa-user-cog',
+            'active' => ['account*'],
         ],
         [
-            'text' => 'information',
-            'icon_color' => 'cyan',
-            'url' => '#',
+            'text' => 'Profile Settings',
+            'route' => 'account.settings',
+            'icon' => 'fas fa-user-edit',
+        ],
+        [
+            'text' => 'Security Settings',
+            'route' => 'account.security',
+            'icon' => 'fas fa-shield-alt',
         ],
     ],
 

@@ -5,14 +5,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\HB837\HB837Controller;
-use App\Http\Controllers\Admin\Users\UserController;
-use App\Http\Controllers\Admin\Owners\OwnerController;
+use App\Http\Controllers\Admin\UserController;
+// use App\Http\Controllers\Admin\Owners\OwnerController; // DISABLED - controller removed
 use App\Http\Controllers\Admin\Plots\PlotController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\HB837\GoogleMapsController;
 use App\Http\Controllers\Admin\Services\BackupDBController;
 use App\Http\Controllers\Admin\Consultants\ConsultantController;
+use App\Http\Controllers\Admin\SettingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +38,25 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('login', [LoginController::class, 'login']);
     Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+
+    // CSRF Token refresh route for debugging
+    Route::get('csrf-token', function () {
+        return response()->json(['token' => csrf_token()]);
+    })->name('csrf.token');
+
+    // Test CSRF form route
+    Route::get('csrf-test', function () {
+        return view('test.csrf-test');
+    })->name('csrf.test');
+
+    Route::post('csrf-test', function () {
+        return response()->json([
+            'success' => true,
+            'message' => 'CSRF test successful!',
+            'token_received' => request()->input('_token'),
+            'session_token' => csrf_token()
+        ]);
+    })->name('csrf.test.submit');
 
     // Password Reset Routes
     Route::get('password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
@@ -178,7 +198,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::post('/detach/{id}', [ConsultantController::class, 'detachConsultants'])->name('detach');
     });
 
-    // Owner Routes
+    // Owner Routes - DISABLED (table dropped in migration 2025_06_26_185330)
+    /*
     Route::prefix('owners')->name('owners.')->group(function () {
         Route::get('/', [OwnerController::class, 'index'])->name('index');
         Route::get('/create', [OwnerController::class, 'create'])->name('create');
@@ -192,4 +213,41 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         Route::post('/detach/{id}', [OwnerController::class, 'detachOwners'])->name('detach');
     });
+    */
+
+    // API routes for AJAX calls
+    Route::get('consultants/search', [ConsultantController::class, 'search'])->name('api.consultants.search');
+    Route::get('hb837/search', [HB837Controller::class, 'search'])->name('api.hb837.search');
+    // Route::get('dashboard/stats', [DashboardController::class, 'getStats'])->name('api.dashboard.stats'); // TODO: Create DashboardController
+
+    // User Management (Admin Center)
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/data', [UserController::class, 'getData'])->name('data');
+        Route::get('/create', [UserController::class, 'create'])->name('create');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/{user}', [UserController::class, 'show'])->name('show');
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [UserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+
+        // Additional User Management Actions
+        Route::patch('{user}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
+        Route::patch('{user}/toggle-email-verification', [UserController::class, 'toggleEmailVerification'])->name('toggle-email-verification');
+        Route::patch('{user}/disable-two-factor', [UserController::class, 'disableTwoFactor'])->name('disable-two-factor');
+        Route::post('bulk-action', [UserController::class, 'bulkAction'])->name('bulk-action');
+    });
+
+    // System Settings (Admin Center)
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [SettingsController::class, 'index'])->name('index');
+        Route::put('/', [SettingsController::class, 'update'])->name('update');
+        Route::post('/reset', [SettingsController::class, 'reset'])->name('reset');
+        Route::get('/toggle-maintenance', [SettingsController::class, 'toggleMaintenance'])->name('toggle-maintenance');
+    });
+
+    // Activity Logs (Admin Center)
+    Route::get('logs', function () {
+        return view('admin.logs.index');
+    })->name('logs.index');
 });

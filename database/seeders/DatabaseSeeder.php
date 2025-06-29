@@ -26,11 +26,11 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Using sample/test data seeders...');
         $this->call([
             UserSeeder::class,
-            OwnerSeeder::class,
             ConsultantSeeder::class,
             ClientSeeder::class,
             PlotSeeder::class,
             HB837Seeder::class,
+            SiteSettingsSeeder::class,
         ]);
 
         $this->command->info('✅ Database seeding completed successfully!');

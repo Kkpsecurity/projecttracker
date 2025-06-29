@@ -119,6 +119,37 @@
     crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ asset('js/app.js') }}"></script>
+
+<script>
+// Setup CSRF token for all AJAX requests
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+});
+
+// Auto-refresh CSRF token on page focus (when user returns to tab)
+$(window).on('focus', function() {
+    // Check if token exists in meta tag
+    var token = $('meta[name="csrf-token"]').attr('content');
+    if (token) {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': token
+            }
+        });
+    }
+});
+
+// Handle 419 CSRF errors gracefully
+$(document).ajaxError(function(event, xhr, options, thrownError) {
+    if (xhr.status === 419) {
+        alert('Your session has expired. Please refresh the page and try again.');
+        location.reload();
+    }
+});
+</script>
+
 @yield('scripts')
 
 </html>

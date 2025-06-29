@@ -73,11 +73,6 @@ class HB837 extends Model
         return $this->belongsTo(Consultant::class, 'assigned_consultant_id', 'id');
     }
 
-    public function owner()
-    {
-        return $this->belongsTo(Owner::class, 'owner_id', 'id');
-    }
-
     public function getAddressesGroupedByMacroClient()
     {
         return $this->select('macro_client', 'macro_contact', 'macro_email')

@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\HB837;
 use App\Models\User;
 use App\Models\Consultant;
-use App\Models\Owner;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -29,7 +28,6 @@ class HB837Seeder extends Seeder
         // Get some users and consultants for relationships
         $users = User::all();
         $consultants = Consultant::all();
-        $owners = Owner::all();
 
         if ($users->isEmpty()) {
             $this->command->error("Please run UserSeeder first - no users found");
@@ -41,17 +39,11 @@ class HB837Seeder extends Seeder
             return;
         }
 
-        if ($owners->isEmpty()) {
-            $this->command->error("Please run OwnerSeeder first - no owners found");
-            return;
-        }
-
         $hb837Records = [
             [
                 'report_status' => 'not-started',
                 'property_name' => 'Sunset Apartments',
                 'management_company' => 'Premier Property Management',
-                'owner_id' => $owners->random()->id,
                 'owner_name' => 'John Doe Properties LLC',
                 'property_type' => 'garden',
                 'units' => 150,
@@ -88,7 +80,6 @@ class HB837Seeder extends Seeder
                 'report_status' => 'completed',
                 'property_name' => 'Oak Grove Shopping Center',
                 'management_company' => 'Retail Space Solutions',
-                'owner_id' => $owners->random()->id,
                 'owner_name' => 'Commercial Investments Inc',
                 'property_type' => 'industrial',
                 'units' => 25,
@@ -125,7 +116,6 @@ class HB837Seeder extends Seeder
                 'report_status' => 'in-progress',
                 'property_name' => 'Riverside Industrial Park',
                 'management_company' => 'Industrial Management Corp',
-                'owner_id' => $owners->random()->id,
                 'owner_name' => 'Riverside Holdings',
                 'property_type' => 'industrial',
                 'units' => 8,
@@ -162,7 +152,6 @@ class HB837Seeder extends Seeder
                 'report_status' => 'not-started',
                 'property_name' => 'University Heights Dormitory',
                 'management_company' => 'Campus Living Solutions',
-                'owner_id' => $owners->random()->id,
                 'owner_name' => 'State University Foundation',
                 'property_type' => 'midrise',
                 'units' => 300,
@@ -199,7 +188,6 @@ class HB837Seeder extends Seeder
                 'report_status' => 'completed',
                 'property_name' => 'Downtown Office Plaza',
                 'management_company' => 'Metro Commercial Properties',
-                'owner_id' => $owners->random()->id,
                 'owner_name' => 'Downtown Development LLC',
                 'property_type' => 'highrise',
                 'units' => 45,
