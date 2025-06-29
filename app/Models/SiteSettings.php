@@ -7,81 +7,165 @@ use Illuminate\Support\Facades\Cache;
 
 class SiteSettings extends Model
 {
-    protected $table = 'site_settings';
-
     protected $fillable = [
-        'company_name',
-        'company_email',
-        'company_phone',
-        'company_address',
-        'site_logo_url',
-        'favicon_url',
-        'primary_color',
-        'secondary_color',
-        'api_keys',
-        'maintenance_mode',
+        'key',
+        'value',
+        'type',
+        'group',
+        'description'
     ];
 
     protected $casts = [
-        'api_keys' => 'array',
-        'maintenance_mode' => 'boolean',
+        'value' => 'string'
     ];
 
+    private static $instance = null;
+    private $settings = [];
+
     /**
-     * Get the singleton instance of site settings
+     * Get singleton instance with all settings loaded
      */
     public static function getInstance()
     {
-        return Cache::remember('site_settings', 3600, function () {
-            return self::first() ?? self::create([
-                'company_name' => 'KKP Security Project Tracker',
-                'primary_color' => '#007bff',
-                'secondary_color' => '#6c757d',
-            ]);
+        if (self::$instance === null) {
+            self::$instance = new self();
+            self::$instance->loadSettings();
+        }
+
+        return self::$instance;
+    }
+
+    /**
+     * Load all settings from database with caching
+     */
+    private function loadSettings()
+    {
+        $this->settings = Cache::remember('site_settings', 3600, function () {
+            $settings = [];
+
+            foreach (self::all() as $setting) {
+                $value = $setting->value;
+
+                // Cast values based on type
+                switch ($setting->type) {
+                    case 'boolean':
+                        $value = (bool) $value;
+                        break;
+                    case 'integer':
+                        $value = (int) $value;
+                        break;
+                    case 'json':
+                        $value = json_decode($value, true) ?: [];
+                        break;
+                    default:
+                        $value = (string) $value;
+                }
+
+                $settings[$setting->key] = $value;
+            }
+
+            return $settings;
         });
     }
 
     /**
-     * Update settings and clear cache
+     * Get setting value
      */
-    public function updateSettings(array $data)
+    public function __get($key)
     {
-        $this->update($data);
+        if (isset($this->settings[$key])) {
+            return $this->settings[$key];
+        }
+
+        return $this->getDefaultValue($key);
+    }
+
+    /**
+     * Check if setting exists
+     */
+    public function __isset($key)
+    {
+        return isset($this->settings[$key]) || $this->hasDefaultValue($key);
+    }
+
+    /**
+     * Get default values for settings
+     */
+    private function getDefaultValue($key)
+    {
+        $defaults = [
+            'company_name' => 'KKP Security Project Tracker',
+            'company_email' => 'admin@kkpsecurity.com',
+            'company_phone' => '+1 (555) 123-4567',
+            'company_address' => '123 Security Street, Business District',
+            'site_logo_url' => '/images/logo.png',
+            'favicon_url' => '/images/favicon.ico',
+            'primary_color' => '#007bff',
+            'secondary_color' => '#6c757d',
+            'api_keys' => [],
+            'maintenance_mode' => false,
+        ];
+
+        return $defaults[$key] ?? null;
+    }
+
+    /**
+     * Check if key has default value
+     */
+    private function hasDefaultValue($key)
+    {
+        $defaults = [
+            'company_name',
+            'company_email',
+            'company_phone',
+            'company_address',
+            'site_logo_url',
+            'favicon_url',
+            'primary_color',
+            'secondary_color',
+            'api_keys',
+            'maintenance_mode'
+        ];
+
+        return in_array($key, $defaults);
+    }
+
+    /**
+     * Update setting value
+     */
+    public function updateSetting($key, $value, $type = 'string', $group = 'general')
+    {
+        $setting = self::firstOrCreate(['key' => $key], [
+            'type' => $type,
+            'group' => $group
+        ]);
+
+        // Prepare value based on type
+        switch ($type) {
+            case 'boolean':
+                $value = $value ? '1' : '0';
+                break;
+            case 'json':
+                $value = json_encode($value);
+                break;
+            default:
+                $value = (string) $value;
+        }
+
+        $setting->update(['value' => $value]);
+
+        // Clear cache to reload settings
         Cache::forget('site_settings');
-        return $this;
+        $this->loadSettings();
+
+        return true;
     }
 
     /**
-     * Get a specific setting value
+     * Clear settings cache
      */
-    public static function get($key, $default = null)
+    public static function clearCache()
     {
-        $settings = self::getInstance();
-        return $settings->$key ?? $default;
-    }
-
-    /**
-     * Get API key by name
-     */
-    public static function getApiKey($keyName, $default = null)
-    {
-        $settings = self::getInstance();
-        return $settings->api_keys[$keyName] ?? $default;
-    }
-
-    /**
-     * Boot the model
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::saved(function () {
-            Cache::forget('site_settings');
-        });
-
-        static::deleted(function () {
-            Cache::forget('site_settings');
-        });
+        Cache::forget('site_settings');
     }
 }

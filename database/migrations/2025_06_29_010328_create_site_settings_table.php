@@ -13,7 +13,14 @@ return new class extends Migration
     {
         Schema::create('site_settings', function (Blueprint $table) {
             $table->id();
+            $table->string('key')->unique();
+            $table->text('value')->nullable();
+            $table->string('type')->default('string'); // string, boolean, integer, json
+            $table->string('group')->default('general'); // general, branding, api, system
+            $table->text('description')->nullable();
             $table->timestamps();
+
+            $table->index(['group', 'key']);
         });
     }
 

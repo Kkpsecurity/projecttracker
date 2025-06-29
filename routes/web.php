@@ -40,6 +40,30 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('hb837/{hb837}/status', [HB837Controller::class, 'updateStatus'])->name('hb837.status');
     Route::patch('hb837/{hb837}/priority', [HB837Controller::class, 'updatePriority'])->name('hb837.priority');
 
+    // ProTrack - Enhanced Project Management System
+    Route::prefix('projects')->name('projects.')->group(function () {
+        // Main project routes (placeholder for Phase 2)
+        Route::get('/', function () {
+            return view('projects.index', [
+                'projects' => collect([]), // Empty for now
+                'stats' => [
+                    'total_projects' => 0,
+                    'active_projects' => 0,
+                    'completed_projects' => 0,
+                    'overdue_projects' => 0,
+                ]
+            ]);
+        })->name('index');
+
+        Route::get('/create', function () {
+            return view('projects.create');
+        })->name('create');
+
+        // TODO: Add full project management routes in Phase 2
+        // Route::resource('projects', ProjectController::class);
+        // Route::get('projects/data', [ProjectController::class, 'getData'])->name('projects.data');
+    });
+
     // Account Management routes
     Route::middleware(['auth'])->prefix('account')->name('account.')->group(function () {
         // Account Dashboard
@@ -79,6 +103,7 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     // User Management Resource Routes
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+    Route::get('users/data', [\App\Http\Controllers\Admin\UserController::class, 'getData'])->name('users.data');
 
     // Additional User Management Actions
     Route::patch('users/{user}/reset-password', [\App\Http\Controllers\Admin\UserController::class, 'resetPassword'])->name('users.reset-password');
@@ -86,23 +111,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::patch('users/{user}/disable-two-factor', [\App\Http\Controllers\Admin\UserController::class, 'disableTwoFactor'])->name('users.disable-two-factor');
     Route::post('users/bulk-action', [\App\Http\Controllers\Admin\UserController::class, 'bulkAction'])->name('users.bulk-action');
 
-    // System Settings (placeholder - under development)
-    Route::get('settings', function () {
-        return view('admin.settings.index', [
-            'settings' => (object) [
-                'company_name' => 'KKP Security Project Tracker',
-                'company_email' => 'admin@kkpsecurity.com',
-                'company_phone' => '+1 (555) 123-4567',
-                'company_address' => '123 Security Street, Business District',
-                'site_logo_url' => '/images/logo.png',
-                'favicon_url' => '/images/favicon.ico',
-                'primary_color' => '#007bff',
-                'secondary_color' => '#6c757d',
-                'api_keys' => [],
-                'maintenance_mode' => false,
-            ]
-        ]);
-    })->name('settings.index');
+    // System Settings
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('index');
+        Route::put('/', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('update');
+        Route::post('/reset', [\App\Http\Controllers\Admin\SettingsController::class, 'reset'])->name('reset');
+        Route::get('/toggle-maintenance', [\App\Http\Controllers\Admin\SettingsController::class, 'toggleMaintenance'])->name('toggle-maintenance');
+    });
 
     // Activity Logs (placeholder)
     Route::get('logs', function () {
