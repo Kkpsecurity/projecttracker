@@ -27,6 +27,7 @@ class User extends Authenticatable
         'login_count',
         // Admin fields
         'is_admin',
+        'role',
         'is_active',
         'avatar',
         'phone',
