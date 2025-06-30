@@ -11,7 +11,7 @@ class UserSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * 
+     *
      * This creates admin-only accounts with role-based permissions:
      * - superadmin: Full system access
      * - manager: Project and user management
@@ -42,7 +42,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Chris Jones',
                 'email' => 'jonesy@cisworldservices.org',
-                'role' => 'auditor',
+                'role' => 'superadmin',
             ],
             [
                 'name' => 'Craig Gundry',

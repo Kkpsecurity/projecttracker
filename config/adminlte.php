@@ -330,42 +330,41 @@ return [
             'submenu' => [
                 [
                     'text' => 'User Management',
-                    'route' => 'admin.users.index',
+                    'url' => '#',
                     'icon' => 'fas fa-users-cog',
-                    'active' => ['admin/users*'],
+                    'classes' => 'text-muted',
+                    'tooltip' => 'Coming Soon',
                 ],
                 [
                     'text' => 'System Settings',
-                    'route' => 'admin.settings.index',
+                    'url' => '#',
                     'icon' => 'fas fa-sliders-h',
-                    'active' => ['admin/settings*'],
+                    'classes' => 'text-muted',
+                    'tooltip' => 'Coming Soon',
                 ],
                 [
                     'text' => 'Activity Logs',
-                    'route' => 'admin.logs.index',
+                    'url' => '#',
                     'icon' => 'fas fa-list-alt',
-                    'active' => ['admin/logs*'],
+                    'classes' => 'text-muted',
+                    'tooltip' => 'Coming Soon',
                 ],
             ],
         ],
         [
             'text' => 'HB837 Projects',
-            'route' => 'hb837.index',
+            'route' => 'admin.hb837.index',
             'icon' => 'fas fa-project-diagram',
-            'active' => ['hb837*'],
-        ],
-        [
-            'text' => 'Consultants',
-            'route' => 'consultants.index',
-            'icon' => 'fas fa-users',
-            'active' => ['consultants*'],
+            'active' => ['admin/hb837*'],
         ],
 
         ['header' => 'ANALYTICS & REPORTS'],
         [
             'text' => 'Analytics',
-            'route' => 'dashboard.analytics',
+            'url' => '#',
             'icon' => 'fas fa-chart-line',
+            'classes' => 'text-muted',
+            'tooltip' => 'Coming Soon',
         ],
 
         ['header' => 'ACCOUNT MANAGEMENT'],
@@ -423,22 +422,22 @@ return [
 
     'plugins' => [
         'Datatables' => [
-            'active' => false,
+            'active' => true,
             'files' => [
                 [
                     'type' => 'js',
                     'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js',
+                    'location' => 'https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js',
                 ],
                 [
                     'type' => 'js',
                     'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js',
+                    'location' => 'https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js',
                 ],
                 [
                     'type' => 'css',
                     'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css',
+                    'location' => 'https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css',
                 ],
             ],
         ],

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Plot extends Model
 {
     protected $fillable = [
+        'plot_name',
+        'description',
         'hb837_id',
         'lot_number',
         'block_number',
