@@ -9,6 +9,32 @@ file_put_contents(C:\laragon\www\projecttracker_fresh\storage\framework/sessions
 
 This indicates the application is using **local development paths** on the live server. Here's how to fix it:
 
+## 🚨 **EXCEL PACKAGE ERROR FIX**
+
+If you see this error:
+```
+Class "PhpOffice\PhpSpreadsheet\Reader\Csv" not found
+Package phpoffice/phpexcel is abandoned, you should avoid using it. Use phpoffice/phpspreadsheet instead.
+```
+
+**SOLUTION 1: Install PHP Zip Extension (Recommended)**
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install php-zip php-xml php-gd
+sudo systemctl restart apache2
+
+# CentOS/RHEL
+sudo yum install php-zip php-xml php-gd
+sudo systemctl restart httpd
+```
+
+**SOLUTION 2: Install without Zip Extension**
+```bash
+composer install --ignore-platform-req=ext-zip --no-dev --optimize-autoloader
+php artisan package:discover --ansi
+```
+
 ## 📋 DEPLOYMENT STEPS
 
 ### 1. **Upload Files to Live Server**
