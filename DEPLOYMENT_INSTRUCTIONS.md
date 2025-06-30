@@ -129,6 +129,32 @@ mkdir -p storage/framework/sessions
 chmod 755 storage/framework/sessions
 ```
 
+## 🚨 **DNS/DATABASE CACHE ERROR FIX**
+
+If you see this error:
+```
+SQLSTATE[08006] [7] could not translate host name "criustemp.hq.cisadmin.com" to address: Temporary failure in name resolution
+```
+
+**IMMEDIATE SOLUTION:**
+```bash
+# On your server, run this to fix immediately:
+bash fix_dns_cache_issue.sh
+```
+
+**Manual Fix:**
+```bash
+# Update .env file to use file cache instead of database cache:
+sed -i 's/CACHE_STORE=database/CACHE_STORE=file/g' .env
+sed -i 's/QUEUE_CONNECTION=database/QUEUE_CONNECTION=sync/g' .env
+
+# Clear caches safely:
+php artisan config:clear
+php artisan cache:clear
+```
+
+**Root Cause:** The application tries to clear database cache but can't resolve the database hostname.
+
 ## 📁 **REQUIRED DIRECTORY STRUCTURE**
 ```
 your-app/
