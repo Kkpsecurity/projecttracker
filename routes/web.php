@@ -85,10 +85,7 @@ Route::middleware(['auth'])->group(function () {
 
 // API routes for AJAX calls
 Route::middleware(['auth'])->prefix('api')->group(function () {
-    // HB837 API routes (use Admin controller)
-    Route::get('hb837/search', [AdminHB837Controller::class, 'search'])->name('api.hb837.search');
-    Route::get('hb837/data', [AdminHB837Controller::class, 'getData'])->name('api.hb837.data');
-    Route::get('hb837/data/{tab}', [AdminHB837Controller::class, 'getTabData'])->name('api.hb837.data.tab');
+    // Legacy API routes removed - now handled in routes/admin.php to avoid conflicts
 
     // Placeholder for other API routes (to be implemented)
     // Route::get('consultants/search', [ConsultantController::class, 'search'])->name('api.consultants.search');
@@ -96,11 +93,11 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
 });
 
 // Admin Center Routes
+require __DIR__ . '/admin.php';
+
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    // Admin Dashboard (redirect to main dashboard)
-    Route::get('/dashboard', function () {
-        return redirect()->route('dashboard');
-    })->name('dashboard');
+    // Admin Dashboard (enhanced)
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
 
     // User Management Resource Routes
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
@@ -112,40 +109,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::patch('users/{user}/disable-two-factor', [\App\Http\Controllers\Admin\UserController::class, 'disableTwoFactor'])->name('users.disable-two-factor');
     Route::post('users/bulk-action', [\App\Http\Controllers\Admin\UserController::class, 'bulkAction'])->name('users.bulk-action');
 
-    // HB837 Management Resource Routes
-    Route::resource('hb837', AdminHB837Controller::class);
-
-    // HB837 DataTables AJAX Routes
-    Route::get('hb837/data', [AdminHB837Controller::class, 'getData'])->name('hb837.data');
-    Route::get('hb837/data/{tab}', [AdminHB837Controller::class, 'getTabData'])->name('hb837.data.tab');
-    Route::get('hb837/stats', [AdminHB837Controller::class, 'getStats'])->name('hb837.stats');
-
-    // HB837 Bulk Actions
-    Route::post('hb837/bulk-action', [AdminHB837Controller::class, 'bulkAction'])->name('hb837.bulk-action');
-    Route::patch('hb837/{hb837}/status', [AdminHB837Controller::class, 'updateStatus'])->name('hb837.status');
-    Route::patch('hb837/{hb837}/priority', [AdminHB837Controller::class, 'updatePriority'])->name('hb837.priority');
-
-    // HB837 Additional Actions
-    Route::post('hb837/{hb837}/duplicate', [AdminHB837Controller::class, 'duplicate'])->name('hb837.duplicate');
-    Route::delete('hb837/{hb837}/ajax', [AdminHB837Controller::class, 'ajaxDestroy'])->name('hb837.ajax-destroy');
-
-    // HB837 Import/Export Routes
-    Route::prefix('hb837')->group(function () {
-        Route::get('/import', [AdminHB837Controller::class, 'showImport'])->name('hb837.import.show');
-        Route::post('/import', [AdminHB837Controller::class, 'import'])->name('hb837.import');
-        Route::post('/import/process', [AdminHB837Controller::class, 'processImport'])->name('hb837.import.process');
-        Route::post('/import/compare', [AdminHB837Controller::class, 'compareImport'])->name('hb837.import.compare');
-        Route::post('/import/three-phase', [AdminHB837Controller::class, 'executeThreePhaseImport'])->name('hb837.three-phase-import');
-        Route::get('/import/three-phase', [AdminHB837Controller::class, 'showThreePhaseImport'])->name('hb837.three-phase-import.show');
-        Route::get('/export', [AdminHB837Controller::class, 'export'])->name('hb837.export');
-        Route::get('/export/{format}', [AdminHB837Controller::class, 'exportFormat'])->name('hb837.export.format');
-
-        // File Management
-        Route::get('/{hb837}/files', [AdminHB837Controller::class, 'files'])->name('hb837.files');
-        Route::post('/{hb837}/files', [AdminHB837Controller::class, 'uploadFile'])->name('hb837.files.upload');
-        Route::get('/files/{file}/download', [AdminHB837Controller::class, 'downloadFile'])->name('hb837.files.download');
-        Route::delete('/files/{file}', [AdminHB837Controller::class, 'deleteFile'])->name('hb837.files.delete');
-    });
+    // NOTE: HB837 routes are now handled in routes/admin.php to avoid conflicts
 
     // System Settings
     Route::prefix('settings')->name('settings.')->group(function () {
@@ -155,8 +119,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/toggle-maintenance', [\App\Http\Controllers\Admin\SettingsController::class, 'toggleMaintenance'])->name('toggle-maintenance');
     });
 
-    // Activity Logs (placeholder)
-    Route::get('logs', function () {
-        return view('admin.logs.index');
-    })->name('logs.index');
+    // Activity Logs
+    Route::prefix('logs')->name('logs.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\LogsController::class, 'index'])->name('index');
+        Route::get('/data', [\App\Http\Controllers\Admin\LogsController::class, 'getData'])->name('data');
+        Route::post('/clear-old', [\App\Http\Controllers\Admin\LogsController::class, 'clearOldLogs'])->name('clear-old');
+        Route::get('/export', [\App\Http\Controllers\Admin\LogsController::class, 'export'])->name('export');
+    });
 });

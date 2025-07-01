@@ -21,19 +21,19 @@ DB_PORT=$(grep "^DB_PORT=" .env | cut -d'=' -f2)
 
 if [ ! -z "$DB_HOST" ] && [ ! -z "$DB_PORT" ]; then
     echo "Testing connection to $DB_HOST:$DB_PORT..."
-    
+
     # Test DNS resolution
     if ! nslookup "$DB_HOST" > /dev/null 2>&1; then
         echo "⚠️  DNS resolution failed for $DB_HOST"
         echo "Switching to file-based cache to avoid database dependency..."
-        
+
         # Update cache to use file instead of database
         sed -i 's/CACHE_STORE=database/CACHE_STORE=file/' .env
         sed -i 's/QUEUE_CONNECTION=database/QUEUE_CONNECTION=sync/' .env
         echo "✅ Updated cache configuration to use files"
     else
         echo "✅ DNS resolution successful"
-        
+
         # Test port connectivity
         if timeout 5 bash -c "cat < /dev/null > /dev/tcp/$DB_HOST/$DB_PORT" 2>/dev/null; then
             echo "✅ Database server is reachable"
@@ -70,7 +70,7 @@ fi
 echo "5. Clearing caches (safe mode)..."
 # Clear caches that don't require database
 php artisan config:clear 2>/dev/null || echo "Config cleared"
-php artisan route:clear 2>/dev/null || echo "Routes cleared" 
+php artisan route:clear 2>/dev/null || echo "Routes cleared"
 php artisan view:clear 2>/dev/null || echo "Views cleared"
 
 # Only clear cache if not using database cache

@@ -96,8 +96,8 @@
                     <a href="{{ route('admin.hb837.create') }}" class="btn btn-success mr-2">
                         <i class="fas fa-plus"></i> Create New Record
                     </a>
-                    <a href="{{ route('admin.hb837.import.show') }}" class="btn btn-primary mr-2">
-                        <i class="fas fa-file-upload"></i> Import Data
+                    <a href="{{ route('admin.hb837.smart-import.show') }}" class="btn btn-primary mr-2">
+                        <i class="fas fa-magic"></i> Smart Import
                     </a>
                     <a href="{{ route('admin.hb837.export') }}" class="btn btn-info mr-2">
                         <i class="fas fa-file-download"></i> Export Data
@@ -118,28 +118,32 @@
                     <ul class="nav nav-tabs" id="hb837-tabs" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link {{ $tab == 'active' ? 'active' : '' }}"
-                               id="active-tab" data-toggle="pill" href="#active" role="tab"
+                               id="active-tab" data-toggle="tab" href="#active" role="tab"
+                               aria-controls="active" aria-selected="{{ $tab == 'active' ? 'true' : 'false' }}"
                                onclick="changeTab('active')">
                                 <i class="fas fa-project-diagram"></i> Active
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ $tab == 'quoted' ? 'active' : '' }}"
-                               id="quoted-tab" data-toggle="pill" href="#quoted" role="tab"
+                               id="quoted-tab" data-toggle="tab" href="#quoted" role="tab"
+                               aria-controls="quoted" aria-selected="{{ $tab == 'quoted' ? 'true' : 'false' }}"
                                onclick="changeTab('quoted')">
                                 <i class="fas fa-file-invoice-dollar"></i> Quoted
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ $tab == 'completed' ? 'active' : '' }}"
-                               id="completed-tab" data-toggle="pill" href="#completed" role="tab"
+                               id="completed-tab" data-toggle="tab" href="#completed" role="tab"
+                               aria-controls="completed" aria-selected="{{ $tab == 'completed' ? 'true' : 'false' }}"
                                onclick="changeTab('completed')">
                                 <i class="fas fa-check-circle"></i> Completed
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ $tab == 'closed' ? 'active' : '' }}"
-                               id="closed-tab" data-toggle="pill" href="#closed" role="tab"
+                               id="closed-tab" data-toggle="tab" href="#closed" role="tab"
+                               aria-controls="closed" aria-selected="{{ $tab == 'closed' ? 'true' : 'false' }}"
                                onclick="changeTab('closed')">
                                 <i class="fas fa-times-circle"></i> Closed
                             </a>
@@ -148,32 +152,124 @@
                 </div>
                 <div class="card-body">
                     <div class="tab-content" id="hb837-tabContent">
-                        <!-- DataTable -->
-                        <div class="table-responsive" id="table-container">
-                            <table id="hb837-table" class="table table-bordered table-striped table-hover">
-                                <thead>
-                                    <tr>
-                                        <th class="text-center">
-                                            <input type="checkbox" id="select-all" class="form-check-input">
-                                        </th>
-                                        <th class="text-left">Property Details</th>
-                                        <th class="text-center">County</th>
-                                        <th class="text-center">Crime Risk</th>
-                                        <th class="text-left">Client Contact</th>
-                                        <th class="text-center">Consultant</th>
-                                        <th class="text-center">Inspection<br>Date</th>
-                                        <th class="text-center">Report<br>Status</th>
-                                        <th class="text-center">Contract<br>Status</th>
-                                        <th class="text-center">Quote</th>
-                                        <th class="text-center">Priority</th>
-                                        <th class="text-center">Created</th>
-                                        <th class="text-center">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- DataTables will populate this -->
-                                </tbody>
-                            </table>
+                        <div class="tab-pane fade {{ $tab == 'active' ? 'show active' : '' }}" id="active" role="tabpanel" aria-labelledby="active-tab">
+                            <!-- DataTable -->
+                            <div class="table-responsive" id="table-container">
+                                <table id="hb837-table" class="table table-bordered table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th width="3%" class="text-center">
+                                                <input type="checkbox" id="select-all" class="form-check-input">
+                                            </th>
+                                            <th width="8%" class="text-center">Report Status</th>
+                                            <th width="15%" class="text-left">Property Name</th>
+                                            <th width="8%" class="text-center">County</th>
+                                            <th width="8%" class="text-center">Crime Risk</th>
+                                            <th width="10%" class="text-left">Macro Client</th>
+                                            <th width="10%" class="text-center">Assigned Consultant</th>
+                                            <th width="10%" class="text-center">Scheduled Date</th>
+                                            <th width="8%" class="text-center">Contracting Status</th>
+                                            <th width="8%" class="text-center">Quoted Price</th>
+                                            <th width="6%" class="text-center">Priority</th>
+                                            <th width="8%" class="text-center">Created Date</th>
+                                            <th width="8%" class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- DataTables will populate this -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade {{ $tab == 'quoted' ? 'show active' : '' }}" id="quoted" role="tabpanel" aria-labelledby="quoted-tab">
+                            <!-- Same table structure for quoted -->
+                            <div class="table-responsive">
+                                <table id="hb837-table-quoted" class="table table-bordered table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th width="3%" class="text-center">
+                                                <input type="checkbox" id="select-all-quoted" class="form-check-input">
+                                            </th>
+                                            <th width="8%" class="text-center">Report Status</th>
+                                            <th width="15%" class="text-left">Property Name</th>
+                                            <th width="8%" class="text-center">County</th>
+                                            <th width="8%" class="text-center">Crime Risk</th>
+                                            <th width="10%" class="text-left">Macro Client</th>
+                                            <th width="10%" class="text-center">Assigned Consultant</th>
+                                            <th width="10%" class="text-center">Scheduled Date</th>
+                                            <th width="8%" class="text-center">Contracting Status</th>
+                                            <th width="8%" class="text-center">Quoted Price</th>
+                                            <th width="6%" class="text-center">Priority</th>
+                                            <th width="8%" class="text-center">Created Date</th>
+                                            <th width="8%" class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- DataTables will populate this -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade {{ $tab == 'completed' ? 'show active' : '' }}" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+                            <!-- Same table structure for completed -->
+                            <div class="table-responsive">
+                                <table id="hb837-table-completed" class="table table-bordered table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th width="3%" class="text-center">
+                                                <input type="checkbox" id="select-all-completed" class="form-check-input">
+                                            </th>
+                                            <th width="8%" class="text-center">Report Status</th>
+                                            <th width="15%" class="text-left">Property Name</th>
+                                            <th width="8%" class="text-center">County</th>
+                                            <th width="8%" class="text-center">Crime Risk</th>
+                                            <th width="10%" class="text-left">Macro Client</th>
+                                            <th width="10%" class="text-center">Assigned Consultant</th>
+                                            <th width="10%" class="text-center">Scheduled Date</th>
+                                            <th width="8%" class="text-center">Contracting Status</th>
+                                            <th width="8%" class="text-center">Quoted Price</th>
+                                            <th width="6%" class="text-center">Priority</th>
+                                            <th width="8%" class="text-center">Created Date</th>
+                                            <th width="8%" class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- DataTables will populate this -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade {{ $tab == 'closed' ? 'show active' : '' }}" id="closed" role="tabpanel" aria-labelledby="closed-tab">
+                            <!-- Same table structure for closed -->
+                            <div class="table-responsive">
+                                <table id="hb837-table-closed" class="table table-bordered table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th width="3%" class="text-center">
+                                                <input type="checkbox" id="select-all-closed" class="form-check-input">
+                                            </th>
+                                            <th width="8%" class="text-center">Report Status</th>
+                                            <th width="15%" class="text-left">Property Name</th>
+                                            <th width="8%" class="text-center">County</th>
+                                            <th width="8%" class="text-center">Crime Risk</th>
+                                            <th width="10%" class="text-left">Macro Client</th>
+                                            <th width="10%" class="text-center">Assigned Consultant</th>
+                                            <th width="10%" class="text-center">Scheduled Date</th>
+                                            <th width="8%" class="text-center">Contracting Status</th>
+                                            <th width="8%" class="text-center">Quoted Price</th>
+                                            <th width="6%" class="text-center">Priority</th>
+                                            <th width="8%" class="text-center">Created Date</th>
+                                            <th width="8%" class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- DataTables will populate this -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -239,17 +335,105 @@
 
 @section('css')
 <style>
-/* Color coding for GitHub Issue #8 */
-.crime-risk-low { background-color: #72b862 !important; color: white !important; }
-.crime-risk-moderate { background-color: #95f181 !important; color: black !important; }
-.crime-risk-elevated { background-color: #fae099 !important; color: black !important; }
-.crime-risk-high { background-color: #f2a36e !important; color: black !important; }
-.crime-risk-severe { background-color: #c75845 !important; color: white !important; }
+/* Color coding for Crime Risk levels */
+.risk-low {
+    background-color: #72b862 !important;
+    color: white !important;
+}
 
-.status-not-started { background-color: #f8d7da !important; color: #721c24 !important; }
-.status-in-progress { background-color: #fff3cd !important; color: #856404 !important; }
-.status-in-review { background-color: #cce5ff !important; color: #004085 !important; }
-.status-completed { background-color: #d4edda !important; color: #155724 !important; }
+.risk-moderate {
+    background-color: #95f181 !important;
+    color: black !important;
+}
+
+.risk-elevated {
+    background-color: #fae099 !important;
+    color: black !important;
+}
+
+.risk-high {
+    background-color: #f2a36e !important;
+    color: black !important;
+}
+
+.risk-severe {
+    background-color: #c75845 !important;
+    color: white !important;
+}
+
+/* Color coding for Report Status */
+.status-not-started {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+}
+
+.status-in-progress {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+}
+
+.status-in-review {
+    background-color: #cce5ff !important;
+    color: #004085 !important;
+}
+
+.status-completed {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+}
+
+/* Additional status colors for completeness */
+.status-quoted {
+    background-color: #e2e3e5 !important;
+    color: #383d41 !important;
+}
+
+.status-active {
+    background-color: #b3d9ff !important;
+    color: #004085 !important;
+}
+
+.status-closed {
+    background-color: #f5c6cb !important;
+    color: #721c24 !important;
+}
+
+/* Contract Status colors */
+.contract-executed {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+}
+
+.contract-pending {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+}
+
+.contract-cancelled {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+}
+
+/* Priority colors */
+.priority-low {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+}
+
+.priority-medium {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+}
+
+.priority-high {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+}
+
+.priority-urgent {
+    background-color: #c75845 !important;
+    color: white !important;
+}
 
 /* DataTables custom styling */
 .table-hover tbody tr:hover {
@@ -257,14 +441,68 @@
 }
 
 /* Tab styling */
+.nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+}
+
 .nav-tabs .nav-link {
-    border: none;
-    border-bottom: 3px solid transparent;
+    border: 1px solid transparent;
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+    margin-bottom: -2px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: #e9ecef #e9ecef #dee2e6;
+    background-color: #f8f9fa;
 }
 
 .nav-tabs .nav-link.active {
-    border-bottom-color: #007bff;
-    background-color: transparent;
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    border-bottom: 2px solid #fff;
+    font-weight: 600;
+}
+
+.nav-tabs .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #007bff;
+}
+
+.nav-tabs .nav-link i {
+    margin-right: 0.5rem;
+}
+
+/* Tab content styling */
+.tab-content {
+    padding-top: 1rem;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+.tab-pane.show.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Bulk action checkboxes */
@@ -406,6 +644,25 @@ table.dataTable tbody td.dataTables_empty {
     background: transparent !important;
 }
 
+/* Empty state row styling for manual injection */
+.empty-state-row td {
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    vertical-align: middle !important;
+}
+
+.empty-state-row:hover td {
+    background: transparent !important;
+}
+
+/* Ensure empty state is visible in table body */
+#hb837-table tbody .empty-state-container {
+    width: 100%;
+    padding: 40px 20px;
+    margin: 0;
+}
+
 /* Critical: Prevent all horizontal scrolling */
 .table-responsive {
     overflow-x: hidden !important;
@@ -418,18 +675,18 @@ table.dataTable tbody td.dataTables_empty {
 .dataTables_wrapper {
     width: 100% !important;
     max-width: 100% !important;
-    overflow: hidden !important;
+    overflow-x: auto !important;
     box-sizing: border-box;
 }
 
 .dataTables_scrollBody {
-    overflow-x: hidden !important;
+    overflow-x: auto !important;
     overflow-y: visible !important;
     width: 100% !important;
     max-width: 100% !important;
 }
 
-/* Force table to fit container width - no horizontal scroll */
+/* Table layout for better column alignment */
 #hb837-table {
     width: 100% !important;
     max-width: 100% !important;
@@ -440,12 +697,13 @@ table.dataTable tbody td.dataTables_empty {
     overflow: hidden;
     border: 1px solid #dee2e6;
     box-sizing: border-box;
+    margin-bottom: 0;
 }
 
 /* DataTables wrapper styling */
 .dataTables_wrapper {
     width: 100%;
-    overflow: hidden;
+    overflow-x: auto;
 }
 
 .dataTables_wrapper .dataTables_length,
@@ -467,11 +725,13 @@ table.dataTable tbody td.dataTables_empty {
 #hb837-table thead th {
     text-align: center;
     vertical-align: middle;
-    padding: 10px 4px;
+    padding: 10px 6px;
     white-space: nowrap;
     font-size: 0.8rem;
+    font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
+    border-bottom: 2px solid #dee2e6;
 }
 
 #hb837-table thead th:first-child {
@@ -480,10 +740,19 @@ table.dataTable tbody td.dataTables_empty {
     min-width: 35px;
 }
 
-#hb837-table thead th:nth-child(2) { width: 20%; } /* Property Details */
+#hb837-table thead th:nth-child(2) {
+    width: 20%;
+    text-align: left;
+    padding-left: 12px;
+}
+
 #hb837-table thead th:nth-child(3) { width: 8%; }  /* County */
 #hb837-table thead th:nth-child(4) { width: 9%; } /* Crime Risk */
-#hb837-table thead th:nth-child(5) { width: 11%; } /* Client Contact */
+#hb837-table thead th:nth-child(5) {
+    width: 11%;
+    text-align: left;
+    padding-left: 12px;
+} /* Client Contact */
 #hb837-table thead th:nth-child(6) { width: 9%; } /* Consultant */
 #hb837-table thead th:nth-child(7) { width: 8%; }  /* Inspection Date */
 #hb837-table thead th:nth-child(8) { width: 8%; }  /* Report Status */
@@ -496,7 +765,7 @@ table.dataTable tbody td.dataTables_empty {
 /* Column-specific alignment */
 #hb837-table tbody td {
     vertical-align: middle;
-    padding: 8px 4px;
+    padding: 8px 6px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -509,19 +778,26 @@ table.dataTable tbody td.dataTables_empty {
 #hb837-table tbody td:nth-child(2) { /* Property Details */
     white-space: normal;
     word-wrap: break-word;
+    text-align: left;
+    padding-left: 12px;
 }
 
-/* Right align numeric columns */
-#hb837-table tbody td:nth-child(10), /* Quote column */
-#hb837-table tbody td:nth-child(11), /* Priority column */
-#hb837-table thead th:nth-child(10),
-#hb837-table thead th:nth-child(11) {
-    text-align: center;
+#hb837-table tbody td:nth-child(5) { /* Client Contact */
+    text-align: left;
+    padding-left: 12px;
 }
 
-/* Center align action column */
-#hb837-table tbody td:last-child,
-#hb837-table thead th:last-child {
+/* Center align numeric and status columns */
+#hb837-table tbody td:nth-child(3),  /* County */
+#hb837-table tbody td:nth-child(4),  /* Crime Risk */
+#hb837-table tbody td:nth-child(6),  /* Consultant */
+#hb837-table tbody td:nth-child(7),  /* Inspection Date */
+#hb837-table tbody td:nth-child(8),  /* Report Status */
+#hb837-table tbody td:nth-child(9),  /* Contract Status */
+#hb837-table tbody td:nth-child(10), /* Quote */
+#hb837-table tbody td:nth-child(11), /* Priority */
+#hb837-table tbody td:nth-child(12), /* Created */
+#hb837-table tbody td:nth-child(13) /* Actions */ {
     text-align: center;
 }
 
@@ -619,97 +895,6 @@ table.dataTable tbody td.dataTables_empty {
         font-size: 0.85rem;
     }
 
-    /* Hide less important columns on small screens */
-    #hb837-table thead th:nth-child(3),
-    #hb837-table tbody td:nth-child(3),
-    #hb837-table thead th:nth-child(4),
-    #hb837-table tbody td:nth-child(4),
-    #hb837-table thead th:nth-child(7),
-    #hb837-table tbody td:nth-child(7),
-    #hb837-table thead th:nth-child(12),
-    #hb837-table tbody td:nth-child(12) {
-        display: none;
-    }
-
-    /* Adjust remaining column widths for mobile */
-    #hb837-table thead th:nth-child(2) { width: 25%; }
-    #hb837-table thead th:nth-child(5) { width: 20%; }
-    #hb837-table thead th:nth-child(6) { width: 15%; }
-    #hb837-table thead th:nth-child(8) { width: 10%; }
-    #hb837-table thead th:nth-child(9) { width: 10%; }
-    #hb837-table thead th:nth-child(10) { width: 8%; }
-    #hb837-table thead th:nth-child(11) { width: 7%; }
-    #hb837-table thead th:nth-child(13) { width: 15%; }
-}
-
-@media (max-width: 576px) {
-    .empty-state-container {
-        padding: 20px 10px !important;
-        min-height: 200px !important;
-    }
-
-    .empty-state-icon {
-        font-size: 2.5rem;
-    }
-
-    .empty-state-title {
-        font-size: 1.1rem;
-    }
-
-    .empty-state-message {
-        font-size: 0.8rem;
-    }
-
-    /* Hide even more columns on very small screens */
-    #hb837-table thead th:nth-child(6),
-    #hb837-table tbody td:nth-child(6),
-    #hb837-table thead th:nth-child(10),
-    #hb837-table tbody td:nth-child(10),
-    #hb837-table thead th:nth-child(11),
-    #hb837-table tbody td:nth-child(11) {
-        display: none;
-    }
-
-    /* Minimal columns for very small screens */
-    #hb837-table thead th:nth-child(2) { width: 35%; }
-    #hb837-table thead th:nth-child(5) { width: 25%; }
-    #hb837-table thead th:nth-child(8) { width: 15%; }
-    #hb837-table thead th:nth-child(9) { width: 15%; }
-    #hb837-table thead th:nth-child(13) { width: 10%; }
-}
-
-/* Ensure no content breaks out of containers */
-* {
-    box-sizing: border-box;
-}
-
-body, html {
-    overflow-x: hidden !important;
-}
-
-.content-wrapper {
-    overflow-x: hidden !important;
-}
-
-.card-body {
-    overflow-x: hidden !important;
-    padding: 1rem;
-}
-
-/* DataTables specific fixes */
-.dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_filter,
-.dataTables_wrapper .dataTables_info,
-.dataTables_wrapper .dataTables_paginate {
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-    }
-
-    .empty-state-message {
-        font-size: 0.9rem;
-    }
-
     .empty-state-buttons {
         flex-direction: column;
         align-items: center;
@@ -772,6 +957,10 @@ body, html {
 
 @section('js')
 <script>
+// Global variables for table management
+var table; // Global DataTable instance
+var currentTab = '{{ $tab }}'; // Current active tab
+
 // Wait for AdminLTE and DataTables to be fully loaded
 $(document).ready(function() {
     console.log('Document ready - Starting DataTables initialization...');
@@ -825,9 +1014,12 @@ $(document).ready(function() {
     function initializeDataTables() {
         console.log('Initializing DataTables...');
 
-        // Initialize DataTable
-        let currentTab = '{{ $tab }}';
-        let table = initDataTable(currentTab);
+        // Initialize tabs first
+        initializeTabs();
+
+        // Initialize DataTable using global variables
+        let tableId = currentTab === 'active' ? '#hb837-table' : '#hb837-table-' + currentTab;
+        table = initDataTable(currentTab, tableId); // Use global table variable
 
         if (table) {
             console.log('✓ DataTable initialized successfully for tab:', currentTab);
@@ -902,8 +1094,8 @@ $(document).ready(function() {
                         <a href="{{ route('admin.hb837.create') }}" class="btn btn-${state.color} btn-sm">
                             <i class="fas fa-plus"></i> Add New Property
                         </a>
-                        <a href="{{ route('admin.hb837.import.show') }}" class="btn btn-outline-${state.color} btn-sm">
-                            <i class="fas fa-file-upload"></i> Import Data
+                        <a href="{{ route('admin.hb837.smart-import.show') }}" class="btn btn-outline-${state.color} btn-sm">
+                            <i class="fas fa-magic"></i> Smart Import
                         </a>
                     </div>
                 </div>
@@ -923,7 +1115,7 @@ $(document).ready(function() {
                     <p class="search-empty-state-message">
                         No properties match your search criteria. Try adjusting your search terms or clearing the search to see all properties.
                     </p>
-                    <button onclick="table.search('').draw();" class="btn btn-outline-secondary btn-sm">
+                    <button onclick="if(typeof table !== 'undefined' && table) { table.search('').draw(); }" class="btn btn-outline-secondary btn-sm">
                         <i class="fas fa-times"></i> Clear Search
                     </button>
                 </div>
@@ -932,6 +1124,8 @@ $(document).ready(function() {
     }
 
     function initDataTable(tab) {
+        console.log('Initializing DataTable for tab:', tab);
+
         // Check if DataTables is loaded
         if (typeof $.fn.DataTable === 'undefined') {
             console.error('DataTables is not loaded. Please check the JavaScript includes.');
@@ -947,37 +1141,109 @@ $(document).ready(function() {
             processing: true,
             serverSide: true,
             ajax: {
-                url: '{{ route("admin.hb837.data.tab", "active") }}'.replace('active', tab),
+                url: '/admin/hb837/data/' + tab,
                 error: function(xhr, error, thrown) {
                     console.error('DataTables AJAX error:', error, thrown);
+                    console.error('Response:', xhr.responseText);
                     alert('Error loading data. Please refresh the page.');
+                },
+                dataSrc: function(json) {
+                    console.log('=== DataTables Response Debug for tab:', tab, '===');
+                    console.log('Full JSON:', json);
+                    console.log('Records total:', json.recordsTotal);
+                    console.log('Records filtered:', json.recordsFiltered);
+                    console.log('Data array length:', json.data ? json.data.length : 'undefined');
+
+                    // Log first data item to see structure
+                    if (json.data && json.data.length > 0) {
+                        console.log('First data item:', json.data[0]);
+                        console.log('First data item keys:', Object.keys(json.data[0]));
+                    }
+
+                    return json.data;
                 }
             },
             columns: [
-                { data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, width: '40px', className: 'text-center' },
-                { data: 'property_name', name: 'property_name', width: '250px', className: 'text-left' },
-                { data: 'county', name: 'county', width: '90px', className: 'text-center' },
-                { data: 'securitygauge_crime_risk', name: 'securitygauge_crime_risk', orderable: false, width: '110px', className: 'text-center' },
-                { data: 'macro_client', name: 'macro_client', width: '140px', className: 'text-left' },
-                { data: 'assigned_consultant_id', name: 'assigned_consultant_id', orderable: false, width: '120px', className: 'text-center' },
-                { data: 'scheduled_date_of_inspection', name: 'scheduled_date_of_inspection', width: '120px', className: 'text-center' },
-                { data: 'report_status', name: 'report_status', orderable: false, width: '100px', className: 'text-center' },
-                { data: 'contracting_status', name: 'contracting_status', orderable: false, width: '100px', className: 'text-center' },
-                { data: 'quoted_price', name: 'quoted_price', width: '80px', className: 'text-center' },
-                { data: 'priority', name: 'priority', orderable: true, width: '70px', className: 'text-center' },
-                { data: 'created_at', name: 'created_at', width: '90px', className: 'text-center' },
-                { data: 'action', name: 'action', orderable: false, searchable: false, width: '140px', className: 'text-center' }
+                { data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, width: '3%', className: 'text-center' },
+                { data: 'report_status', name: 'report_status', orderable: false, width: '8%', className: 'text-center' },
+                { data: 'property_name', name: 'property_name', width: '15%', className: 'text-left' },
+                { data: 'county', name: 'county', width: '8%', className: 'text-center' },
+                { data: 'securitygauge_crime_risk', name: 'securitygauge_crime_risk', orderable: false, width: '8%', className: 'text-center' },
+                { data: 'macro_client', name: 'macro_client', width: '10%', className: 'text-left' },
+                { data: 'assigned_consultant_id', name: 'assigned_consultant_id', orderable: false, width: '10%', className: 'text-center' },
+                { data: 'scheduled_date_of_inspection', name: 'scheduled_date_of_inspection', width: '10%', className: 'text-center' },
+                { data: 'contracting_status', name: 'contracting_status', orderable: false, width: '8%', className: 'text-center' },
+                { data: 'quoted_price', name: 'quoted_price', width: '8%', className: 'text-center' },
+                { data: 'priority', name: 'priority', orderable: false, width: '6%', className: 'text-center' },
+                { data: 'created_at', name: 'created_at', width: '8%', className: 'text-center' },
+                { data: 'action', name: 'action', orderable: false, searchable: false, width: '8%', className: 'text-center' }
             ],
-            order: [[11, 'desc']], // Order by created_at descending
+            order: [[7, 'desc']], // Order by scheduled_date_of_inspection descending
             pageLength: 25,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-            responsive: true,
+            responsive: false,
             stateSave: true,
-            scrollX: false,
+            scrollX: true,
             autoWidth: false,
+            fixedColumns: false,
+            columnDefs: [
+                { targets: [0, 3, 5, 7, 8], orderable: false },
+                { targets: '_all', className: 'align-middle' }
+            ],
             dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>' +
                  '<"row"<"col-sm-12"<"table-responsive"t>>>' +
                  '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+            drawCallback: function(settings) {
+                var api = this.api();
+                var pageInfo = api.page.info();
+                var data = api.rows().data();
+
+                console.log('DrawCallback - Tab:', tab, 'Page Info:', pageInfo, 'Actual Data Length:', data.length);
+
+                // Only show empty state if we truly have no data
+                // Don't interfere with DataTables rendering if there is data
+                if (data.length === 0 && pageInfo.recordsTotal === 0) {
+                    var emptyStateHtml = getEmptyStateHTML(tab);
+                    console.log('Showing empty state for tab:', tab);
+                    $(this).find('tbody').html(
+                        '<tr class="empty-state-row"><td colspan="13" class="text-center p-0 border-0">' +
+                        emptyStateHtml +
+                        '</td></tr>'
+                    );
+                } else if (data.length > 0) {
+                    console.log('Data exists, letting DataTables render normally. Rows:', data.length);
+
+                    // Re-initialize tooltips
+                    $('[data-toggle="tooltip"]').tooltip();
+
+                    // Apply color coding to entire cells (as per GitHub issue #8)
+                    setTimeout(function() {
+                        applyCellColorCoding('#hb837-table');
+                    }, 100);
+
+                    // Update bulk selection state
+                    updateBulkCount();
+
+                    // Show/hide bulk actions based on data
+                    $('.bulk-actions-container').show();
+                }
+
+                // Add custom styling to empty table message only if it's the DataTables default empty message
+                setTimeout(function() {
+                    var $emptyCell = $('#hb837-table tbody tr td.dataTables_empty');
+                    if ($emptyCell.length > 0) {
+                        $emptyCell.css({
+                            'border': 'none',
+                            'background': 'transparent'
+                        });
+                    }
+                }, 100);
+            },
+            initComplete: function(settings, json) {
+                console.log('DataTable init complete for tab:', tab, 'Data:', json);
+                // Force draw callback to run
+                this.api().draw(false);
+            },
             language: {
                 processing: '<div class="dt-processing-wrapper"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i><br><strong>Loading properties...</strong></div>',
                 emptyTable: getEmptyStateHTML(tab),
@@ -986,54 +1252,76 @@ $(document).ready(function() {
                 infoFiltered: '(filtered from _MAX_ total properties)',
                 lengthMenu: 'Show _MENU_ properties per page',
                 search: 'Search properties:',
-                zeroRecords: getSearchEmptyStateHTML(),
+                zeroRecords: getEmptyStateHTML(tab),
                 paginate: {
                     first: '<i class="fas fa-angle-double-left"></i>',
                     last: '<i class="fas fa-angle-double-right"></i>',
                     next: '<i class="fas fa-angle-right"></i>',
                     previous: '<i class="fas fa-angle-left"></i>'
                 }
-            },
-            drawCallback: function(settings) {
-                // Re-initialize tooltips
-                $('[data-toggle="tooltip"]').tooltip();
-
-                // Update bulk selection state
-                updateBulkCount();
-
-                // Add custom styling to empty table message
-                setTimeout(function() {
-                    if ($('#hb837-table tbody tr').length === 1 &&
-                        $('#hb837-table tbody tr td').hasClass('dataTables_empty')) {
-                        $('#hb837-table tbody tr td').css({
-                            'border': 'none',
-                            'background': 'transparent'
-                        });
-                    }
-                }, 100);
-
-                // Show/hide bulk actions based on data
-                if (settings.aoData && settings.aoData.length > 0) {
-                    $('.bulk-actions-container').show();
-                } else {
-                    $('.bulk-actions-container').hide();
-                }
             }
         });
     }
 
+    // Initialize Bootstrap tabs properly
+    function initializeTabs() {
+        console.log('Initializing Bootstrap tabs...');
+
+        // Handle tab click events
+        $('#hb837-tabs a[data-toggle="tab"]').on('click', function(e) {
+            e.preventDefault();
+            var targetTab = $(this).attr('href').substring(1); // Remove # from href
+            changeTab(targetTab);
+        });
+
+        // Handle tab shown event (after tab is displayed)
+        $('#hb837-tabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+            var target = $(e.target).attr('href').substring(1);
+            console.log('Tab shown:', target);
+
+            // Trigger table resize for proper column sizing
+            if (table) {
+                table.columns.adjust().responsive.recalc();
+            }
+        });
+
+        // Activate current tab on page load using global currentTab
+        $('#' + currentTab + '-tab').tab('show');
+
+        console.log('Bootstrap tabs initialized successfully');
+    }
+
     // Tab change function
     window.changeTab = function(tab) {
-        // Save current state
+        console.log('Changing tab to:', tab);
+
+        // Save current state using global currentTab
         if (table) {
             var currentPage = table.page();
             var currentSearch = table.search();
             sessionStorage.setItem('hb837_page_' + currentTab, currentPage);
             sessionStorage.setItem('hb837_search_' + currentTab, currentSearch);
+
+            // Destroy current table
+            table.destroy();
         }
 
+        // Update global currentTab variable
         currentTab = tab;
-        table = initDataTable(tab);
+
+        // Remove active classes from all tabs and content
+        $('#hb837-tabs .nav-link').removeClass('active').attr('aria-selected', 'false');
+        $('.tab-pane').removeClass('show active');
+
+        // Add active class to clicked tab
+        $('#' + tab + '-tab').addClass('active').attr('aria-selected', 'true');
+        $('#' + tab).addClass('show active');
+
+        // Initialize DataTable for the new tab using global table variable
+        var tableId = tab === 'active' ? '#hb837-table' : '#hb837-table-' + tab;
+        table = initDataTable(tab, tableId);
+
+        // Update URL
         updateUrl(tab);
 
         // Restore state for new tab
@@ -1225,6 +1513,155 @@ $(document).ready(function() {
             }
         });
     });
+
+    // Apply color coding to entire table cells as specified in GitHub issue #8
+    function applyCellColorCoding(tableId) {
+        $(tableId + ' tbody tr').each(function() {
+            const $row = $(this);
+
+            // Apply crime risk color to entire cell (Column 4 - Crime Risk)
+            const $riskCell = $row.find('td:nth-child(4)');
+            const $riskSpan = $riskCell.find('span');
+            if ($riskSpan.length > 0) {
+                const riskClasses = $riskSpan.attr('class');
+                if (riskClasses) {
+                    const riskColorClass = riskClasses.split(' ').find(cls => cls.startsWith('risk-'));
+                    if (riskColorClass) {
+                        $riskCell.addClass(riskColorClass);
+                        $riskSpan.removeClass(riskColorClass); // Remove from span to avoid double styling
+                    }
+                }
+            }
+
+            // Apply report status color to entire cell (Column 8 - Report Status)
+            const $statusCell = $row.find('td:nth-child(8)');
+            const $statusSpan = $statusCell.find('span');
+            if ($statusSpan.length > 0) {
+                const statusClasses = $statusSpan.attr('class');
+                if (statusClasses) {
+                    const statusColorClass = statusClasses.split(' ').find(cls => cls.startsWith('status-'));
+                    if (statusColorClass) {
+                        $statusCell.addClass(statusColorClass);
+                        $statusSpan.removeClass(statusColorClass); // Remove from span to avoid double styling
+                    }
+                }
+            }
+
+            // Apply contract status color to entire cell (Column 9 - Contract Status)
+            const $contractCell = $row.find('td:nth-child(9)');
+            const $contractSpan = $contractCell.find('span');
+            if ($contractSpan.length > 0) {
+                const contractClasses = $contractSpan.attr('class');
+                if (contractClasses) {
+                    const contractColorClass = contractClasses.split(' ').find(cls => cls.startsWith('contract-'));
+                    if (contractColorClass) {
+                        $contractCell.addClass(contractColorClass);
+                        $contractSpan.removeClass(contractColorClass); // Remove from span to avoid double styling
+                    }
+                }
+            }
+
+            // Apply priority color to entire cell (Column 11 - Priority)
+            const $priorityCell = $row.find('td:nth-child(11)');
+            const $prioritySpan = $priorityCell.find('span');
+            if ($prioritySpan.length > 0) {
+                const priorityClasses = $prioritySpan.attr('class');
+                if (priorityClasses) {
+                    const priorityColorClass = priorityClasses.split(' ').find(cls => cls.startsWith('priority-'));
+                    if (priorityColorClass) {
+                        $priorityCell.addClass(priorityColorClass);
+                        $prioritySpan.removeClass(priorityColorClass); // Remove from span to avoid double styling
+                    }
+                }
+            }
+        });
+    }
+
+    // Helper functions for color coding as per GitHub issue #8
+    function getRiskClass(riskLevel) {
+        if (!riskLevel) return '';
+
+        const risk = riskLevel.toLowerCase().trim();
+        switch (risk) {
+            case 'low':
+                return 'risk-low';
+            case 'moderate':
+                return 'risk-moderate';
+            case 'elevated':
+                return 'risk-elevated';
+            case 'high':
+                return 'risk-high';
+            case 'severe':
+                return 'risk-severe';
+            default:
+                return '';
+        }
+    }
+
+    function getStatusClass(status) {
+        if (!status) return '';
+
+        const statusLower = status.toLowerCase().replace(/[\s-_]/g, '-');
+        switch (statusLower) {
+            case 'not-started':
+            case 'notstarted':
+                return 'status-not-started';
+            case 'in-progress':
+            case 'inprogress':
+                return 'status-in-progress';
+            case 'in-review':
+            case 'inreview':
+                return 'status-in-review';
+            case 'completed':
+                return 'status-completed';
+            case 'quoted':
+                return 'status-quoted';
+            case 'active':
+                return 'status-active';
+            case 'closed':
+                return 'status-closed';
+            default:
+                return '';
+        }
+    }
+
+    function getContractClass(contractStatus) {
+        if (!contractStatus) return '';
+
+        const contract = contractStatus.toLowerCase().replace(/[\s-_]/g, '-');
+        switch (contract) {
+            case 'executed':
+                return 'contract-executed';
+            case 'pending':
+                return 'contract-pending';
+            case 'cancelled':
+            case 'canceled':
+                return 'contract-cancelled';
+            default:
+                return '';
+        }
+    }
+
+    function getPriorityClass(priority) {
+        if (!priority) return '';
+
+        const priorityLower = priority.toLowerCase().trim();
+        switch (priorityLower) {
+            case 'low':
+                return 'priority-low';
+            case 'medium':
+            case 'normal':
+                return 'priority-medium';
+            case 'high':
+                return 'priority-high';
+            case 'urgent':
+            case 'critical':
+                return 'priority-urgent';
+            default:
+                return '';
+        }
+    }
+
 });
 </script>
 @stop

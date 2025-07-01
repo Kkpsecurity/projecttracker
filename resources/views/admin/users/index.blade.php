@@ -90,7 +90,7 @@
                     </div>
                 </div>
                 <div class="card-body table-responsive p-0">
-                    <table class="table table-hover text-nowrap">
+                    <table class="table table-hover text-nowrap datatable" id="users-table">
                         <thead>
                             <tr>
                                 <th>
@@ -196,6 +196,23 @@
 @section('js')
 <script>
 $(document).ready(function() {
+    // Initialize DataTables
+    $('.datatable').DataTable({
+        responsive: true,
+        ordering: true,
+        searching: true,
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+        order: [[2, 'asc']], // Sort by name column
+        columnDefs: [
+            {
+                targets: [0, 8], // Checkbox and Actions columns
+                orderable: false,
+                searchable: false
+            }
+        ]
+    });
+
     // Select all checkbox functionality
     $('#select-all').change(function() {
         $('.user-checkbox').prop('checked', this.checked);

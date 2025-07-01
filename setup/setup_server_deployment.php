@@ -1,7 +1,7 @@
 <?php
 /**
  * Server Deployment Setup Script
- * 
+ *
  * This script ensures all necessary Laravel directories exist
  * and have proper permissions for live server deployment.
  */
@@ -30,7 +30,7 @@ $requiredDirs = [
 echo "\n=== Creating Required Directories ===\n";
 foreach ($requiredDirs as $dir) {
     $fullPath = $appRoot . DIRECTORY_SEPARATOR . $dir;
-    
+
     if (!is_dir($fullPath)) {
         if (mkdir($fullPath, 0755, true)) {
             echo "✓ Created: {$dir}\n";
@@ -40,7 +40,7 @@ foreach ($requiredDirs as $dir) {
     } else {
         echo "✓ Exists: {$dir}\n";
     }
-    
+
     // Set permissions (if on Unix-like system)
     if (function_exists('chmod') && !stripos(PHP_OS, 'WIN') === 0) {
         chmod($fullPath, 0755);
@@ -85,7 +85,7 @@ foreach ($commands as $command) {
     $output = [];
     $returnCode = 0;
     exec("php artisan {$command} 2>&1", $output, $returnCode);
-    
+
     if ($returnCode === 0) {
         echo "✓ Success: {$command}\n";
     } else {

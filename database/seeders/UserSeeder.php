@@ -29,11 +29,7 @@ class UserSeeder extends Seeder
 
         // Define users with role-based access (all are admins with different permissions)
         $users = [
-            [
-                'name' => 'Test Admin',
-                'email' => 'admin@projecttracker.test',
-                'role' => 'superadmin',
-            ],
+
             [
                 'name' => 'Richard Clark',
                 'email' => 'richievc@gmail.com',

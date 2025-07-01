@@ -34,7 +34,7 @@ foreach ($users as $user) {
     echo "Email Verified: " . ($user->email_verified_at ? 'Yes' : 'No') . "\n";
 
     // Test password verification
-    $testPassword = $user->role === 'admin' ? 'admin123' : 'password123';
+    $testPassword = 'Secure$101'; // All users use this password
     $passwordWorks = Hash::check($testPassword, $user->password);
     echo "Password '{$testPassword}': " . ($passwordWorks ? '✓ Valid' : '✗ Invalid') . "\n";
     echo "Password Hash: " . substr($user->password, 0, 30) . "...\n";
@@ -44,36 +44,36 @@ foreach ($users as $user) {
 // Test auth system
 echo "\n=== AUTHENTICATION SYSTEM TEST ===\n";
 try {
-    // Test finding admin user
-    $adminUser = User::where('role', 'admin')->first();
+    // Test finding superadmin user
+    $adminUser = User::where('role', 'superadmin')->first();
     if ($adminUser) {
-        echo "✓ Admin user found: {$adminUser->email}\n";
+        echo "✓ Superadmin user found: {$adminUser->email}\n";
 
         // Test password verification
-        if (Hash::check('admin123', $adminUser->password)) {
-            echo "✓ Admin password verification successful\n";
+        if (Hash::check('Secure$101', $adminUser->password)) {
+            echo "✓ Superadmin password verification successful\n";
         } else {
-            echo "✗ Admin password verification failed\n";
+            echo "✗ Superadmin password verification failed\n";
         }
 
         // Test login simulation
-        echo "✓ Admin login simulation would succeed\n";
+        echo "✓ Superadmin login simulation would succeed\n";
     } else {
-        echo "✗ No admin user found\n";
+        echo "✗ No superadmin user found\n";
     }
 
-    // Test finding regular user
-    $regularUser = User::where('role', 'user')->first();
-    if ($regularUser) {
-        echo "✓ Regular user found: {$regularUser->email}\n";
+    // Test finding manager user
+    $managerUser = User::where('role', 'manager')->first();
+    if ($managerUser) {
+        echo "✓ Manager user found: {$managerUser->email}\n";
 
-        if (Hash::check('password123', $regularUser->password)) {
-            echo "✓ Regular user password verification successful\n";
+        if (Hash::check('Secure$101', $managerUser->password)) {
+            echo "✓ Manager user password verification successful\n";
         } else {
-            echo "✗ Regular user password verification failed\n";
+            echo "✗ Manager user password verification failed\n";
         }
     } else {
-        echo "⚠ No regular users found (this is normal for admin-only systems)\n";
+        echo "⚠ No manager users found\n";
     }
 
 } catch (Exception $e) {
@@ -96,8 +96,10 @@ try {
 
 echo "\n=== DATABASE SUMMARY ===\n";
 echo "Total users: " . User::count() . "\n";
-echo "Admin users: " . User::where('role', 'admin')->count() . "\n";
-echo "Regular users: " . User::where('role', 'user')->count() . "\n";
+echo "Superadmin users: " . User::where('role', 'superadmin')->count() . "\n";
+echo "Manager users: " . User::where('role', 'manager')->count() . "\n";
+echo "Editor users: " . User::where('role', 'editor')->count() . "\n";
+echo "Auditor users: " . User::where('role', 'auditor')->count() . "\n";
 echo "Active users: " . User::where('is_active', true)->count() . "\n";
 echo "Verified users: " . User::whereNotNull('email_verified_at')->count() . "\n";
 

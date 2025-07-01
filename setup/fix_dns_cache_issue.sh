@@ -33,7 +33,7 @@ chmod -R 755 storage
 echo ""
 echo "3. Clearing caches safely..."
 php artisan config:clear
-php artisan route:clear 
+php artisan route:clear
 php artisan view:clear
 
 echo ""

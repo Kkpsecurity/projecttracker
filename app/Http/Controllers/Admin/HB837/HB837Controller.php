@@ -21,6 +21,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use Maatwebsite\Excel\Concerns\FromArray;
 
 class HB837Controller extends Controller
 {
@@ -89,7 +93,7 @@ class HB837Controller extends Controller
             })
             ->editColumn('property_name', function ($hb837) {
                 return '<strong>' . e($hb837->property_name) . '</strong><br>
-                        <small class="text-muted">' . e($hb837->address) . '</small>';
+                        <small class="text-muted">' . e($hb837->address) . ', ' . e($hb837->city) . ', ' . e($hb837->state) . '</small>';
             })
             ->editColumn('securitygauge_crime_risk', function ($hb837) {
                 return $this->getCrimeRiskCell($hb837->securitygauge_crime_risk);
@@ -133,7 +137,13 @@ class HB837Controller extends Controller
             ->editColumn('created_at', function ($hb837) {
                 return $hb837->created_at->format('M j, Y');
             })
-            ->rawColumns(['checkbox', 'action', 'property_name', 'securitygauge_crime_risk', 'report_status', 'contracting_status', 'assigned_consultant_id', 'scheduled_date_of_inspection', 'quoted_price', 'priority'])
+            ->editColumn('county', function ($hb837) {
+                return $hb837->county ?: '<span class="text-muted">Not specified</span>';
+            })
+            ->editColumn('macro_client', function ($hb837) {
+                return $hb837->macro_client ?: '<span class="text-muted">Not assigned</span>';
+            })
+            ->rawColumns(['checkbox', 'action', 'property_name', 'report_status', 'contracting_status', 'assigned_consultant_id', 'scheduled_date_of_inspection', 'quoted_price', 'priority', 'securitygauge_crime_risk', 'county', 'macro_client'])
             ->make(true);
     }
 
@@ -537,6 +547,22 @@ class HB837Controller extends Controller
     }
 
     /**
+     * Redirect to new 3-phase import system
+     */
+    public function newImport()
+    {
+        return redirect()->route('modules.hb837.import.index');
+    }
+
+    /**
+     * Redirect to module dashboard
+     */
+    public function moduleDashboard()
+    {
+        return redirect()->route('modules.hb837.index');
+    }
+
+    /**
      * Get sortable columns for DataTables
      */
     protected function sortableColumns()
@@ -895,5 +921,665 @@ class HB837Controller extends Controller
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * Show smart import interface
+     */
+    public function showSmartImport()
+    {
+        return view('admin.hb837.smart-import');
+    }
+
+    /**
+     * Analyze uploaded file intelligently
+     */
+    public function analyzeImportFile(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
+        ]);
+
+        try {
+            $file = $request->file('file');
+            $originalName = $file->getClientOriginalName();
+            $extension = $file->getClientOriginalExtension();
+
+            // Store file temporarily
+            $fileName = 'import_' . time() . '_' . uniqid() . '.' . $extension;
+            $filePath = $file->storeAs('temp/imports', $fileName);
+
+            // Analyze file structure
+            $analysis = $this->performFileAnalysis(storage_path('app/' . $filePath));
+
+            // Store analysis data temporarily
+            $fileId = uniqid();
+            Cache::put("import_analysis_{$fileId}", [
+                'file_path' => $filePath,
+                'original_name' => $originalName,
+                'analysis' => $analysis
+            ], 3600); // Store for 1 hour
+
+            return response()->json([
+                'success' => true,
+                'file_id' => $fileId,
+                'detection' => $analysis['detection'],
+                'stats' => $analysis['stats'],
+                'mapping' => $analysis['mapping'],
+                'warnings' => $analysis['warnings']
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Smart import analysis failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to analyze file: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Preview import data
+     */
+    public function previewImportData(Request $request)
+    {
+        $fileId = $request->get('file_id');
+
+        $cacheData = Cache::get("import_analysis_{$fileId}");
+        if (!$cacheData) {
+            return response()->json(['success' => false, 'message' => 'File analysis not found or expired'], 404);
+        }
+
+        try {
+            $filePath = storage_path('app/' . $cacheData['file_path']);
+            $previewData = $this->generatePreviewData($filePath, $cacheData['analysis']);
+
+            return response()->json([
+                'success' => true,
+                'headers' => $previewData['headers'],
+                'preview_rows' => $previewData['rows'],
+                'total_rows' => $previewData['total_rows']
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Preview generation failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate preview: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Execute smart import
+     */
+    public function executeSmartImport(Request $request)
+    {
+        $fileId = $request->get('file_id');
+
+        $cacheData = Cache::get("import_analysis_{$fileId}");
+        if (!$cacheData) {
+            return response()->json(['success' => false, 'message' => 'File analysis not found or expired'], 404);
+        }
+
+        try {
+            $filePath = storage_path('app/' . $cacheData['file_path']);
+            $analysis = $cacheData['analysis'];
+
+            $result = $this->executeIntelligentImport($filePath, $analysis);
+
+            // Clean up temporary file
+            Storage::delete($cacheData['file_path']);
+            Cache::forget("import_analysis_{$fileId}");
+
+            return response()->json([
+                'success' => true,
+                'imported' => $result['imported'],
+                'updated' => $result['updated'],
+                'skipped' => $result['skipped'],
+                'errors' => $result['errors']
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Smart import execution failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Import failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export template file
+     */
+    public function exportTemplate($format)
+    {
+        $headers = [
+            'property_name',
+            'address',
+            'city',
+            'county',
+            'state',
+            'zip',
+            'phone',
+            'management_company',
+            'owner_name',
+            'property_type',
+            'units',
+            'securitygauge_crime_risk',
+            'macro_client',
+            'macro_contact',
+            'macro_email',
+            'property_manager_name',
+            'property_manager_email',
+            'regional_manager_name',
+            'regional_manager_email',
+            'report_status',
+            'contracting_status',
+            'scheduled_date_of_inspection',
+            'quoted_price'
+        ];
+
+        $filename = 'hb837_template_' . date('Y-m-d');
+
+        if ($format === 'csv') {
+            $output = fopen('php://output', 'w');
+
+            return response()->stream(function () use ($output, $headers) {
+                fputcsv($output, $headers);
+                fclose($output);
+            }, 200, [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => "attachment; filename=\"{$filename}.csv\"",
+            ]);
+        } else {
+            // Excel template
+            $headers = [
+                'Property Name',
+                'County',
+                'Crime Risk',
+                'Macro Client',
+                'Consultant',
+                'Scheduled Date',
+                'Contract Status',
+                'Quoted Price',
+                'Priority',
+                'Notes'
+            ];
+
+            return Excel::download(new class ($headers) implements FromArray {
+                private $headers;
+
+                public function __construct($headers)
+                {
+                    $this->headers = $headers;
+                }
+
+                public function array(): array
+                {
+                    return [$this->headers];
+                }
+            }, "{$filename}.xlsx");
+        }
+    }
+
+    /**
+     * Perform intelligent file analysis
+     */
+    private function performFileAnalysis($filePath)
+    {
+        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+        $data = [];
+        $headers = [];
+
+        // Read file based on type
+        if (in_array(strtolower($extension), ['xlsx', 'xls'])) {
+            $spreadsheet = IOFactory::load($filePath);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $data = $worksheet->toArray();
+        } else if (strtolower($extension) === 'csv') {
+            $handle = fopen($filePath, 'r');
+            while (($row = fgetcsv($handle)) !== FALSE) {
+                $data[] = $row;
+            }
+            fclose($handle);
+        }
+
+        if (empty($data)) {
+            throw new \Exception('No data found in file');
+        }
+
+        // Extract headers (assume first row)
+        $headers = array_shift($data);
+        $headers = array_map('trim', $headers);
+
+        // Analyze file content
+        $stats = [
+            'total_rows' => count($data),
+            'valid_rows' => 0,
+            'columns' => count($headers),
+            'new_records' => 0,
+            'updates' => 0
+        ];
+
+        // Map columns to database fields
+        $mapping = $this->intelligentColumnMapping($headers);
+
+        // Detect import type
+        $detection = $this->detectImportType($headers, $data);
+
+        // Validate data and count valid rows
+        $validationResults = $this->validateImportData($data, $mapping);
+        $stats['valid_rows'] = $validationResults['valid_count'];
+        $stats['new_records'] = $validationResults['new_count'];
+        $stats['updates'] = $validationResults['update_count'];
+
+        // Generate warnings
+        $warnings = $this->generateWarnings($mapping, $validationResults);
+
+        return [
+            'detection' => $detection,
+            'stats' => $stats,
+            'mapping' => $mapping,
+            'warnings' => $warnings,
+            'headers' => $headers,
+            'sample_data' => array_slice($data, 0, 5) // First 5 rows for analysis
+        ];
+    }
+
+    /**
+     * Intelligent column mapping using fuzzy matching
+     */
+    private function intelligentColumnMapping($headers)
+    {
+        $fieldMappings = [
+            'property_name' => ['property name', 'property', 'name', 'building name', 'complex name'],
+            'address' => ['address', 'street', 'location', 'street address'],
+            'city' => ['city', 'town'],
+            'county' => ['county', 'parish'],
+            'state' => ['state', 'province', 'st'],
+            'zip' => ['zip', 'zipcode', 'postal', 'postal code'],
+            'phone' => ['phone', 'telephone', 'tel', 'contact'],
+            'management_company' => ['management', 'company', 'mgmt', 'manager'],
+            'owner_name' => ['owner', 'property owner', 'landlord'],
+            'property_type' => ['type', 'property type', 'building type'],
+            'units' => ['units', 'unit count', 'number of units'],
+            'securitygauge_crime_risk' => ['crime risk', 'risk', 'security risk', 'crime', 'risk level'],
+            'macro_client' => ['macro client', 'client', 'parent company'],
+            'property_manager_name' => ['property manager', 'pm', 'manager name'],
+            'property_manager_email' => ['pm email', 'manager email', 'property manager email'],
+            'regional_manager_name' => ['regional manager', 'rm', 'regional'],
+            'regional_manager_email' => ['rm email', 'regional email', 'regional manager email'],
+            'report_status' => ['status', 'report status', 'progress'],
+            'contracting_status' => ['contract status', 'contract', 'phase'],
+            'scheduled_date_of_inspection' => ['inspection date', 'scheduled', 'date'],
+            'quoted_price' => ['price', 'quote', 'quoted price', 'amount']
+        ];
+
+        $mappings = [];
+
+        foreach ($headers as $header) {
+            $bestMatch = null;
+            $bestScore = 0;
+
+            foreach ($fieldMappings as $field => $patterns) {
+                foreach ($patterns as $pattern) {
+                    $score = $this->calculateSimilarity(strtolower(trim($header)), strtolower($pattern));
+                    if ($score > $bestScore) {
+                        $bestScore = $score;
+                        $bestMatch = $field;
+                    }
+                }
+            }
+
+            $mappings[] = [
+                'source_column' => $header,
+                'target_field' => $bestMatch ?: 'unmapped',
+                'confidence' => $bestScore
+            ];
+        }
+
+        return $mappings;
+    }
+
+    /**
+     * Calculate similarity between two strings
+     */
+    private function calculateSimilarity($str1, $str2)
+    {
+        // Use Levenshtein distance for fuzzy matching
+        $len1 = strlen($str1);
+        $len2 = strlen($str2);
+
+        if ($len1 == 0)
+            return $len2 == 0 ? 1 : 0;
+        if ($len2 == 0)
+            return 0;
+
+        $levenshtein = levenshtein($str1, $str2);
+        $maxLen = max($len1, $len2);
+
+        $similarity = 1 - ($levenshtein / $maxLen);
+
+        // Boost score for exact substring matches
+        if (strpos($str1, $str2) !== false || strpos($str2, $str1) !== false) {
+            $similarity += 0.3;
+        }
+
+        return min(1, $similarity);
+    }
+
+    /**
+     * Detect import type based on file content
+     */
+    private function detectImportType($headers, $data)
+    {
+        // Analyze headers and data to determine import type
+        $hasPropertyNames = false;
+        $hasAddresses = false;
+        $hasContacts = false;
+
+        foreach ($headers as $header) {
+            $lower = strtolower($header);
+            if (strpos($lower, 'property') !== false || strpos($lower, 'name') !== false) {
+                $hasPropertyNames = true;
+            }
+            if (strpos($lower, 'address') !== false || strpos($lower, 'street') !== false) {
+                $hasAddresses = true;
+            }
+            if (strpos($lower, 'email') !== false || strpos($lower, 'phone') !== false) {
+                $hasContacts = true;
+            }
+        }
+
+        $type = 'general';
+        if ($hasPropertyNames && $hasAddresses) {
+            $type = 'property_list';
+        } else if ($hasContacts) {
+            $type = 'contact_update';
+        }
+
+        return [
+            'type' => $type,
+            'confidence' => 0.8,
+            'description' => $this->getImportTypeDescription($type)
+        ];
+    }
+
+    /**
+     * Get description for import type
+     */
+    private function getImportTypeDescription($type)
+    {
+        $descriptions = [
+            'property_list' => 'Property listing with addresses and details',
+            'contact_update' => 'Contact information update',
+            'general' => 'General HB837 data import'
+        ];
+
+        return $descriptions[$type] ?? 'Unknown import type';
+    }
+
+    /**
+     * Validate import data
+     */
+    private function validateImportData($data, $mapping)
+    {
+        $validCount = 0;
+        $newCount = 0;
+        $updateCount = 0;
+        $errors = [];
+
+        // Create field index map
+        $fieldIndexMap = [];
+        foreach ($mapping as $index => $map) {
+            if ($map['target_field'] !== 'unmapped') {
+                $fieldIndexMap[$map['target_field']] = $index;
+            }
+        }
+
+        foreach ($data as $rowIndex => $row) {
+            if (empty(array_filter($row)))
+                continue; // Skip empty rows
+
+            $isValid = true;
+            $hasPropertyName = false;
+
+            // Check for required fields
+            if (isset($fieldIndexMap['property_name']) && !empty($row[$fieldIndexMap['property_name']])) {
+                $hasPropertyName = true;
+
+                // Check if this property already exists
+                $propertyName = trim($row[$fieldIndexMap['property_name']]);
+                $exists = HB837::where('property_name', 'like', "%{$propertyName}%")->exists();
+
+                if ($exists) {
+                    $updateCount++;
+                } else {
+                    $newCount++;
+                }
+            }
+
+            if ($hasPropertyName && $isValid) {
+                $validCount++;
+            }
+        }
+
+        return [
+            'valid_count' => $validCount,
+            'new_count' => $newCount,
+            'update_count' => $updateCount,
+            'errors' => $errors
+        ];
+    }
+
+    /**
+     * Generate warnings for import
+     */
+    private function generateWarnings($mapping, $validationResults)
+    {
+        $warnings = [];
+
+        // Check for low confidence mappings
+        foreach ($mapping as $map) {
+            if ($map['confidence'] < 0.5 && $map['target_field'] !== 'unmapped') {
+                $warnings[] = "Low confidence mapping for column '{$map['source_column']}' to '{$map['target_field']}'";
+            }
+        }
+
+        // Check for unmapped columns
+        $unmapped = array_filter($mapping, function ($map) {
+            return $map['target_field'] === 'unmapped';
+        });
+
+        if (!empty($unmapped)) {
+            $unmappedColumns = array_column($unmapped, 'source_column');
+            $warnings[] = "Unmapped columns: " . implode(', ', $unmappedColumns);
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * Generate preview data
+     */
+    private function generatePreviewData($filePath, $analysis)
+    {
+        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+        $data = [];
+
+        // Read file
+        if (in_array(strtolower($extension), ['xlsx', 'xls'])) {
+            $spreadsheet = IOFactory::load($filePath);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $data = $worksheet->toArray();
+        } else if (strtolower($extension) === 'csv') {
+            $handle = fopen($filePath, 'r');
+            while (($row = fgetcsv($handle)) !== FALSE) {
+                $data[] = $row;
+            }
+            fclose($handle);
+        }
+
+        $headers = array_shift($data); // Remove header row
+
+        return [
+            'headers' => $headers,
+            'rows' => $data,
+            'total_rows' => count($data)
+        ];
+    }
+
+    /**
+     * Execute intelligent import
+     */
+    private function executeIntelligentImport($filePath, $analysis)
+    {
+        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+        $data = [];
+
+        // Read file
+        if (in_array(strtolower($extension), ['xlsx', 'xls'])) {
+            $spreadsheet = IOFactory::load($filePath);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $data = $worksheet->toArray();
+        } else if (strtolower($extension) === 'csv') {
+            $handle = fopen($filePath, 'r');
+            while (($row = fgetcsv($handle)) !== FALSE) {
+                $data[] = $row;
+            }
+            fclose($handle);
+        }
+
+        $headers = array_shift($data); // Remove header row
+
+        // Create field index map
+        $fieldIndexMap = [];
+        foreach ($analysis['mapping'] as $index => $map) {
+            if ($map['target_field'] !== 'unmapped' && $map['confidence'] > 0.5) {
+                $fieldIndexMap[$map['target_field']] = $index;
+            }
+        }
+
+        $imported = 0;
+        $updated = 0;
+        $skipped = 0;
+        $errors = [];
+
+        foreach ($data as $rowIndex => $row) {
+            if (empty(array_filter($row))) {
+                $skipped++;
+                continue;
+            }
+
+            try {
+                $recordData = [];
+
+                // Map data according to analysis
+                foreach ($fieldIndexMap as $field => $index) {
+                    if (isset($row[$index])) {
+                        $value = trim($row[$index]);
+                        if ($value !== '') {
+                            $recordData[$field] = $this->sanitizeValue($field, $value);
+                        }
+                    }
+                }
+
+                if (empty($recordData['property_name'])) {
+                    $skipped++;
+                    continue;
+                }
+
+                // Check if record exists
+                $existing = HB837::where('property_name', 'like', "%{$recordData['property_name']}%")->first();
+
+                if ($existing) {
+                    // Update existing record
+                    $existing->update($recordData);
+                    $updated++;
+                } else {
+                    // Create new record
+                    HB837::create($recordData);
+                    $imported++;
+                }
+
+            } catch (\Exception $e) {
+                $errors[] = "Row " . ($rowIndex + 2) . ": " . $e->getMessage();
+                $skipped++;
+            }
+        }
+
+        return [
+            'imported' => $imported,
+            'updated' => $updated,
+            'skipped' => $skipped,
+            'errors' => $errors
+        ];
+    }
+
+    /**
+     * Sanitize value based on field type
+     */
+    private function sanitizeValue($field, $value)
+    {
+        switch ($field) {
+            case 'scheduled_date_of_inspection':
+            case 'report_submitted':
+            case 'billing_req_sent':
+            case 'agreement_submitted':
+                // Handle date fields
+                if (is_numeric($value)) {
+                    // Excel date serial number
+                    $date = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value);
+                    return $date->format('Y-m-d');
+                } else {
+                    // Try to parse date string
+                    try {
+                        return Carbon::parse($value)->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        return null;
+                    }
+                }
+
+            case 'quoted_price':
+            case 'sub_fees_estimated_expenses':
+            case 'project_net_profit':
+                // Handle monetary values
+                $cleaned = preg_replace('/[^\d.-]/', '', $value);
+                return is_numeric($cleaned) ? (float) $cleaned : null;
+
+            case 'units':
+                // Handle integer values
+                return is_numeric($value) ? (int) $value : null;
+
+            case 'report_status':
+                // Map status values
+                $statusMap = [
+                    'not started' => 'not-started',
+                    'in progress' => 'in-progress',
+                    'in review' => 'in-review',
+                    'completed' => 'completed'
+                ];
+                $lower = strtolower(trim($value));
+                return $statusMap[$lower] ?? $lower;
+
+            case 'contracting_status':
+                // Map contract status values
+                $statusMap = [
+                    'quote' => 'quoted',
+                    'quoted' => 'quoted',
+                    'start' => 'started',
+                    'started' => 'started',
+                    'execute' => 'executed',
+                    'executed' => 'executed',
+                    'close' => 'closed',
+                    'closed' => 'closed'
+                ];
+                $lower = strtolower(trim($value));
+                return $statusMap[$lower] ?? $lower;
+
+            default:
+                return trim($value);
+        }
     }
 }

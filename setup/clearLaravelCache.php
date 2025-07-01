@@ -4,13 +4,13 @@
  * This script clears all Laravel caches and optimizes the application
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 echo "=== Laravel Cache Clearing & Optimization ===\n\n";
 
 try {
     // Initialize Laravel app
-    $app = require_once __DIR__ . '/../bootstrap/app.php';
+    $app = require_once __DIR__ . '/bootstrap/app.php';
     $kernel = $app->make('Illuminate\Contracts\Console\Kernel');
     $kernel->bootstrap();
 
@@ -125,4 +125,3 @@ try {
 }
 
 echo "\n=== Cache Clearing Complete ===\n";
-

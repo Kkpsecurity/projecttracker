@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
@@ -72,36 +73,45 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'bio' => ['nullable', 'string', 'max:1000'],
-            'is_admin' => ['boolean'],
-            'is_active' => ['boolean'],
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+                'password' => ['required', 'confirmed', Password::defaults()],
+                'phone' => ['nullable', 'string', 'max:20'],
+                'bio' => ['nullable', 'string', 'max:1000'],
+                'is_admin' => ['boolean'],
+                'is_active' => ['boolean'],
+            ]);
 
-        if ($validator->fails()) {
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput()
+                    ->with('error', 'Please correct the validation errors below.');
+            }
+
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'phone' => $request->phone,
+                'bio' => $request->bio,
+                'is_admin' => $request->boolean('is_admin'),
+                'is_active' => $request->boolean('is_active', true),
+                'email_verified' => true,
+                'password_changed_at' => now(),
+            ]);
+
+            return redirect()->route('admin.users.index')
+                ->with('success', 'User "' . $user->name . '" created successfully.');
+
+        } catch (\Exception $e) {
+            Log::error('User creation failed: ' . $e->getMessage());
             return redirect()->back()
-                           ->withErrors($validator)
-                           ->withInput();
+                ->withInput()
+                ->with('error', 'Failed to create user. Please try again.');
         }
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'phone' => $request->phone,
-            'bio' => $request->bio,
-            'is_admin' => $request->boolean('is_admin'),
-            'is_active' => $request->boolean('is_active', true),
-            'email_verified' => true,
-            'password_changed_at' => now(),
-        ]);
-
-        return redirect()->route('admin.users.index')
-                        ->with('success', 'User created successfully.');
     }
 
     /**
