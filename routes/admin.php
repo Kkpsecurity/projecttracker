@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Admin\HB837\HB837Controller;
 use App\Http\Controllers\Admin\ConsultantController;
+use App\Http\Controllers\Admin\GoogleMapsController;
+use App\Http\Controllers\Admin\PlotsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -124,6 +126,40 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::post('/{hb837}/files', [HB837Controller::class, 'uploadFile'])->name('files.upload');
     });
 
+    // Google Maps & Plots Management
+    Route::prefix('maps')->name('maps.')->group(function () {
+        Route::get('/', [GoogleMapsController::class, 'index'])->name('index');
+        Route::get('/plot/{plot}', [GoogleMapsController::class, 'showPlot'])->name('plot.show');
+        Route::post('/plot', [GoogleMapsController::class, 'createPlot'])->name('plot.create');
+        Route::patch('/plot/{plot}/coordinates', [GoogleMapsController::class, 'updatePlotCoordinates'])->name('plot.coordinates');
+        Route::get('/export', [GoogleMapsController::class, 'exportPlots'])->name('export');
+
+        // New enhanced features
+        Route::post('/plot/from-address', [GoogleMapsController::class, 'createPlotFromAddress'])->name('plot.from-address');
+        Route::get('/macro-client/plots', [GoogleMapsController::class, 'getMacroClientPlots'])->name('macro-client.plots');
+
+        // API endpoints
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/plots', [GoogleMapsController::class, 'getPlotsData'])->name('plots');
+            Route::get('/nearby', [GoogleMapsController::class, 'getNearbyPlots'])->name('nearby');
+        });
+    });
+
+    Route::prefix('plots')->name('plots.')->group(function () {
+        // Basic CRUD Routes
+        Route::get('/', [PlotsController::class, 'index'])->name('index');
+        Route::get('/create', [PlotsController::class, 'create'])->name('create');
+        Route::post('/', [PlotsController::class, 'store'])->name('store');
+        Route::get('/{plot}', [PlotsController::class, 'show'])->name('show');
+        Route::get('/{plot}/edit', [PlotsController::class, 'edit'])->name('edit');
+        Route::put('/{plot}', [PlotsController::class, 'update'])->name('update');
+        Route::delete('/{plot}', [PlotsController::class, 'destroy'])->name('destroy');
+
+        // DataTables and Bulk Operations
+        Route::get('/datatable', [PlotsController::class, 'datatable'])->name('datatable');
+        Route::post('/bulk', [PlotsController::class, 'bulkAction'])->name('bulk');
+    });
+
     // Consultant Management
     Route::prefix('consultants')->name('consultants.')->group(function () {
         // Basic CRUD Routes
@@ -143,6 +179,29 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         // File Management (parameterized routes for specific consultant records)
         Route::post('/{consultant}/files', [ConsultantController::class, 'uploadFile'])->name('files.upload');
+    });
+
+    // Google Maps & Plots Routes
+    Route::prefix('maps')->name('maps.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\GoogleMapsController::class, 'index'])->name('index');
+        Route::get('/plot/{id}', [App\Http\Controllers\Admin\GoogleMapsController::class, 'showPlot'])->name('plot');
+        Route::get('/api/plots', [App\Http\Controllers\Admin\GoogleMapsController::class, 'getPlotsData'])->name('api.plots');
+        Route::post('/plot/create', [App\Http\Controllers\Admin\GoogleMapsController::class, 'createPlot'])->name('plot.create');
+        Route::put('/plot/{id}/coordinates', [App\Http\Controllers\Admin\GoogleMapsController::class, 'updatePlotCoordinates'])->name('plot.coordinates');
+        Route::get('/nearby', [App\Http\Controllers\Admin\GoogleMapsController::class, 'getNearbyPlots'])->name('nearby');
+        Route::get('/export', [App\Http\Controllers\Admin\GoogleMapsController::class, 'exportPlots'])->name('export');
+    });
+
+    Route::prefix('plots')->name('plots.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\PlotsController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\PlotsController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\PlotsController::class, 'store'])->name('store');
+        Route::get('/datatable', [App\Http\Controllers\Admin\PlotsController::class, 'datatable'])->name('datatable');
+        Route::post('/bulk-action', [App\Http\Controllers\Admin\PlotsController::class, 'bulkAction'])->name('bulk-action');
+        Route::get('/{plot}', [App\Http\Controllers\Admin\PlotsController::class, 'show'])->name('show');
+        Route::get('/{plot}/edit', [App\Http\Controllers\Admin\PlotsController::class, 'edit'])->name('edit');
+        Route::put('/{plot}', [App\Http\Controllers\Admin\PlotsController::class, 'update'])->name('update');
+        Route::delete('/{plot}', [App\Http\Controllers\Admin\PlotsController::class, 'destroy'])->name('destroy');
     });
 
     // Future Admin Modules (placeholders)

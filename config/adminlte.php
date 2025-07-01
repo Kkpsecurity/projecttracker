@@ -350,9 +350,40 @@ return [
         ],
         [
             'text' => 'HB837 Projects',
-            'route' => 'admin.hb837.index',
             'icon' => 'fas fa-project-diagram',
-            'active' => ['admin/hb837*'],
+            'submenu' => [
+                [
+                    'text' => 'All Projects',
+                    'route' => 'admin.hb837.index',
+                    'icon' => 'fas fa-list',
+                    'active' => ['admin/hb837', 'admin/hb837/index'],
+                ],
+                [
+                    'text' => 'Create Project',
+                    'route' => 'admin.hb837.create',
+                    'icon' => 'fas fa-plus-circle',
+                    'active' => ['admin/hb837/create'],
+                ],
+                [
+                    'text' => 'Smart Import',
+                    'route' => 'admin.hb837.smart-import.show',
+                    'icon' => 'fas fa-file-import',
+                    'active' => ['admin/hb837/smart-import*'],
+                ],
+                ['header' => 'MAP & PLOTS'],
+                [
+                    'text' => 'Google Maps',
+                    'route' => 'admin.maps.index',
+                    'icon' => 'fas fa-map',
+                    'active' => ['admin/maps*'],
+                ],
+                [
+                    'text' => 'Manage Plots',
+                    'route' => 'admin.plots.index',
+                    'icon' => 'fas fa-map-marker-alt',
+                    'active' => ['admin/plots*'],
+                ],
+            ],
         ],
         [
             'text' => 'Consultant Records',
@@ -377,15 +408,43 @@ return [
             'icon' => 'fas fa-user-cog',
             'active' => ['account*'],
         ],
+
+        ['header' => 'HELP & SUPPORT'],
         [
-            'text' => 'Profile Settings',
-            'route' => 'account.settings',
-            'icon' => 'fas fa-user-edit',
-        ],
-        [
-            'text' => 'Security Settings',
-            'route' => 'account.security',
-            'icon' => 'fas fa-shield-alt',
+            'text' => 'Help Center',
+            'icon' => 'fas fa-question-circle',
+            'submenu' => [
+                [
+                    'text' => 'Getting Started',
+                    'route' => 'help.getting-started',
+                    'icon' => 'fas fa-play-circle',
+                    'active' => ['help/getting-started*'],
+                ],
+                [
+                    'text' => 'User Guide',
+                    'route' => 'help.user-guide',
+                    'icon' => 'fas fa-book',
+                    'active' => ['help/user-guide*'],
+                ],
+                [
+                    'text' => 'FAQ',
+                    'route' => 'help.faq',
+                    'icon' => 'fas fa-question',
+                    'active' => ['help/faq*'],
+                ],
+                [
+                    'text' => 'Documentation',
+                    'route' => 'help.documentation',
+                    'icon' => 'fas fa-file-alt',
+                    'active' => ['help/documentation*'],
+                ],
+                [
+                    'text' => 'Contact Support',
+                    'route' => 'help.contact',
+                    'icon' => 'fas fa-headset',
+                    'active' => ['help/contact*'],
+                ],
+            ],
         ],
     ],
 

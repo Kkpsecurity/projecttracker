@@ -37,6 +37,7 @@ class HB837 extends Model
         'project_net_profit',
         'notes',
         'financial_notes',
+        'consultant_notes',
         'securitygauge_crime_risk',
         'property_manager_name',
         'property_manager_email',
@@ -45,6 +46,7 @@ class HB837 extends Model
         'macro_client',
         'macro_contact',
         'macro_email',
+        'assigned_consultant',
     ];
 
     protected $casts = [
@@ -69,9 +71,9 @@ class HB837 extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function plot(): HasOne
+    public function plots(): HasMany
     {
-        return $this->hasOne(Plot::class);
+        return $this->hasMany(Plot::class, 'hb837_id');
     }
 
     public function files(): HasMany

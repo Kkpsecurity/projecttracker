@@ -81,6 +81,16 @@ Route::middleware(['auth'])->group(function () {
         // Account Deletion
         Route::delete('/delete', [App\Http\Controllers\AccountController::class, 'deleteAccount'])->name('delete');
     });
+
+    // Help Center Routes
+    Route::prefix('help')->name('help.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\HelpController::class, 'index'])->name('index');
+        Route::get('/getting-started', [\App\Http\Controllers\HelpController::class, 'gettingStarted'])->name('getting-started');
+        Route::get('/user-guide', [\App\Http\Controllers\HelpController::class, 'userGuide'])->name('user-guide');
+        Route::get('/faq', [\App\Http\Controllers\HelpController::class, 'faq'])->name('faq');
+        Route::get('/contact', [\App\Http\Controllers\HelpController::class, 'contact'])->name('contact');
+        Route::get('/documentation', [\App\Http\Controllers\HelpController::class, 'documentation'])->name('documentation');
+    });
 });
 
 // API routes for AJAX calls

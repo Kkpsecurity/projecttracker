@@ -24,6 +24,7 @@
                 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
                 <h5><i class="icon fas fa-check"></i> Welcome!</h5>
                 Welcome to Project Tracker, <strong>{{ Auth::user()->name }}</strong>! You are logged in as <span class="badge badge-primary">{{ ucfirst(Auth::user()->role) }}</span>.
+                <br><small class="text-muted"><i class="fas fa-info-circle"></i> New: Check out our improved Help Center for assistance with using the system!</small>
             </div>
         </div>
     </div>
@@ -88,6 +89,63 @@
         </div>
     </div>
 
+    <!-- Recent Improvements -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-success">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-rocket"></i> Latest System Improvements</h3>
+                    <div class="card-tools">
+                        <span class="badge badge-success">{{ date('Y-m-d') }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-box bg-gradient-success">
+                                <span class="info-box-icon"><i class="fas fa-question-circle"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Help Center</span>
+                                    <span class="info-box-number">NEW!</span>
+                                    <div class="progress">
+                                        <div class="progress-bar" style="width: 100%"></div>
+                                    </div>
+                                    <span class="progress-description">Complete help system with guides and FAQ</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-box bg-gradient-info">
+                                <span class="info-box-icon"><i class="fas fa-bars"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Menu Optimization</span>
+                                    <span class="info-box-number">UPDATED</span>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" style="width: 100%"></div>
+                                    </div>
+                                    <span class="progress-description">Streamlined navigation with help integration</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <h5><i class="icon fas fa-check"></i> What's New:</h5>
+                                <ul class="mb-0">
+                                    <li><strong>Help Center:</strong> Comprehensive help system with Getting Started guide, User Manual, FAQ, and Contact Support</li>
+                                    <li><strong>Menu Cleanup:</strong> Removed redundant settings items and streamlined navigation</li>
+                                    <li><strong>User Experience:</strong> Improved accessibility to help resources and documentation</li>
+                                    <li><strong>System Optimization:</strong> Better organization of menu items for enhanced workflow</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Quick Actions -->
     <div class="row">
         <div class="col-12">
@@ -120,9 +178,9 @@
                             </a>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <button class="btn btn-secondary btn-lg btn-block" disabled>
-                                <i class="fas fa-cog mr-2"></i> Settings (Coming Soon)
-                            </button>
+                            <a href="{{ route('help.index') }}" class="btn btn-secondary btn-lg btn-block">
+                                <i class="fas fa-question-circle mr-2"></i> Help Center
+                            </a>
                         </div>
                         <div class="col-md-4 mb-3">
                             <button class="btn btn-dark btn-lg btn-block" disabled>
@@ -190,12 +248,32 @@
                             </div>
                         </div>
                         <div>
+                            <i class="fas fa-question-circle bg-success"></i>
+                            <div class="timeline-item">
+                                <span class="time"><i class="fas fa-clock"></i> {{ now()->subMinutes(10)->format('H:i') }}</span>
+                                <h3 class="timeline-header">Help Center Deployed</h3>
+                                <div class="timeline-body">
+                                    New comprehensive help system with guides, FAQ, and support resources
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <i class="fas fa-bars bg-info"></i>
+                            <div class="timeline-item">
+                                <span class="time"><i class="fas fa-clock"></i> {{ now()->subMinutes(15)->format('H:i') }}</span>
+                                <h3 class="timeline-header">Menu System Updated</h3>
+                                <div class="timeline-body">
+                                    Removed redundant settings items and optimized navigation structure
+                                </div>
+                            </div>
+                        </div>
+                        <div>
                             <i class="fas fa-database bg-green"></i>
                             <div class="timeline-item">
-                                <span class="time"><i class="fas fa-clock"></i> {{ now()->subMinutes(5)->format('H:i') }}</span>
-                                <h3 class="timeline-header">Database seeded</h3>
+                                <span class="time"><i class="fas fa-clock"></i> {{ now()->subMinutes(30)->format('H:i') }}</span>
+                                <h3 class="timeline-header">System Cache Cleared</h3>
                                 <div class="timeline-body">
-                                    Test data successfully loaded
+                                    Configuration and route caches refreshed for optimal performance
                                 </div>
                             </div>
                         </div>

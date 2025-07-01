@@ -1231,39 +1231,55 @@ class HB837Controller extends Controller
     private function intelligentColumnMapping($headers)
     {
         $fieldMappings = [
-            'property_name' => ['property name', 'property', 'name', 'building name', 'complex name'],
+            'property_name' => ['property name', 'property', 'building name', 'complex name', 'site name'],
             'address' => ['address', 'street', 'location', 'street address'],
             'city' => ['city', 'town'],
             'county' => ['county', 'parish'],
             'state' => ['state', 'province', 'st'],
             'zip' => ['zip', 'zipcode', 'postal', 'postal code'],
-            'phone' => ['phone', 'telephone', 'tel', 'contact'],
-            'management_company' => ['management', 'company', 'mgmt', 'manager'],
-            'owner_name' => ['owner', 'property owner', 'landlord'],
+            'phone' => ['phone', 'telephone', 'tel', 'contact phone', 'phone number'],
+            'management_company' => ['management', 'company', 'mgmt', 'management company', 'mgmt company'],
+            'owner_name' => ['owner', 'property owner', 'landlord', 'owner name'],
             'property_type' => ['type', 'property type', 'building type'],
-            'units' => ['units', 'unit count', 'number of units'],
-            'securitygauge_crime_risk' => ['crime risk', 'risk', 'security risk', 'crime', 'risk level'],
+            'units' => ['units', 'unit count', 'number of units', '# units', 'total units'],
+            'securitygauge_crime_risk' => ['crime risk', 'risk', 'security risk', 'crime', 'risk level', 'securitygauge crime risk'],
             'macro_client' => ['macro client', 'client', 'parent company'],
-            'property_manager_name' => ['property manager', 'pm', 'manager name'],
+            'macro_contact' => ['macro contact', 'primary contact', 'main contact'],
+            'macro_email' => ['macro email', 'primary email', 'main email'],
+            'property_manager_name' => ['property manager', 'pm', 'manager name', 'property manager name'],
             'property_manager_email' => ['pm email', 'manager email', 'property manager email'],
-            'regional_manager_name' => ['regional manager', 'rm', 'regional'],
+            'regional_manager_name' => ['regional manager', 'rm', 'regional', 'regional manager name'],
             'regional_manager_email' => ['rm email', 'regional email', 'regional manager email'],
             'report_status' => ['status', 'report status', 'progress'],
-            'contracting_status' => ['contract status', 'contract', 'phase'],
-            'scheduled_date_of_inspection' => ['inspection date', 'scheduled', 'date'],
-            'quoted_price' => ['price', 'quote', 'quoted price', 'amount']
+            'contracting_status' => ['contract status', 'contract', 'phase', 'contracting status'],
+            'scheduled_date_of_inspection' => ['inspection date', 'scheduled', 'date', 'scheduled date', 'scheduled date of inspection'],
+            'quoted_price' => ['price', 'quote', 'quoted price', 'amount'],
+            'sub_fees_estimated_expenses' => ['sub fees', 'estimated expenses', 'sub fees estimated expenses', 'expenses', 'additional fees'],
+            'financial_notes' => ['financial notes', 'finance notes', 'financial', 'billing notes'],
+            'consultant_notes' => ['consultant notes', 'agent notes', 'inspector notes'],
+            'general_notes' => ['general notes', 'comments', 'remarks', 'additional notes', 'notes'],
+            'assigned_consultant' => ['assigned consultant', 'consultant', 'assigned to', 'inspector', 'agent']
         ];
 
         $mappings = [];
+        $usedFields = []; // Track which fields have been mapped
 
         foreach ($headers as $header) {
             $bestMatch = null;
             $bestScore = 0;
+            $headerLower = strtolower(trim($header));
 
             foreach ($fieldMappings as $field => $patterns) {
+                // Skip field if already used with high confidence
+                if (isset($usedFields[$field]) && $usedFields[$field] > 0.8) {
+                    continue;
+                }
+
                 foreach ($patterns as $pattern) {
-                    $score = $this->calculateSimilarity(strtolower(trim($header)), strtolower($pattern));
-                    if ($score > $bestScore) {
+                    $score = $this->calculateSimilarity($headerLower, strtolower($pattern));
+
+                    // Increase minimum threshold to 0.6 for better accuracy
+                    if ($score >= 0.6 && $score > $bestScore) {
                         $bestScore = $score;
                         $bestMatch = $field;
                     }
@@ -1275,6 +1291,11 @@ class HB837Controller extends Controller
                 'target_field' => $bestMatch ?: 'unmapped',
                 'confidence' => $bestScore
             ];
+
+            // Mark field as used if mapped with reasonable confidence
+            if ($bestMatch && $bestScore > 0.7) {
+                $usedFields[$bestMatch] = $bestScore;
+            }
         }
 
         return $mappings;
@@ -1294,17 +1315,40 @@ class HB837Controller extends Controller
         if ($len2 == 0)
             return 0;
 
+        // Check for exact match first
+        if ($str1 === $str2) {
+            return 1.0;
+        }
+
+        // Check for substring matches
+        if (strpos($str1, $str2) !== false || strpos($str2, $str1) !== false) {
+            $minLen = min($len1, $len2);
+            $maxLen = max($len1, $len2);
+            $similarity = 0.8 + (0.2 * ($maxLen > 0 ? $minLen / $maxLen : 0));
+            return min(1, $similarity);
+        }
+
+        // Calculate Levenshtein distance
         $levenshtein = levenshtein($str1, $str2);
         $maxLen = max($len1, $len2);
 
         $similarity = 1 - ($levenshtein / $maxLen);
 
-        // Boost score for exact substring matches
-        if (strpos($str1, $str2) !== false || strpos($str2, $str1) !== false) {
-            $similarity += 0.3;
+        // Check for word overlap - improved algorithm
+        if ($similarity > 0.3) {
+            $words1 = explode(' ', $str1);
+            $words2 = explode(' ', $str2);
+            $overlap = count(array_intersect($words1, $words2));
+            $totalWords = count(array_unique(array_merge($words1, $words2)));
+
+            if ($overlap > 0) {
+                $wordBoost = ($overlap / $totalWords) * 0.3;
+                $similarity += $wordBoost;
+            }
         }
 
-        return min(1, $similarity);
+        // Set minimum threshold - anything below 0.5 should be considered low confidence
+        return min(1, max(0, $similarity));
     }
 
     /**
