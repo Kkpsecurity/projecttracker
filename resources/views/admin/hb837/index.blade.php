@@ -164,30 +164,37 @@
                         <div class="tab-pane fade {{ $tab == 'all' ? 'show active' : '' }}" id="all" role="tabpanel" aria-labelledby="all-tab">
                             <!-- DataTable -->
                             <div class="table-responsive" id="table-container">
-                                <table id="hb837-table" class="table table-bordered table-striped table-hover">
+                                <table id="hb837-table-all" class="table table-bordered table-striped table-hover">
                                     <thead>
                                         <tr>
-                                            <th width="30"><input type="checkbox" id="select-all" title="Select All"></th>
-                                            <th>Property Name</th>
-                                            <th>County</th>
-                                            <th>Macro Client</th>
-                                            <th>Assigned Consultant Id</th>
-                                            <th>Scheduled Date Of Inspection</th>
-                                            <th>Report Status</th>
-                                            <th>Action</th>
+                                            <th width="3%" class="text-center">
+                                                <input type="checkbox" id="select-all-all" class="form-check-input">
+                                            </th>
+                                            <th width="20%" class="text-left">Property Name</th>
+                                            <th width="12%" class="text-center">County</th>
+                                            <th width="15%" class="text-left">Macro Client</th>
+                                            <th width="15%" class="text-center">Assigned Consultant Id</th>
+                                            <th width="15%" class="text-center">Scheduled Date Of Inspection</th>
+                                            <th width="12%" class="text-center">Report Status</th>
+                                            <th width="8%" class="text-center">Action</th>
                                         </tr>
                                     </thead>
+                                    <tbody>
+                                        <!-- DataTables will populate this -->
+                                    </tbody>
                                 </table>
+                            </div>
+                        </div>
                             </div>
                         </div>
                         <div class="tab-pane fade {{ $tab == 'active' ? 'show active' : '' }}" id="active" role="tabpanel" aria-labelledby="active-tab">
                             <!-- DataTable -->
                             <div class="table-responsive" id="table-container">
-                                <table id="hb837-table" class="table table-bordered table-striped table-hover">
+                                <table id="hb837-table-active" class="table table-bordered table-striped table-hover">
                                     <thead>
                                         <tr>
                                             <th width="3%" class="text-center">
-                                                <input type="checkbox" id="select-all" class="form-check-input">
+                                                <input type="checkbox" id="select-all-active" class="form-check-input">
                                             </th>
                                             <th width="20%" class="text-left">Property Name</th>
                                             <th width="12%" class="text-center">County</th>
@@ -221,10 +228,6 @@
                                             <th width="15%" class="text-center">Scheduled Date Of Inspection</th>
                                             <th width="12%" class="text-center">Report Status</th>
                                             <th width="8%" class="text-center">Action</th>
-                                        </tr>
-                                    </thead>
-                                            <th width="8%" class="text-center">Created Date</th>
-                                            <th width="8%" class="text-center">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1030,7 +1033,7 @@ $(document).ready(function() {
         initializeTabs();
 
         // Initialize DataTable using global variables
-        let tableId = currentTab === 'active' ? '#hb837-table' : '#hb837-table-' + currentTab;
+        let tableId = '#hb837-table-' + currentTab;
         table = initDataTable(currentTab, tableId); // Use global table variable
 
         if (table) {
@@ -1135,8 +1138,13 @@ $(document).ready(function() {
         `;
     }
 
-    function initDataTable(tab) {
-        console.log('Initializing DataTable for tab:', tab);
+    function initDataTable(tab, tableId) {
+        console.log('Initializing DataTable for tab:', tab, 'with tableId:', tableId);
+
+        // Default to main table if no tableId provided (for backward compatibility)
+        if (!tableId) {
+            tableId = '#hb837-table';
+        }
 
         // Check if DataTables is loaded
         if (typeof $.fn.DataTable === 'undefined') {
@@ -1145,11 +1153,12 @@ $(document).ready(function() {
             return null;
         }
 
-        if ($.fn.DataTable.isDataTable('#hb837-table')) {
-            $('#hb837-table').DataTable().destroy();
+        // Destroy existing DataTable for this specific table
+        if ($.fn.DataTable.isDataTable(tableId)) {
+            $(tableId).DataTable().destroy();
         }
 
-        return $('#hb837-table').DataTable({
+        return $(tableId).DataTable({
             processing: true,
             serverSide: true,
             ajax: {
@@ -1225,7 +1234,7 @@ $(document).ready(function() {
 
                     // Apply color coding to entire cells (as per GitHub issue #8)
                     setTimeout(function() {
-                        applyCellColorCoding('#hb837-table');
+                        applyCellColorCoding(tableId);
                     }, 100);
 
                     // Update bulk selection state
@@ -1237,7 +1246,7 @@ $(document).ready(function() {
 
                 // Add custom styling to empty table message only if it's the DataTables default empty message
                 setTimeout(function() {
-                    var $emptyCell = $('#hb837-table tbody tr td.dataTables_empty');
+                    var $emptyCell = $(tableId + ' tbody tr td.dataTables_empty');
                     if ($emptyCell.length > 0) {
                         $emptyCell.css({
                             'border': 'none',
@@ -1287,8 +1296,16 @@ $(document).ready(function() {
             console.log('Tab shown:', target);
 
             // Trigger table resize for proper column sizing
-            if (table) {
-                table.columns.adjust().responsive.recalc();
+            if (table && $.fn.DataTable.isDataTable(table.table().node())) {
+                try {
+                    table.columns.adjust();
+                    // Only call responsive.recalc() if responsive is enabled
+                    if (table.responsive) {
+                        table.responsive.recalc();
+                    }
+                } catch (e) {
+                    console.warn('Error adjusting table columns:', e);
+                }
             }
         });
 
@@ -1303,14 +1320,18 @@ $(document).ready(function() {
         console.log('Changing tab to:', tab);
 
         // Save current state using global currentTab
-        if (table) {
-            var currentPage = table.page();
-            var currentSearch = table.search();
-            sessionStorage.setItem('hb837_page_' + currentTab, currentPage);
-            sessionStorage.setItem('hb837_search_' + currentTab, currentSearch);
+        if (table && $.fn.DataTable.isDataTable(table.table().node())) {
+            try {
+                var currentPage = table.page();
+                var currentSearch = table.search();
+                sessionStorage.setItem('hb837_page_' + currentTab, currentPage);
+                sessionStorage.setItem('hb837_search_' + currentTab, currentSearch);
 
-            // Destroy current table
-            table.destroy();
+                // Destroy current table
+                table.destroy();
+            } catch (e) {
+                console.warn('Error saving table state:', e);
+            }
         }
 
         // Update global currentTab variable
@@ -1325,7 +1346,7 @@ $(document).ready(function() {
         $('#' + tab).addClass('show active');
 
         // Initialize DataTable for the new tab using global table variable
-        var tableId = tab === 'active' ? '#hb837-table' : '#hb837-table-' + tab;
+        var tableId = '#hb837-table-' + tab;
         table = initDataTable(tab, tableId);
 
         // Update URL
@@ -1333,16 +1354,22 @@ $(document).ready(function() {
 
         // Restore state for new tab
         setTimeout(function() {
-            var savedPage = sessionStorage.getItem('hb837_page_' + tab);
-            var savedSearch = sessionStorage.getItem('hb837_search_' + tab);
+            if (table && $.fn.DataTable.isDataTable(table.table().node())) {
+                try {
+                    var savedPage = sessionStorage.getItem('hb837_page_' + tab);
+                    var savedSearch = sessionStorage.getItem('hb837_search_' + tab);
 
-            if (savedSearch) {
-                table.search(savedSearch);
+                    if (savedSearch) {
+                        table.search(savedSearch);
+                    }
+                    if (savedPage) {
+                        table.page(parseInt(savedPage));
+                    }
+                    table.draw();
+                } catch (e) {
+                    console.warn('Error restoring table state:', e);
+                }
             }
-            if (savedPage) {
-                table.page(parseInt(savedPage));
-            }
-            table.draw();
         }, 100);
 
         // Update tab statistics

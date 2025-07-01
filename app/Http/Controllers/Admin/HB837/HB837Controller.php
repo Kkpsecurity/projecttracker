@@ -580,11 +580,8 @@ class HB837Controller extends Controller
      */
     public function getTabData(Request $request, $tab = 'active')
     {
-        if ($request->ajax()) {
-            return $this->getDatatablesData($tab);
-        }
-
-        return response()->json(['error' => 'Invalid request'], 400);
+        // Allow both AJAX and direct requests for debugging
+        return $this->getDatatablesData($tab);
     }
 
     /**
