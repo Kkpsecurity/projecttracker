@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 
 class HB837File extends Model
 {
+    protected $table = 'hb837_files';
+
     protected $fillable = [
         'hb837_id',
         'uploaded_by',
@@ -52,7 +54,7 @@ class HB837File extends Model
 
     public function getDownloadUrlAttribute(): string
     {
-        return route('hb837.files.download', $this->id);
+        return route('admin.hb837.files.download', $this->id);
     }
 
     // Methods

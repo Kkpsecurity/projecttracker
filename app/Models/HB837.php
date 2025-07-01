@@ -76,7 +76,7 @@ class HB837 extends Model
 
     public function files(): HasMany
     {
-        return $this->hasMany(HB837File::class);
+        return $this->hasMany(HB837File::class, 'hb837_id');
     }
 
     // Scopes

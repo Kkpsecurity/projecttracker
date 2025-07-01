@@ -107,10 +107,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         // File Management (non-parameterized routes)
         Route::get('/files/{file}/download', [HB837Controller::class, 'downloadFile'])->name('files.download');
         Route::delete('/files/{file}', [HB837Controller::class, 'deleteFile'])->name('files.delete');
+        Route::post('/{hb837}/files/upload', [HB837Controller::class, 'uploadFile'])->name('files.upload');
 
         // Parameterized routes (must come LAST)
         Route::get('/{hb837}', [HB837Controller::class, 'show'])->name('show');
-        Route::get('/{hb837}/edit', [HB837Controller::class, 'edit'])->name('edit');
+        Route::get('/{hb837}/edit/{tab?}', [HB837Controller::class, 'edit'])->name('edit');
         Route::put('/{hb837}', [HB837Controller::class, 'update'])->name('update');
         Route::delete('/{hb837}', [HB837Controller::class, 'destroy'])->name('destroy');
         Route::patch('/{hb837}/status', [HB837Controller::class, 'updateStatus'])->name('status');
