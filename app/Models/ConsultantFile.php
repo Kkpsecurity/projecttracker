@@ -45,7 +45,7 @@ class ConsultantFile extends Model
 
     public function getDownloadUrlAttribute(): string
     {
-        return route('consultants.files.download', $this->id);
+        return route('admin.consultants.files.download', $this->id);
     }
 
     // Methods

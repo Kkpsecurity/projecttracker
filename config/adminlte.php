@@ -354,6 +354,12 @@ return [
             'icon' => 'fas fa-project-diagram',
             'active' => ['admin/hb837*'],
         ],
+        [
+            'text' => 'Consultant Records',
+            'route' => 'admin.consultants.index',
+            'icon' => 'fas fa-user-tie',
+            'active' => ['admin/consultants*'],
+        ],
 
         ['header' => 'ANALYTICS & REPORTS'],
         [

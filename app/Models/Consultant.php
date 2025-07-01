@@ -29,7 +29,7 @@ class Consultant extends Model
     // Relationships
     public function hb837Projects(): HasMany
     {
-        return $this->hasMany(HB837::class);
+        return $this->hasMany(HB837::class, 'assigned_consultant_id');
     }
 
     public function files(): HasMany

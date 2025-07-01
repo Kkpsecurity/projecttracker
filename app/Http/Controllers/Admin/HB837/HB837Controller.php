@@ -31,9 +31,9 @@ class HB837Controller extends Controller
     /**
      * Display HB837 index with tabs and DataTables
      */
-    public function index(Request $request, $tab = 'active')
+    public function index(Request $request, $tab = 'all')
     {
-        $tab = in_array($tab = Str::lower($tab), ['active', 'quoted', 'completed', 'closed']) ? $tab : 'active';
+        $tab = in_array($tab = Str::lower($tab), ['all', 'active', 'quoted', 'completed', 'closed']) ? $tab : 'all';
 
         if ($request->ajax()) {
             return $this->getDatatablesData($tab);
@@ -95,14 +95,8 @@ class HB837Controller extends Controller
                 return '<strong>' . e($hb837->property_name) . '</strong><br>
                         <small class="text-muted">' . e($hb837->address) . ', ' . e($hb837->city) . ', ' . e($hb837->state) . '</small>';
             })
-            ->editColumn('securitygauge_crime_risk', function ($hb837) {
-                return $this->getCrimeRiskCell($hb837->securitygauge_crime_risk);
-            })
             ->editColumn('report_status', function ($hb837) {
                 return $this->getReportStatusCell($hb837->report_status);
-            })
-            ->editColumn('contracting_status', function ($hb837) {
-                return $this->getContractingStatusCell($hb837->contracting_status);
             })
             ->editColumn('assigned_consultant_id', function ($hb837) {
                 return $hb837->consultant ?
@@ -118,32 +112,13 @@ class HB837Controller extends Controller
                 }
                 return '<span class="text-muted">Not scheduled</span>';
             })
-            ->editColumn('quoted_price', function ($hb837) {
-                if ($hb837->quoted_price) {
-                    return '$' . number_format($hb837->quoted_price, 2);
-                }
-                return '<span class="text-muted">Not quoted</span>';
-            })
-            ->editColumn('priority', function ($hb837) {
-                $score = $this->calculatePriorityScore($hb837);
-                $labels = [
-                    0 => '<span class="badge badge-secondary">Low</span>',
-                    1 => '<span class="badge badge-primary">Normal</span>',
-                    2 => '<span class="badge badge-warning">High</span>',
-                    3 => '<span class="badge badge-danger">Urgent</span>'
-                ];
-                return $labels[$score] ?? $labels[0];
-            })
-            ->editColumn('created_at', function ($hb837) {
-                return $hb837->created_at->format('M j, Y');
-            })
             ->editColumn('county', function ($hb837) {
                 return $hb837->county ?: '<span class="text-muted">Not specified</span>';
             })
             ->editColumn('macro_client', function ($hb837) {
                 return $hb837->macro_client ?: '<span class="text-muted">Not assigned</span>';
             })
-            ->rawColumns(['checkbox', 'action', 'property_name', 'report_status', 'contracting_status', 'assigned_consultant_id', 'scheduled_date_of_inspection', 'quoted_price', 'priority', 'securitygauge_crime_risk', 'county', 'macro_client'])
+            ->rawColumns(['checkbox', 'action', 'property_name', 'county', 'macro_client', 'assigned_consultant_id', 'scheduled_date_of_inspection', 'report_status'])
             ->make(true);
     }
 
@@ -248,6 +223,9 @@ class HB837Controller extends Controller
     protected function applyTabFilters($query, $tab)
     {
         switch ($tab) {
+            case 'all':
+                // No filters - show all records
+                break;
             case 'active':
                 $query->whereIn('report_status', ['not-started', 'in-progress', 'in-review'])
                     ->where('contracting_status', 'executed');
@@ -394,7 +372,8 @@ class HB837Controller extends Controller
             'property_manager_email' => 'nullable|email|max:255',
             'regional_manager_name' => 'nullable|string|max:255',
             'regional_manager_email' => 'nullable|email|max:255',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            'financial_notes' => 'nullable|string'
         ]);
 
         // Calculate net profit
@@ -943,14 +922,56 @@ class HB837Controller extends Controller
         try {
             $file = $request->file('file');
             $originalName = $file->getClientOriginalName();
-            $extension = $file->getClientOriginalExtension();
+            $extension = $file->getClientOriginalExtension();            // Ensure temp/imports directory exists with proper recursive creation
+            $tempDirPath = 'temp' . DIRECTORY_SEPARATOR . 'imports';
+            $fullTempDir = storage_path('app' . DIRECTORY_SEPARATOR . $tempDirPath);
 
-            // Store file temporarily
+            if (!file_exists($fullTempDir)) {
+                if (!mkdir($fullTempDir, 0755, true)) {
+                    throw new \Exception("Failed to create upload directory: {$fullTempDir}");
+                }
+            }
+
+            // Verify directory is writable
+            if (!is_writable($fullTempDir)) {
+                throw new \Exception("Upload directory is not writable: {$fullTempDir}");
+            }            // Store file temporarily with better error handling
             $fileName = 'import_' . time() . '_' . uniqid() . '.' . $extension;
-            $filePath = $file->storeAs('temp/imports', $fileName);
+
+            // Use manual file storage instead of Laravel Storage due to disk configuration
+            $targetPath = $fullTempDir . DIRECTORY_SEPARATOR . $fileName;
+
+            try {
+                if (!$file->move($fullTempDir, $fileName)) {
+                    throw new \Exception("File move operation failed");
+                }
+                $filePath = 'temp' . DIRECTORY_SEPARATOR . 'imports' . DIRECTORY_SEPARATOR . $fileName;
+            } catch (\Exception $e) {
+                throw new \Exception("Failed to move uploaded file: " . $e->getMessage());
+            }
+
+            // Verify file was stored successfully
+            if (!file_exists($targetPath)) {
+                throw new \Exception("Failed to store uploaded file at: {$targetPath}");
+            }
+
+            // Verify file is readable
+            if (!is_readable($targetPath)) {
+                throw new \Exception("Stored file is not readable: {$targetPath}");
+            }
+
+            // Use the target path for analysis
+            $fullPath = $targetPath;
+
+            // Log successful upload for debugging
+            Log::info("File uploaded successfully", [
+                'original_name' => $originalName,
+                'stored_path' => $fullPath,
+                'file_size' => filesize($fullPath)
+            ]);
 
             // Analyze file structure
-            $analysis = $this->performFileAnalysis(storage_path('app/' . $filePath));
+            $analysis = $this->performFileAnalysis($fullPath);
 
             // Store analysis data temporarily
             $fileId = uniqid();
@@ -1037,7 +1058,8 @@ class HB837Controller extends Controller
                 'imported' => $result['imported'],
                 'updated' => $result['updated'],
                 'skipped' => $result['skipped'],
-                'errors' => $result['errors']
+                'errors' => $result['errors'],
+                'redirect_url' => route('admin.hb837.index', ['tab' => 'active'])
             ]);
 
         } catch (\Exception $e) {
@@ -1128,21 +1150,40 @@ class HB837Controller extends Controller
      */
     private function performFileAnalysis($filePath)
     {
+        // Verify file exists
+        if (!file_exists($filePath)) {
+            throw new \Exception("File does not exist: {$filePath}");
+        }
+
+        // Check file is readable
+        if (!is_readable($filePath)) {
+            throw new \Exception("File is not readable: {$filePath}");
+        }
+
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);
         $data = [];
         $headers = [];
 
-        // Read file based on type
-        if (in_array(strtolower($extension), ['xlsx', 'xls'])) {
-            $spreadsheet = IOFactory::load($filePath);
-            $worksheet = $spreadsheet->getActiveSheet();
-            $data = $worksheet->toArray();
-        } else if (strtolower($extension) === 'csv') {
-            $handle = fopen($filePath, 'r');
-            while (($row = fgetcsv($handle)) !== FALSE) {
-                $data[] = $row;
+        try {
+            // Read file based on type
+            if (in_array(strtolower($extension), ['xlsx', 'xls'])) {
+                $spreadsheet = IOFactory::load($filePath);
+                $worksheet = $spreadsheet->getActiveSheet();
+                $data = $worksheet->toArray();
+            } else if (strtolower($extension) === 'csv') {
+                $handle = fopen($filePath, 'r');
+                if ($handle === false) {
+                    throw new \Exception("Failed to open CSV file: {$filePath}");
+                }
+                while (($row = fgetcsv($handle)) !== FALSE) {
+                    $data[] = $row;
+                }
+                fclose($handle);
+            } else {
+                throw new \Exception("Unsupported file format: {$extension}");
             }
-            fclose($handle);
+        } catch (\Exception $e) {
+            throw new \Exception("Failed to read file: " . $e->getMessage());
         }
 
         if (empty($data)) {
@@ -1461,6 +1502,15 @@ class HB837Controller extends Controller
             }
         }
 
+        // Debug logging
+        Log::info('Starting intelligent import', [
+            'file_path' => $filePath,
+            'total_rows' => count($data),
+            'headers' => $headers,
+            'field_index_map' => $fieldIndexMap,
+            'analysis_mapping' => $analysis['mapping']
+        ]);
+
         $imported = 0;
         $updated = 0;
         $skipped = 0;
@@ -1485,7 +1535,29 @@ class HB837Controller extends Controller
                     }
                 }
 
+                // Set user_id to current authenticated user for all imported records
+                $recordData['user_id'] = \Illuminate\Support\Facades\Auth::id();
+
+                // Set default status values if not provided to ensure records appear in datatable
+                if (empty($recordData['report_status'])) {
+                    $recordData['report_status'] = 'not-started';
+                }
+                if (empty($recordData['contracting_status'])) {
+                    $recordData['contracting_status'] = 'quoted';
+                }
+
+                // Debug logging
+                Log::info('Import row data', [
+                    'row_index' => $rowIndex,
+                    'record_data' => $recordData,
+                    'field_index_map' => $fieldIndexMap
+                ]);
+
                 if (empty($recordData['property_name'])) {
+                    Log::warning('Skipping row due to missing property_name', [
+                        'row_index' => $rowIndex,
+                        'record_data' => $recordData
+                    ]);
                     $skipped++;
                     continue;
                 }
@@ -1496,10 +1568,12 @@ class HB837Controller extends Controller
                 if ($existing) {
                     // Update existing record
                     $existing->update($recordData);
+                    Log::info('Updated existing record', ['id' => $existing->id, 'property_name' => $recordData['property_name']]);
                     $updated++;
                 } else {
                     // Create new record
-                    HB837::create($recordData);
+                    $created = HB837::create($recordData);
+                    Log::info('Created new record', ['id' => $created->id, 'property_name' => $recordData['property_name']]);
                     $imported++;
                 }
 

@@ -20,13 +20,14 @@
 
 @section('content')
 <div class="container-fluid">
-    <!-- Statistics Cards -->
+    <!-- Statistics Cards (Updated: {{ now() }}) -->
     <div class="row">
         <div class="col-lg-3 col-6">
             <div class="small-box bg-info">
                 <div class="inner">
                     <h3>{{ $stats['active'] }}</h3>
                     <p>Active Projects</p>
+                    <!-- Debug: Active={{ $stats['active'] }}, Total={{ $stats['total'] }} -->
                 </div>
                 <div class="icon">
                     <i class="fas fa-project-diagram"></i>
@@ -117,6 +118,14 @@
                 <div class="card-header p-0 pt-1">
                     <ul class="nav nav-tabs" id="hb837-tabs" role="tablist">
                         <li class="nav-item">
+                            <a class="nav-link {{ $tab == 'all' ? 'active' : '' }}"
+                               id="all-tab" data-toggle="tab" href="#all" role="tab"
+                               aria-controls="all" aria-selected="{{ $tab == 'all' ? 'true' : 'false' }}"
+                               onclick="changeTab('all')">
+                                <i class="fas fa-list"></i> All
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {{ $tab == 'active' ? 'active' : '' }}"
                                id="active-tab" data-toggle="tab" href="#active" role="tab"
                                aria-controls="active" aria-selected="{{ $tab == 'active' ? 'true' : 'false' }}"
@@ -152,6 +161,25 @@
                 </div>
                 <div class="card-body">
                     <div class="tab-content" id="hb837-tabContent">
+                        <div class="tab-pane fade {{ $tab == 'all' ? 'show active' : '' }}" id="all" role="tabpanel" aria-labelledby="all-tab">
+                            <!-- DataTable -->
+                            <div class="table-responsive" id="table-container">
+                                <table id="hb837-table" class="table table-bordered table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th width="30"><input type="checkbox" id="select-all" title="Select All"></th>
+                                            <th>Property Name</th>
+                                            <th>County</th>
+                                            <th>Macro Client</th>
+                                            <th>Assigned Consultant Id</th>
+                                            <th>Scheduled Date Of Inspection</th>
+                                            <th>Report Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
                         <div class="tab-pane fade {{ $tab == 'active' ? 'show active' : '' }}" id="active" role="tabpanel" aria-labelledby="active-tab">
                             <!-- DataTable -->
                             <div class="table-responsive" id="table-container">
@@ -161,18 +189,13 @@
                                             <th width="3%" class="text-center">
                                                 <input type="checkbox" id="select-all" class="form-check-input">
                                             </th>
-                                            <th width="8%" class="text-center">Report Status</th>
-                                            <th width="15%" class="text-left">Property Name</th>
-                                            <th width="8%" class="text-center">County</th>
-                                            <th width="8%" class="text-center">Crime Risk</th>
-                                            <th width="10%" class="text-left">Macro Client</th>
-                                            <th width="10%" class="text-center">Assigned Consultant</th>
-                                            <th width="10%" class="text-center">Scheduled Date</th>
-                                            <th width="8%" class="text-center">Contracting Status</th>
-                                            <th width="8%" class="text-center">Quoted Price</th>
-                                            <th width="6%" class="text-center">Priority</th>
-                                            <th width="8%" class="text-center">Created Date</th>
-                                            <th width="8%" class="text-center">Actions</th>
+                                            <th width="20%" class="text-left">Property Name</th>
+                                            <th width="12%" class="text-center">County</th>
+                                            <th width="15%" class="text-left">Macro Client</th>
+                                            <th width="15%" class="text-center">Assigned Consultant Id</th>
+                                            <th width="15%" class="text-center">Scheduled Date Of Inspection</th>
+                                            <th width="12%" class="text-center">Report Status</th>
+                                            <th width="8%" class="text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -191,16 +214,15 @@
                                             <th width="3%" class="text-center">
                                                 <input type="checkbox" id="select-all-quoted" class="form-check-input">
                                             </th>
-                                            <th width="8%" class="text-center">Report Status</th>
-                                            <th width="15%" class="text-left">Property Name</th>
-                                            <th width="8%" class="text-center">County</th>
-                                            <th width="8%" class="text-center">Crime Risk</th>
-                                            <th width="10%" class="text-left">Macro Client</th>
-                                            <th width="10%" class="text-center">Assigned Consultant</th>
-                                            <th width="10%" class="text-center">Scheduled Date</th>
-                                            <th width="8%" class="text-center">Contracting Status</th>
-                                            <th width="8%" class="text-center">Quoted Price</th>
-                                            <th width="6%" class="text-center">Priority</th>
+                                            <th width="20%" class="text-left">Property Name</th>
+                                            <th width="12%" class="text-center">County</th>
+                                            <th width="15%" class="text-left">Macro Client</th>
+                                            <th width="15%" class="text-center">Assigned Consultant Id</th>
+                                            <th width="15%" class="text-center">Scheduled Date Of Inspection</th>
+                                            <th width="12%" class="text-center">Report Status</th>
+                                            <th width="8%" class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
                                             <th width="8%" class="text-center">Created Date</th>
                                             <th width="8%" class="text-center">Actions</th>
                                         </tr>
@@ -221,18 +243,13 @@
                                             <th width="3%" class="text-center">
                                                 <input type="checkbox" id="select-all-completed" class="form-check-input">
                                             </th>
-                                            <th width="8%" class="text-center">Report Status</th>
-                                            <th width="15%" class="text-left">Property Name</th>
-                                            <th width="8%" class="text-center">County</th>
-                                            <th width="8%" class="text-center">Crime Risk</th>
-                                            <th width="10%" class="text-left">Macro Client</th>
-                                            <th width="10%" class="text-center">Assigned Consultant</th>
-                                            <th width="10%" class="text-center">Scheduled Date</th>
-                                            <th width="8%" class="text-center">Contracting Status</th>
-                                            <th width="8%" class="text-center">Quoted Price</th>
-                                            <th width="6%" class="text-center">Priority</th>
-                                            <th width="8%" class="text-center">Created Date</th>
-                                            <th width="8%" class="text-center">Actions</th>
+                                            <th width="20%" class="text-left">Property Name</th>
+                                            <th width="12%" class="text-center">County</th>
+                                            <th width="15%" class="text-left">Macro Client</th>
+                                            <th width="15%" class="text-center">Assigned Consultant Id</th>
+                                            <th width="15%" class="text-center">Scheduled Date Of Inspection</th>
+                                            <th width="12%" class="text-center">Report Status</th>
+                                            <th width="8%" class="text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -251,18 +268,13 @@
                                             <th width="3%" class="text-center">
                                                 <input type="checkbox" id="select-all-closed" class="form-check-input">
                                             </th>
-                                            <th width="8%" class="text-center">Report Status</th>
-                                            <th width="15%" class="text-left">Property Name</th>
-                                            <th width="8%" class="text-center">County</th>
-                                            <th width="8%" class="text-center">Crime Risk</th>
-                                            <th width="10%" class="text-left">Macro Client</th>
-                                            <th width="10%" class="text-center">Assigned Consultant</th>
-                                            <th width="10%" class="text-center">Scheduled Date</th>
-                                            <th width="8%" class="text-center">Contracting Status</th>
-                                            <th width="8%" class="text-center">Quoted Price</th>
-                                            <th width="6%" class="text-center">Priority</th>
-                                            <th width="8%" class="text-center">Created Date</th>
-                                            <th width="8%" class="text-center">Actions</th>
+                                            <th width="20%" class="text-left">Property Name</th>
+                                            <th width="12%" class="text-center">County</th>
+                                            <th width="15%" class="text-left">Macro Client</th>
+                                            <th width="15%" class="text-center">Assigned Consultant Id</th>
+                                            <th width="15%" class="text-center">Scheduled Date Of Inspection</th>
+                                            <th width="12%" class="text-center">Report Status</th>
+                                            <th width="8%" class="text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1165,20 +1177,15 @@ $(document).ready(function() {
             },
             columns: [
                 { data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, width: '3%', className: 'text-center' },
-                { data: 'report_status', name: 'report_status', orderable: false, width: '8%', className: 'text-center' },
-                { data: 'property_name', name: 'property_name', width: '15%', className: 'text-left' },
-                { data: 'county', name: 'county', width: '8%', className: 'text-center' },
-                { data: 'securitygauge_crime_risk', name: 'securitygauge_crime_risk', orderable: false, width: '8%', className: 'text-center' },
-                { data: 'macro_client', name: 'macro_client', width: '10%', className: 'text-left' },
-                { data: 'assigned_consultant_id', name: 'assigned_consultant_id', orderable: false, width: '10%', className: 'text-center' },
-                { data: 'scheduled_date_of_inspection', name: 'scheduled_date_of_inspection', width: '10%', className: 'text-center' },
-                { data: 'contracting_status', name: 'contracting_status', orderable: false, width: '8%', className: 'text-center' },
-                { data: 'quoted_price', name: 'quoted_price', width: '8%', className: 'text-center' },
-                { data: 'priority', name: 'priority', orderable: false, width: '6%', className: 'text-center' },
-                { data: 'created_at', name: 'created_at', width: '8%', className: 'text-center' },
+                { data: 'property_name', name: 'property_name', width: '20%', className: 'text-left' },
+                { data: 'county', name: 'county', width: '12%', className: 'text-center' },
+                { data: 'macro_client', name: 'macro_client', width: '15%', className: 'text-left' },
+                { data: 'assigned_consultant_id', name: 'assigned_consultant_id', orderable: false, width: '15%', className: 'text-center' },
+                { data: 'scheduled_date_of_inspection', name: 'scheduled_date_of_inspection', width: '15%', className: 'text-center' },
+                { data: 'report_status', name: 'report_status', orderable: false, width: '12%', className: 'text-center' },
                 { data: 'action', name: 'action', orderable: false, searchable: false, width: '8%', className: 'text-center' }
             ],
-            order: [[7, 'desc']], // Order by scheduled_date_of_inspection descending
+            order: [[5, 'desc']], // Order by scheduled_date_of_inspection descending
             pageLength: 25,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
             responsive: false,
@@ -1187,7 +1194,7 @@ $(document).ready(function() {
             autoWidth: false,
             fixedColumns: false,
             columnDefs: [
-                { targets: [0, 3, 5, 7, 8], orderable: false },
+                { targets: [0, 4, 5, 6, 7], orderable: false },
                 { targets: '_all', className: 'align-middle' }
             ],
             dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>' +
@@ -1206,7 +1213,7 @@ $(document).ready(function() {
                     var emptyStateHtml = getEmptyStateHTML(tab);
                     console.log('Showing empty state for tab:', tab);
                     $(this).find('tbody').html(
-                        '<tr class="empty-state-row"><td colspan="13" class="text-center p-0 border-0">' +
+                        '<tr class="empty-state-row"><td colspan="8" class="text-center p-0 border-0">' +
                         emptyStateHtml +
                         '</td></tr>'
                     );

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Admin\HB837\HB837Controller;
+use App\Http\Controllers\Admin\ConsultantController;
 
 /*
 |--------------------------------------------------------------------------
@@ -120,6 +121,27 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         // File Management (parameterized routes for specific HB837 records)
         Route::get('/{hb837}/files', [HB837Controller::class, 'files'])->name('files');
         Route::post('/{hb837}/files', [HB837Controller::class, 'uploadFile'])->name('files.upload');
+    });
+
+    // Consultant Management
+    Route::prefix('consultants')->name('consultants.')->group(function () {
+        // Basic CRUD Routes
+        Route::get('/', [ConsultantController::class, 'index'])->name('index');
+        Route::get('/create', [ConsultantController::class, 'create'])->name('create');
+        Route::post('/', [ConsultantController::class, 'store'])->name('store');
+
+        // File Management (non-parameterized routes)
+        Route::get('/files/{file}/download', [ConsultantController::class, 'downloadFile'])->name('files.download');
+        Route::delete('/files/{file}', [ConsultantController::class, 'deleteFile'])->name('files.delete');
+
+        // Parameterized routes (must come LAST)
+        Route::get('/{consultant}', [ConsultantController::class, 'show'])->name('show');
+        Route::get('/{consultant}/edit', [ConsultantController::class, 'edit'])->name('edit');
+        Route::put('/{consultant}', [ConsultantController::class, 'update'])->name('update');
+        Route::delete('/{consultant}', [ConsultantController::class, 'destroy'])->name('destroy');
+
+        // File Management (parameterized routes for specific consultant records)
+        Route::post('/{consultant}/files', [ConsultantController::class, 'uploadFile'])->name('files.upload');
     });
 
     // Future Admin Modules (placeholders)

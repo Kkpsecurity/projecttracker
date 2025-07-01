@@ -910,6 +910,24 @@ $(document).ready(function() {
             success: function(response) {
                 hideProgress();
                 showImportResults(response);
+
+                // Auto-redirect with countdown after showing results
+                if (response.redirect_url) {
+                    let countdown = 3;
+                    const countdownElement = document.getElementById('countdown');
+
+                    const timer = setInterval(function() {
+                        countdown--;
+                        if (countdownElement) {
+                            countdownElement.textContent = countdown;
+                        }
+
+                        if (countdown <= 0) {
+                            clearInterval(timer);
+                            window.location.href = response.redirect_url;
+                        }
+                    }, 1000);
+                }
             },
             error: function(xhr, status, error) {
                 hideProgress();
@@ -937,9 +955,15 @@ $(document).ready(function() {
                 </div>
             </div>
 
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <strong>Import completed successfully!</strong>
+                <br>Redirecting to HB837 data view in <span id="countdown">3</span> seconds...
+                <br><small>You can click the button below to go now.</small>
+            </div>
+
             <div class="text-center mt-4">
                 <a href="{{ route('admin.hb837.index') }}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-table"></i> View HB837 Data
+                    <i class="fas fa-table"></i> View HB837 Data Now
                 </a>
                 <button type="button" class="btn btn-secondary" onclick="resetImport()">
                     <i class="fas fa-upload"></i> Import Another File
