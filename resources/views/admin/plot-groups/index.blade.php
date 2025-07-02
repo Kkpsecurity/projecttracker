@@ -235,10 +235,11 @@
         let currentClientPlots = [];
 
         $(document).ready(function() {
-            initMap();
+            // initMap will be called by Google Maps API callback
             initEventHandlers();
         });
 
+        // Global function that will be called by Google Maps API
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 10,
@@ -257,6 +258,13 @@
                     alert('Please select a macro client');
                     return;
                 }
+
+                // Check if Google Maps is available
+                if (typeof google === 'undefined') {
+                    alert('Google Maps is still loading. Please wait a moment and try again.');
+                    return;
+                }
+
                 loadMacroClientPlots(macroClient);
             });
 
@@ -291,7 +299,7 @@
 
         function loadMacroClientPlots(macroClient) {
             $.ajax({
-                url: '{{ route("admin.plot-groups.macro-client-plots") }}',
+                url: '{{ route("admin.plot-groups.api.macro-client-plots") }}',
                 data: { macro_client: macroClient },
                 success: function(response) {
                     if (response.success) {
@@ -325,6 +333,12 @@
         }
 
         function displayPlotsOnMap(plots, projectAddresses = []) {
+            // Check if Google Maps is available
+            if (typeof google === 'undefined') {
+                console.error('Google Maps API not loaded yet');
+                return;
+            }
+
             clearMarkers();
 
             // Add plot markers (red)
@@ -449,5 +463,10 @@
                 }
             });
         }
+    </script>
+
+    <!-- Google Maps API -->
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.api_key', 'YOUR_API_KEY_HERE') }}&callback=initMap">
     </script>
 @stop

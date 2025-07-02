@@ -210,6 +210,13 @@ class PlotsController extends Controller
             ->addColumn('actions', function($plot) {
                 return view('admin.plots.partials.actions', compact('plot'))->render();
             })
+            ->addColumn('plot_address', function ($plot) {
+                return $plot->address; // Return the full address object for frontend rendering
+            })
+            ->addColumn('status', function ($plot) {
+                // Add a default status field since DataTables expects it
+                return 'active'; // You can customize this based on your business logic
+            })
             ->editColumn('coordinates', function($plot) {
                 if ($plot->coordinates_latitude && $plot->coordinates_longitude) {
                     return $plot->coordinates_latitude . ', ' . $plot->coordinates_longitude;

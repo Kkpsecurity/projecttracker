@@ -157,6 +157,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     });
 
     Route::prefix('plots')->name('plots.')->group(function () {
+        // DataTables and Bulk Operations (must be before parameterized routes)
+        Route::get('/datatable', [PlotsController::class, 'datatable'])->name('datatable');
+        Route::post('/bulk', [PlotsController::class, 'bulkAction'])->name('bulk');
+
         // Basic CRUD Routes
         Route::get('/', [PlotsController::class, 'index'])->name('index');
         Route::get('/create', [PlotsController::class, 'create'])->name('create');
@@ -165,10 +169,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/{plot}/edit', [PlotsController::class, 'edit'])->name('edit');
         Route::put('/{plot}', [PlotsController::class, 'update'])->name('update');
         Route::delete('/{plot}', [PlotsController::class, 'destroy'])->name('destroy');
-
-        // DataTables and Bulk Operations
-        Route::get('/datatable', [PlotsController::class, 'datatable'])->name('datatable');
-        Route::post('/bulk', [PlotsController::class, 'bulkAction'])->name('bulk');
     });
 
     // Plot Groups Management
