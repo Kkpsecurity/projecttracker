@@ -341,6 +341,12 @@ return [
                     'active' => ['admin/settings*'],
                 ],
                 [
+                    'text' => 'HB837 Import Config',
+                    'route' => 'admin.hb837-import-config.index',
+                    'icon' => 'fas fa-cog',
+                    'active' => ['admin/hb837-import-config*'],
+                ],
+                [
                     'text' => 'Activity Logs',
                     'route' => 'admin.logs.index',
                     'icon' => 'fas fa-list-alt',
@@ -370,6 +376,12 @@ return [
                     'icon' => 'fas fa-file-import',
                     'active' => ['admin/hb837/smart-import*'],
                 ],
+                [
+                    'text' => 'Inspection Schedule',
+                    'route' => 'admin.hb837.inspection-calendar.index',
+                    'icon' => 'fas fa-calendar-alt',
+                    'active' => ['admin/hb837/inspection-calendar*'],
+                ],
                 ['header' => 'MAP & PLOTS'],
                 [
                     'text' => 'Google Maps',
@@ -382,6 +394,12 @@ return [
                     'route' => 'admin.plots.index',
                     'icon' => 'fas fa-map-marker-alt',
                     'active' => ['admin/plots*'],
+                ],
+                [
+                    'text' => 'Plot Groups',
+                    'route' => 'admin.plot-groups.index',
+                    'icon' => 'fas fa-layer-group',
+                    'active' => ['admin/plot-groups*'],
                 ],
             ],
         ],
@@ -550,6 +568,21 @@ return [
                     'type' => 'js',
                     'asset' => false,
                     'location' => '//cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js',
+                ],
+            ],
+        ],
+        'Toastr' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'css',
+                    'asset' => false,
+                    'location' => 'https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => 'https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js',
                 ],
             ],
         ],

@@ -6,9 +6,13 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Admin\HB837\HB837Controller;
+use App\Http\Controllers\Admin\HB837\InspectionCalendarController;
+use App\Http\Controllers\Admin\HB837ImportConfigController;
 use App\Http\Controllers\Admin\ConsultantController;
 use App\Http\Controllers\Admin\GoogleMapsController;
 use App\Http\Controllers\Admin\PlotsController;
+use App\Http\Controllers\Admin\PlotGroupController;
+// use App\Http\Controllers\Admin\MockPlotsController; // Uncomment for testing without database
 
 /*
 |--------------------------------------------------------------------------
@@ -106,6 +110,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/export/{format}', [HB837Controller::class, 'exportFormat'])->name('export.format');
         Route::get('/export/template/{format}', [HB837Controller::class, 'exportTemplate'])->name('export.template');
 
+        // Inspection Calendar Routes
+        Route::get('/inspection-calendar', [InspectionCalendarController::class, 'index'])->name('inspection-calendar.index');
+        Route::get('/inspection-calendar/events', [InspectionCalendarController::class, 'getEvents'])->name('inspection-calendar.events');
+        Route::get('/inspection-calendar/statuses', [InspectionCalendarController::class, 'getStatuses'])->name('inspection-calendar.statuses');
+        Route::get('/inspection-calendar/project/{id}', [InspectionCalendarController::class, 'getProjectDetails'])->name('inspection-calendar.project');
+        Route::put('/inspection-calendar/project/{id}/date', [InspectionCalendarController::class, 'updateInspectionDate'])->name('inspection-calendar.update-date');
+
         // File Management (non-parameterized routes)
         Route::get('/files/{file}/download', [HB837Controller::class, 'downloadFile'])->name('files.download');
         Route::delete('/files/{file}', [HB837Controller::class, 'deleteFile'])->name('files.delete');
@@ -158,6 +169,24 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         // DataTables and Bulk Operations
         Route::get('/datatable', [PlotsController::class, 'datatable'])->name('datatable');
         Route::post('/bulk', [PlotsController::class, 'bulkAction'])->name('bulk');
+    });
+
+    // Plot Groups Management
+    Route::prefix('plot-groups')->name('plot-groups.')->group(function () {
+        Route::get('/', [PlotGroupController::class, 'index'])->name('index');
+        Route::post('/', [PlotGroupController::class, 'store'])->name('store');
+        Route::put('/{plotGroup}', [PlotGroupController::class, 'update'])->name('update');
+        Route::delete('/{plotGroup}', [PlotGroupController::class, 'destroy'])->name('destroy');
+
+        // Plot management within groups
+        Route::post('/{plotGroup}/plots', [PlotGroupController::class, 'addPlot'])->name('add-plot');
+        Route::delete('/{plotGroup}/plots/{plot}', [PlotGroupController::class, 'removePlot'])->name('remove-plot');
+
+        // API endpoints
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/macro-client-plots', [PlotGroupController::class, 'getMacroClientPlots'])->name('macro-client-plots');
+            Route::get('/{plotGroup}/plots', [PlotGroupController::class, 'getGroupPlots'])->name('group-plots');
+        });
     });
 
     // Consultant Management
@@ -224,6 +253,22 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
                 'message' => 'System maintenance and backup functionality will be implemented here.'
             ]);
         })->name('index');
+    });
+
+    // HB837 Import Configuration Management
+    Route::prefix('hb837-import-config')->name('hb837-import-config.')->group(function () {
+        Route::get('/', [HB837ImportConfigController::class, 'index'])->name('index');
+        Route::get('/create', [HB837ImportConfigController::class, 'create'])->name('create');
+        Route::post('/', [HB837ImportConfigController::class, 'store'])->name('store');
+        Route::get('/{hb837ImportConfig}', [HB837ImportConfigController::class, 'show'])->name('show');
+        Route::get('/{hb837ImportConfig}/edit', [HB837ImportConfigController::class, 'edit'])->name('edit');
+        Route::put('/{hb837ImportConfig}', [HB837ImportConfigController::class, 'update'])->name('update');
+        Route::delete('/{hb837ImportConfig}', [HB837ImportConfigController::class, 'destroy'])->name('destroy');
+
+        // Additional actions
+        Route::post('/{hb837ImportConfig}/create-column', [HB837ImportConfigController::class, 'createColumn'])->name('create-column');
+        Route::post('/sync-config', [HB837ImportConfigController::class, 'syncConfig'])->name('sync');
+        Route::post('/import-schema', [HB837ImportConfigController::class, 'importSchema'])->name('import-schema');
     });
 
     // API Management

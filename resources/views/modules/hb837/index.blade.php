@@ -375,17 +375,23 @@ function createBackup() {
             },
             success: function(response) {
                 if (response.success) {
-                    toastr.success('Backup created successfully!');
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success('Backup created successfully!');
+                    }
                     // Offer download
                     if (response.download_url) {
                         window.open(response.download_url, '_blank');
                     }
                 } else {
-                    toastr.error('Backup failed: ' + response.error);
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Backup failed: ' + response.error);
+                    }
                 }
             },
             error: function() {
-                toastr.error('Backup request failed');
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('Backup request failed');
+                }
             }
         });
     }
@@ -466,16 +472,22 @@ function executeExport() {
         success: function(response) {
             if (response.success) {
                 $('#exportModal').modal('hide');
-                toastr.success('Export completed successfully!');
+                if (typeof toastr !== 'undefined') {
+                    toastr.success('Export completed successfully!');
+                }
                 if (response.download_url) {
                     window.open(response.download_url, '_blank');
                 }
             } else {
-                toastr.error('Export failed: ' + response.error);
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('Export failed: ' + response.error);
+                }
             }
         },
         error: function() {
-            toastr.error('Export request failed');
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Export request failed');
+            }
         }
     });
 }

@@ -102,12 +102,11 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
     // Route::get('dashboard/stats', [DashboardController::class, 'getStats'])->name('api.dashboard.stats');
 });
 
-// Admin Center Routes
-require __DIR__ . '/admin.php';
+// Admin Center Routes - Loaded here to avoid conflicts
+// require __DIR__ . '/admin.php';
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    // Admin Dashboard (enhanced)
-    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    // Note: Main admin dashboard is handled in routes/admin.php
 
     // User Management Resource Routes
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);

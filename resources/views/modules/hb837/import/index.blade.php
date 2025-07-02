@@ -371,12 +371,16 @@ function uploadFile(file) {
                 setupFieldMapping(response);
                 goToPhase('mapping');
             } else {
-                toastr.error('Upload failed: ' + response.error);
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('Upload failed: ' + response.error);
+                }
                 resetUpload();
             }
         },
         error: function() {
-            toastr.error('Upload failed. Please try again.');
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Upload failed. Please try again.');
+            }
             resetUpload();
         }
     });
@@ -459,7 +463,9 @@ function updateMappingStats() {
 
 function generatePreview() {
     if (Object.keys(mappings).length === 0) {
-        toastr.warning('Please map at least one field before previewing.');
+        if (typeof toastr !== 'undefined') {
+            toastr.warning('Please map at least one field before previewing.');
+        }
         return;
     }
 
@@ -479,11 +485,15 @@ function generatePreview() {
                 setupValidationPhase(response);
                 goToPhase('validation');
             } else {
-                toastr.error('Preview failed: ' + response.error);
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('Preview failed: ' + response.error);
+                }
             }
         },
         error: function() {
-            toastr.error('Preview request failed');
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Preview request failed');
+            }
         }
     });
 }
@@ -562,12 +572,16 @@ function executeImport() {
                     showImportResults(response.results);
                     goToPhase('complete');
                 } else {
-                    toastr.error('Import failed: ' + response.error);
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Import failed: ' + response.error);
+                    }
                     $('#importBtn').prop('disabled', false).html('<i class="fas fa-database"></i> Execute Import');
                 }
             },
             error: function() {
-                toastr.error('Import request failed');
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('Import request failed');
+                }
                 $('#importBtn').prop('disabled', false).html('<i class="fas fa-database"></i> Execute Import');
             }
         });

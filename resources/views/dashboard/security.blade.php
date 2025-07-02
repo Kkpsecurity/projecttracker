@@ -287,7 +287,9 @@
         }, 30000);
 
         // Show welcome notification
-        toastr.success('Security dashboard loaded successfully', 'System Ready');
+        if (typeof toastr !== 'undefined') {
+            toastr.success('Security dashboard loaded successfully', 'System Ready');
+        }
     });
 </script>
 @stop

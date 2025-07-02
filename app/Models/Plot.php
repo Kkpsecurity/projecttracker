@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Plot extends Model
@@ -33,6 +34,14 @@ class Plot extends Model
     public function address(): HasOne
     {
         return $this->hasOne(PlotAddress::class);
+    }
+
+    public function plotGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(PlotGroup::class, 'plot_group_plots')
+            ->withPivot('sort_order', 'notes')
+            ->withTimestamps()
+            ->orderBy('plot_group_plots.sort_order');
     }
 
     // Accessors

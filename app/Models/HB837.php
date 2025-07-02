@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class HB837 extends Model
 {
+    use HasFactory;
     protected $table = 'hb837';
 
     protected $fillable = [
@@ -62,6 +64,11 @@ class HB837 extends Model
 
     // Relationships
     public function consultant(): BelongsTo
+    {
+        return $this->belongsTo(Consultant::class, 'assigned_consultant_id');
+    }
+
+    public function assignedConsultant(): BelongsTo
     {
         return $this->belongsTo(Consultant::class, 'assigned_consultant_id');
     }

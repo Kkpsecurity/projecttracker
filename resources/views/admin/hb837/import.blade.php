@@ -704,7 +704,9 @@ $(document).ready(function() {
         e.preventDefault();
 
         if (!$('#file')[0].files.length) {
-            toastr.error('Please select a file to import.');
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Please select a file to import.');
+            }
             return;
         }
 
@@ -723,7 +725,9 @@ $(document).ready(function() {
         e.preventDefault();
 
         if (!$('#file_phase1')[0].files.length || !$('#file_phase2')[0].files.length || !$('#file_phase3')[0].files.length) {
-            toastr.error('Please select all three phase files.');
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Please select all three phase files.');
+            }
             return;
         }
 
@@ -734,7 +738,9 @@ $(document).ready(function() {
     // Preview button
     $('#previewBtn').on('click', function() {
         if (!$('#file')[0].files.length) {
-            toastr.error('Please select a file first.');
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Please select a file first.');
+            }
             return;
         }
 
@@ -744,7 +750,9 @@ $(document).ready(function() {
     // Compare button
     $('#compareBtn').on('click', function() {
         if (!$('#file')[0].files.length) {
-            toastr.error('Please select a file first.');
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Please select a file first.');
+            }
             return;
         }
 
@@ -764,11 +772,15 @@ $(document).ready(function() {
                 if (response.success) {
                     showComparisonResults(response.comparison);
                 } else {
-                    toastr.error('Comparison failed: ' + response.error);
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Comparison failed: ' + response.error);
+                    }
                 }
             },
             error: function() {
-                toastr.error('Error occurred during comparison.');
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('Error occurred during comparison.');
+                }
             }
         });
     });

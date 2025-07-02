@@ -149,7 +149,7 @@ class DashboardController extends Controller
     {
         try {
             return DB::table('hb837')
-                ->where('status', '!=', 'completed')
+                ->whereIn('report_status', ['in-progress', 'not-started'])
                 ->count();
         } catch (\Exception $e) {
             return 0;
@@ -163,7 +163,7 @@ class DashboardController extends Controller
     {
         try {
             return DB::table('hb837')
-                ->where('status', 'completed')
+                ->where('report_status', 'completed')
                 ->count();
         } catch (\Exception $e) {
             return 0;

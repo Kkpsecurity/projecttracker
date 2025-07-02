@@ -1517,6 +1517,9 @@ class HB837Controller extends Controller
      */
     private function executeIntelligentImport($filePath, $analysis)
     {
+        // Use the enhanced import system
+        $enhancedImport = new \App\Imports\EnhancedHB837Import();
+
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);
         $data = [];
 
@@ -1533,103 +1536,40 @@ class HB837Controller extends Controller
             fclose($handle);
         }
 
-        $headers = array_shift($data); // Remove header row
-
-        // Create field index map
-        $fieldIndexMap = [];
-        foreach ($analysis['mapping'] as $index => $map) {
-            if ($map['target_field'] !== 'unmapped' && $map['confidence'] > 0.5) {
-                $fieldIndexMap[$map['target_field']] = $index;
-            }
+        if (empty($data)) {
+            throw new \Exception('No data found in file');
         }
 
-        // Debug logging
-        Log::info('Starting intelligent import', [
+        $headers = array_shift($data); // Remove header row
+
+        // Log the import start with detailed analysis
+        Log::info('Enhanced Intelligent Import Started', [
             'file_path' => $filePath,
             'total_rows' => count($data),
             'headers' => $headers,
-            'field_index_map' => $fieldIndexMap,
-            'analysis_mapping' => $analysis['mapping']
+            'analysis_mapping' => $analysis['mapping'] ?? 'No analysis provided'
         ]);
 
-        $imported = 0;
-        $updated = 0;
-        $skipped = 0;
-        $errors = [];
+        // Process the import using enhanced rules
+        $result = $enhancedImport->processImport($filePath, $headers, $data);
 
-        foreach ($data as $rowIndex => $row) {
-            if (empty(array_filter($row))) {
-                $skipped++;
-                continue;
-            }
+        // Log detailed results
+        Log::info('Enhanced Import Results', [
+            'imported' => $result['imported'],
+            'updated' => $result['updated'],
+            'skipped' => $result['skipped'],
+            'errors' => count($result['errors']),
+            'field_changes_count' => count($result['field_changes'])
+        ]);
 
-            try {
-                $recordData = [];
-
-                // Map data according to analysis
-                foreach ($fieldIndexMap as $field => $index) {
-                    if (isset($row[$index])) {
-                        $value = trim($row[$index]);
-                        if ($value !== '') {
-                            $recordData[$field] = $this->sanitizeValue($field, $value);
-                        }
-                    }
-                }
-
-                // Set user_id to current authenticated user for all imported records
-                $recordData['user_id'] = \Illuminate\Support\Facades\Auth::id();
-
-                // Set default status values if not provided to ensure records appear in datatable
-                if (empty($recordData['report_status'])) {
-                    $recordData['report_status'] = 'not-started';
-                }
-                if (empty($recordData['contracting_status'])) {
-                    $recordData['contracting_status'] = 'quoted';
-                }
-
-                // Debug logging
-                Log::info('Import row data', [
-                    'row_index' => $rowIndex,
-                    'record_data' => $recordData,
-                    'field_index_map' => $fieldIndexMap
-                ]);
-
-                if (empty($recordData['property_name'])) {
-                    Log::warning('Skipping row due to missing property_name', [
-                        'row_index' => $rowIndex,
-                        'record_data' => $recordData
-                    ]);
-                    $skipped++;
-                    continue;
-                }
-
-                // Check if record exists
-                $existing = HB837::where('property_name', 'like', "%{$recordData['property_name']}%")->first();
-
-                if ($existing) {
-                    // Update existing record
-                    $existing->update($recordData);
-                    Log::info('Updated existing record', ['id' => $existing->id, 'property_name' => $recordData['property_name']]);
-                    $updated++;
-                } else {
-                    // Create new record
-                    $created = HB837::create($recordData);
-                    Log::info('Created new record', ['id' => $created->id, 'property_name' => $recordData['property_name']]);
-                    $imported++;
-                }
-
-            } catch (\Exception $e) {
-                $errors[] = "Row " . ($rowIndex + 2) . ": " . $e->getMessage();
-                $skipped++;
-            }
+        // Log field changes for monitoring
+        if (!empty($result['field_changes'])) {
+            Log::info('Field Changes Summary', [
+                'changes_by_record' => $result['field_changes']
+            ]);
         }
 
-        return [
-            'imported' => $imported,
-            'updated' => $updated,
-            'skipped' => $skipped,
-            'errors' => $errors
-        ];
+        return $result;
     }
 
     /**
