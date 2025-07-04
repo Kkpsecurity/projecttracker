@@ -1,38 +1,108 @@
-*.log
-.DS_Store
-.env
-.env.backup
-.env.production
-.env.server
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
-/auth.json
 /node_modules
-/public/build
 /public/hot
 /public/storage
 /storage/*.key
-/storage/pail
 /vendor
+.env
+.env.backup
+.env.server
+.env.production
+.phpunit.result.cache
+docker-compose.override.yml
 Homestead.json
 Homestead.yaml
+npm-debug.log
+yarn-error.log
+/.idea
+/.vscode
+
+# Laravel specific
+/bootstrap/cache
+/storage/app
+/storage/framework/cache
+/storage/framework/sessions
+/storage/framework/testing
+/storage/framework/views
+/storage/logs
+/public/build
+/public/hot
+
+# Backup files
+/storage/backups
+
+# Testing
+/coverage
+/.phpunit.cache
+/phpunit.xml
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Setup and testing files (exclude from repo)
-/setup/
+# Composer
+composer.phar
 
-# Project Documentation (contains secrets)
-/docs/settings-secrets.md
-/docs/*secrets*
-/docs/*config*
-/docs/*password*
+# NPM/Yarn
+/node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Keep progress tracking but protect sensitive docs
-!/docs/progress.md
-!/docs/README.md
+# Build artifacts
+/public/js/app.js
+/public/css/app.css
+/public/mix-manifest.json
+
+# IDE
+/.idea
+/.vscode
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Development files
+analyze_*.php
+check_*.php
+clear_cache.php
+create_*.php
+debug_*.php
+diagnostic_*.php
+test_*.php
+scroll_feature_summary.php
+setup_mock_mode.bat
+upload_flow_changes.php
+workflow_*.php
+*.md
+!README.md
+
+# Documentation (keeping only README)
+/docs
+excel_field_mapping_report.md
+GITHUB_PUSH_INSTRUCTIONS.md
+
+# Test runners
+run-tests*.ps1
+run-tests*.sh
+
+# Public vendor assets (these should be managed by Laravel Mix/Vite)
+/public/vendor
+/public/assets
+/public/build
+/public/C%3A*
+
+# Web server config
+/public/.user.ini
+/public/web.config
+
+# JavaScript build files
+/js

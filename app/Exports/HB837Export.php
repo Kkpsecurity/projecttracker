@@ -86,6 +86,7 @@ class HB837Export implements FromCollection, WithHeadings, WithMapping, WithTitl
             'Regional Manager Name',
             'Regional Manager Email',
             'Notes',
+            'Financial Notes',
             'Created At',
             'Updated At'
         ];
@@ -111,14 +112,14 @@ class HB837Export implements FromCollection, WithHeadings, WithMapping, WithTitl
             $hb837->zip,
             $hb837->phone,
             $hb837->consultant ? $hb837->consultant->first_name . ' ' . $hb837->consultant->last_name : '',
-            $hb837->scheduled_date_of_inspection ? $hb837->scheduled_date_of_inspection->format('Y-m-d') : '',
+            $hb837->scheduled_date_of_inspection ? \Carbon\Carbon::parse($hb837->scheduled_date_of_inspection)->format('Y-m-d') : '',
             $hb837->report_status,
             $hb837->contracting_status,
             $hb837->quoted_price,
             $hb837->sub_fees_estimated_expenses,
-            $hb837->billing_req_sent ? $hb837->billing_req_sent->format('Y-m-d') : '',
-            $hb837->report_submitted ? $hb837->report_submitted->format('Y-m-d') : '',
-            $hb837->agreement_submitted ? $hb837->agreement_submitted->format('Y-m-d') : '',
+            $hb837->billing_req_sent ? \Carbon\Carbon::parse($hb837->billing_req_sent)->format('Y-m-d') : '',
+            $hb837->report_submitted ? \Carbon\Carbon::parse($hb837->report_submitted)->format('Y-m-d') : '',
+            $hb837->agreement_submitted ? \Carbon\Carbon::parse($hb837->agreement_submitted)->format('Y-m-d') : '',
             $hb837->project_net_profit,
             $hb837->securitygauge_crime_risk,
             $hb837->macro_client,
@@ -129,8 +130,9 @@ class HB837Export implements FromCollection, WithHeadings, WithMapping, WithTitl
             $hb837->regional_manager_name,
             $hb837->regional_manager_email,
             $hb837->notes,
-            $hb837->created_at ? $hb837->created_at->format('Y-m-d H:i:s') : '',
-            $hb837->updated_at ? $hb837->updated_at->format('Y-m-d H:i:s') : ''
+            $hb837->financial_notes,
+            $hb837->created_at ? \Carbon\Carbon::parse($hb837->created_at)->format('Y-m-d H:i:s') : '',
+            $hb837->updated_at ? \Carbon\Carbon::parse($hb837->updated_at)->format('Y-m-d H:i:s') : ''
         ];
     }
 

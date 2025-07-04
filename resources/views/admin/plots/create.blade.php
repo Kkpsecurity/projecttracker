@@ -49,7 +49,7 @@
                                         @foreach($hb837Projects as $project)
                                             <option value="{{ $project->id }}"
                                                     {{ old('hb837_id') == $project->id ? 'selected' : '' }}>
-                                                {{ $project->project_name }}
+                                                {{ $project->property_name }}
                                             </option>
                                         @endforeach
                                     </select>

@@ -115,7 +115,7 @@
                                 @endif
                             </td>
                             <td>
-                                @if($field->columnExists())
+                                @if($field->column_exists)
                                     <span class="badge badge-success">
                                         <i class="fas fa-check"></i> Exists
                                     </span>
@@ -127,12 +127,12 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ route('admin.hb837-import-config.show', $field) }}"
+                                    <a href="{{ route('admin.hb837-import-config.show', $field->database_field) }}"
                                        class="btn btn-sm btn-outline-info">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <!-- Config fields can only have labels edited -->
-                                    <a href="{{ route('admin.hb837-import-config.edit', $field) }}"
+                                    <a href="{{ route('admin.hb837-import-config.edit', $field->database_field) }}"
                                        class="btn btn-sm btn-outline-secondary"
                                        title="Edit label only">
                                         <i class="fas fa-tag"></i>
@@ -223,7 +223,7 @@
                                 @endif
                             </td>
                             <td>
-                                @if($field->columnExists())
+                                @if($field->column_exists)
                                     <span class="badge badge-success">
                                         <i class="fas fa-check"></i> Exists
                                     </span>
@@ -231,7 +231,7 @@
                                     <span class="badge badge-danger">
                                         <i class="fas fa-times"></i> Missing
                                     </span>
-                                    <a href="{{ route('admin.hb837-import-config.create-column', $field) }}"
+                                    <a href="{{ route('admin.hb837-import-config.create-column', $field->database_field) }}"
                                        class="btn btn-xs btn-outline-primary ml-1"
                                        onclick="return confirm('Create database column for this field?')">
                                         Create
@@ -240,15 +240,15 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ route('admin.hb837-import-config.show', $field) }}"
+                                    <a href="{{ route('admin.hb837-import-config.show', $field->database_field) }}"
                                        class="btn btn-sm btn-outline-info">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('admin.hb837-import-config.edit', $field) }}"
+                                    <a href="{{ route('admin.hb837-import-config.edit', $field->database_field) }}"
                                        class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form method="POST" action="{{ route('admin.hb837-import-config.destroy', $field) }}"
+                                    <form method="POST" action="{{ route('admin.hb837-import-config.destroy', $field->database_field) }}"
                                           style="display: inline;"
                                           onsubmit="return confirm('Are you sure you want to delete this field? This will also remove the database column if it exists.')">
                                         @csrf

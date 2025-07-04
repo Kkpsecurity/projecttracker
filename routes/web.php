@@ -108,16 +108,7 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     // Note: Main admin dashboard is handled in routes/admin.php
 
-    // User Management Resource Routes
-    Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
-    Route::get('users/data', [\App\Http\Controllers\Admin\UserController::class, 'getData'])->name('users.data');
-
-    // Additional User Management Actions
-    Route::patch('users/{user}/reset-password', [\App\Http\Controllers\Admin\UserController::class, 'resetPassword'])->name('users.reset-password');
-    Route::patch('users/{user}/toggle-email-verification', [\App\Http\Controllers\Admin\UserController::class, 'toggleEmailVerification'])->name('users.toggle-email-verification');
-    Route::patch('users/{user}/disable-two-factor', [\App\Http\Controllers\Admin\UserController::class, 'disableTwoFactor'])->name('users.disable-two-factor');
-    Route::post('users/bulk-action', [\App\Http\Controllers\Admin\UserController::class, 'bulkAction'])->name('users.bulk-action');
-
+    // NOTE: User Management routes are now handled in routes/admin.php to avoid conflicts
     // NOTE: HB837 routes are now handled in routes/admin.php to avoid conflicts
 
     // System Settings

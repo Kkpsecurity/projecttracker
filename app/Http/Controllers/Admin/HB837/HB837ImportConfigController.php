@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\HB837;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\HB837ImportFieldConfig;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
@@ -34,7 +35,32 @@ class HB837ImportConfigController extends Controller
         $fieldMappings = config('hb837_field_mapping.field_mapping', []);
         $tableColumns = $this->getTableColumns();
 
-        return view('admin.hb837.import-config.index', compact('fieldMappings', 'tableColumns'));
+        // Create configFields collection for the view
+        $configFields = collect($fieldMappings)->map(function ($excelColumns, $dbField) use ($tableColumns, $fieldMappings) {
+            $columnInfo = $this->getColumnInfo($dbField);
+
+            return (object) [
+                'id' => $dbField,
+                'database_field' => $dbField,
+                'field_label' => ucwords(str_replace('_', ' ', $dbField)),
+                'field_type' => $columnInfo['type'] ?? 'string',
+                'max_length' => $columnInfo['max_length'] ?? null,
+                'excel_column_mappings' => $excelColumns,
+                'excel_mappings' => $excelColumns, // Keep both for compatibility
+                'is_active' => true,
+                'column_exists' => in_array($dbField, $tableColumns),
+                'sort_order' => array_search($dbField, array_keys($fieldMappings)) + 1,
+                'is_system_field' => in_array($dbField, ['id', 'created_at', 'updated_at']),
+                'is_foreign_key' => str_ends_with($dbField, '_id'),
+                'is_required_for_import' => false, // Default to false, can be configured later
+                'validation_rules' => []
+            ];
+        });
+
+        // Create customFields collection (empty for now, but expected by view)
+        $customFields = collect();
+
+        return view('admin.hb837-import-config.index', compact('fieldMappings', 'tableColumns', 'configFields', 'customFields'));
     }
 
     /**
@@ -58,12 +84,16 @@ class HB837ImportConfigController extends Controller
             ];
         }
 
-        return DataTables::of($data)
+        return DataTables::of(collect($data))
             ->addColumn('actions', function ($row) {
-                return view('admin.hb837.import-config.actions', ['field' => $row['database_field']]);
+                // Convert row to array if it's an object
+                $rowData = is_array($row) ? $row : (array) $row;
+                return view('admin.hb837-import-config.actions', ['field' => $rowData['database_field']])->render();
             })
             ->addColumn('status', function ($row) {
-                return $row['column_exists']
+                // Convert row to array if it's an object
+                $rowData = is_array($row) ? $row : (array) $row;
+                return $rowData['column_exists']
                     ? '<span class="badge badge-success">DB Column Exists</span>'
                     : '<span class="badge badge-warning">DB Column Missing</span>';
             })
@@ -79,7 +109,7 @@ class HB837ImportConfigController extends Controller
         $columnTypes = $this->getAvailableColumnTypes();
         $validationRules = config('hb837_field_mapping.validation_rules', []);
 
-        return view('admin.hb837.import-config.create', compact('columnTypes', 'validationRules'));
+        return view('admin.hb837-import-config.create', compact('columnTypes', 'validationRules'));
     }
 
     /**
@@ -88,10 +118,17 @@ class HB837ImportConfigController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'database_field' => 'required|string|max:255|regex:/^[a-z_]+$/',
-            'excel_columns' => 'required|array|min:1',
-            'excel_columns.*' => 'required|string|max:255',
-            'column_type' => 'required|string',
+            'database_field' => 'required|string|max:255',
+            'field_label' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'field_type' => 'required|string|max:50',
+            'max_length' => 'nullable|integer|min:1|max:255',
+            'excel_column_mappings' => 'nullable|string',
+            'sort_order' => 'nullable|integer|min:0',
+            // Legacy fields for backward compatibility
+            'excel_columns' => 'nullable|array',
+            'excel_columns.*' => 'nullable|string|max:255',
+            'column_type' => 'nullable|string',
             'column_length' => 'nullable|integer|min:1|max:255',
             'column_nullable' => 'boolean',
             'column_default' => 'nullable|string|max:255',
@@ -101,27 +138,53 @@ class HB837ImportConfigController extends Controller
         try {
             DB::beginTransaction();
 
-            // 1. Create database column if requested
+            // 1. Create or update the field configuration record
+            $excelMappings = $request->excel_column_mappings;
+            if (!$excelMappings && $request->excel_columns) {
+                $excelMappings = implode("\n", $request->excel_columns);
+            }
+
+            $configData = [
+                'database_field' => $request->database_field,
+                'field_label' => $request->field_label,
+                'description' => $request->description,
+                'field_type' => $request->field_type,
+                'max_length' => $request->max_length,
+                'excel_column_mappings' => $excelMappings,
+                'sort_order' => $request->sort_order ?? 999,
+                'is_active' => true,
+                'is_custom_field' => true
+            ];
+
+            $fieldConfig = HB837ImportFieldConfig::updateOrCreate(
+                ['database_field' => $request->database_field],
+                $configData
+            );
+
+            // 2. Create database column if requested
             if ($request->create_database_column) {
+                $columnType = $request->column_type ?? $request->field_type ?? 'varchar';
                 $this->createDatabaseColumn(
                     $request->database_field,
-                    $request->column_type,
-                    $request->column_length,
+                    $columnType,
+                    $request->column_length ?? $request->max_length,
                     $request->column_nullable ?? true,
                     $request->column_default
                 );
             }
 
-            // 2. Update configuration file
-            $this->updateFieldMapping(
-                $request->database_field,
-                $request->excel_columns
-            );
+            // 3. Update configuration file for backward compatibility
+            if ($request->excel_columns) {
+                $this->updateFieldMapping(
+                    $request->database_field,
+                    $request->excel_columns
+                );
+            }
 
             DB::commit();
 
-            return redirect()->route('admin.hb837.import-config.index')
-                ->with('success', "Field mapping for '{$request->database_field}' created successfully!");
+            return redirect()->route('admin.hb837-import-config.index')
+                ->with('success', "Field configuration for '{$request->database_field}' created successfully!");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -152,7 +215,7 @@ class HB837ImportConfigController extends Controller
             'column_type' => $this->getColumnType($field)
         ];
 
-        return view('admin.hb837.import-config.edit', compact('currentMapping', 'columnTypes'));
+        return view('admin.hb837-import-config.edit', compact('currentMapping', 'columnTypes'));
     }
 
     /**
@@ -291,6 +354,146 @@ class HB837ImportConfigController extends Controller
         }
     }
 
+    /**
+     * Remove field mapping from configuration file
+     */
+    private function removeFieldMapping($field)
+    {
+        $config = include $this->configPath;
+        unset($config['field_mapping'][$field]);
+        $this->writeConfigFile($config);
+
+        // Clear config cache
+        Artisan::call('config:clear');
+
+        Log::info("Removed field mapping for: {$field}");
+    }
+
+    /**
+     * Display the mapped fields view
+     */
+    public function mappedFields()
+    {
+        $fieldMappings = config('hb837_field_mapping.field_mapping', []);
+        $importRules = config('hb837_field_mapping.import_rules', []);
+        $validationRules = config('hb837_field_mapping.validation_rules', []);
+        $transformations = config('hb837_field_mapping.transformations', []);
+        $statusMaps = config('hb837_field_mapping.status_maps', []);
+        $tableColumns = $this->getTableColumns();
+
+        // Create a detailed view of mappings with additional information
+        $mappedFieldsData = [];
+        foreach ($fieldMappings as $dbField => $excelColumns) {
+            $mappedFieldsData[] = [
+                'database_field' => $dbField,
+                'excel_columns' => $excelColumns,
+                'column_exists' => $this->columnExists($dbField),
+                'column_type' => $this->getColumnType($dbField),
+                'has_validation' => isset($validationRules[$dbField]),
+                'has_transformation' => $this->hasTransformation($dbField, $transformations),
+                'has_status_map' => isset($statusMaps[$dbField]),
+                'is_required' => $this->isRequiredField($dbField, $importRules),
+            ];
+        }
+
+        // Debug output (remove after testing)
+        Log::info('Mapped Fields Data:', [
+            'mappedFieldsData_count' => count($mappedFieldsData),
+            'fieldMappings_count' => count($fieldMappings),
+            'sample_data' => $mappedFieldsData
+        ]);
+
+        return view('admin.hb837-import-config.mapped-fields', compact(
+            'mappedFieldsData',
+            'fieldMappings',
+            'importRules',
+            'validationRules',
+            'transformations',
+            'statusMaps',
+            'tableColumns'
+        ));
+    }
+
+    /**
+     * Check if field has any transformation rules
+     */
+    private function hasTransformation($field, $transformations)
+    {
+        foreach ($transformations as $transformationType => $fields) {
+            if (in_array($field, $fields)) {
+                return $transformationType;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if field is required based on import rules
+     */
+    private function isRequiredField($field, $importRules)
+    {
+        $requiredFields = $importRules['required_fields'] ?? [];
+        return in_array($field, array_keys($requiredFields)) ||
+            in_array($field, ['address', 'property_name']); // These are logically required
+    }
+
+    /**
+     * Show field mapping details
+     */
+    public function show($field)
+    {
+        $fieldMappings = config('hb837_field_mapping.field_mapping', []);
+
+        if (!isset($fieldMappings[$field])) {
+            return redirect()->route('admin.hb837-import-config.index')
+                ->with('error', 'Field mapping not found.');
+        }
+
+        $columnInfo = $this->getColumnInfo($field);
+        $fieldDetails = [
+            'database_field' => $field,
+            'excel_columns' => $fieldMappings[$field],
+            'column_exists' => $this->columnExists($field),
+            'column_type' => $this->getColumnType($field),
+            'column_info' => $columnInfo,
+            'is_system_field' => in_array($field, ['id', 'created_at', 'updated_at']),
+            'is_foreign_key' => str_ends_with($field, '_id')
+        ];
+
+        return view('admin.hb837-import-config.show', compact('fieldDetails'));
+    }
+
+    /**
+     * Create database column for a specific field
+     */
+    public function createColumn($field)
+    {
+        try {
+            $fieldMappings = config('hb837_field_mapping.field_mapping', []);
+
+            if (!isset($fieldMappings[$field])) {
+                return redirect()->route('admin.hb837-import-config.index')
+                    ->with('error', 'Field mapping not found.');
+            }
+
+            if ($this->columnExists($field)) {
+                return redirect()->route('admin.hb837-import-config.index')
+                    ->with('info', "Database column '{$field}' already exists.");
+            }
+
+            // Create the column with default string type
+            $this->createDatabaseColumn($field, 'string', null, true, null);
+
+            return redirect()->route('admin.hb837-import-config.index')
+                ->with('success', "Database column '{$field}' created successfully!");
+
+        } catch (\Exception $e) {
+            Log::error('Error creating database column: ' . $e->getMessage());
+            return redirect()->route('admin.hb837-import-config.index')
+                ->with('error', 'Error creating database column: ' . $e->getMessage());
+        }
+    }
+
     // ========================
     // PRIVATE HELPER METHODS
     // ========================
@@ -320,8 +523,58 @@ class HB837ImportConfigController extends Controller
             return 'N/A';
         }
 
-        $columns = DB::select("DESCRIBE hb837 {$column}");
-        return isset($columns[0]) ? $columns[0]->Type : 'Unknown';
+        try {
+            // PostgreSQL compatible query to get column type
+            $result = DB::select("
+                SELECT data_type, character_maximum_length, numeric_precision, numeric_scale
+                FROM information_schema.columns 
+                WHERE table_name = 'hb837' 
+                AND column_name = ?
+            ", [$column]);
+
+            if (empty($result)) {
+                return 'Unknown';
+            }
+
+            $columnInfo = $result[0];
+            $dataType = $columnInfo->data_type;
+
+            // Format the type similar to MySQL DESCRIBE output
+            switch ($dataType) {
+                case 'character varying':
+                    return 'varchar(' . ($columnInfo->character_maximum_length ?: 255) . ')';
+                case 'character':
+                    return 'char(' . ($columnInfo->character_maximum_length ?: 1) . ')';
+                case 'text':
+                    return 'text';
+                case 'integer':
+                    return 'int';
+                case 'bigint':
+                    return 'bigint';
+                case 'smallint':
+                    return 'smallint';
+                case 'numeric':
+                    return 'decimal(' . ($columnInfo->numeric_precision ?: 10) . ',' . ($columnInfo->numeric_scale ?: 0) . ')';
+                case 'timestamp without time zone':
+                    return 'timestamp';
+                case 'timestamp with time zone':
+                    return 'timestamptz';
+                case 'date':
+                    return 'date';
+                case 'time without time zone':
+                    return 'time';
+                case 'boolean':
+                    return 'boolean';
+                case 'json':
+                case 'jsonb':
+                    return 'json';
+                default:
+                    return $dataType;
+            }
+        } catch (\Exception $e) {
+            Log::error('Error getting column type for ' . $column . ': ' . $e->getMessage());
+            return 'Unknown';
+        }
     }
 
     /**
@@ -458,21 +711,6 @@ class HB837ImportConfigController extends Controller
     }
 
     /**
-     * Remove field mapping from configuration file
-     */
-    private function removeFieldMapping($field)
-    {
-        $config = include $this->configPath;
-        unset($config['field_mapping'][$field]);
-        $this->writeConfigFile($config);
-
-        // Clear config cache
-        Artisan::call('config:clear');
-
-        Log::info("Removed field mapping for: {$field}");
-    }
-
-    /**
      * Write configuration array to file
      */
     private function writeConfigFile($config)
@@ -480,4 +718,67 @@ class HB837ImportConfigController extends Controller
         $content = "<?php\n\nreturn " . var_export($config, true) . ";";
         File::put($this->configPath, $content);
     }
+
+    /**
+     * Get detailed column information including type and max_length
+     */
+    private function getColumnInfo($columnName)
+    {
+        try {
+            $columnInfo = DB::select("
+                SELECT 
+                    column_name,
+                    data_type,
+                    character_maximum_length,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns 
+                WHERE table_name = 'hb837' 
+                AND column_name = ?
+            ", [$columnName]);
+
+            if (empty($columnInfo)) {
+                return ['type' => 'string', 'max_length' => null];
+            }
+
+            $info = $columnInfo[0];
+            $type = $this->mapPostgresTypeToLaravel($info->data_type);
+
+            return [
+                'type' => $type,
+                'max_length' => $info->character_maximum_length,
+                'is_nullable' => $info->is_nullable === 'YES',
+                'default' => $info->column_default
+            ];
+        } catch (\Exception $e) {
+            Log::warning("Could not get column info for {$columnName}: " . $e->getMessage());
+            return ['type' => 'string', 'max_length' => null];
+        }
+    }
+
+    /**
+     * Map PostgreSQL data types to Laravel/display types
+     */
+    private function mapPostgresTypeToLaravel($pgType)
+    {
+        $mapping = [
+            'character varying' => 'string',
+            'varchar' => 'string',
+            'text' => 'text',
+            'integer' => 'integer',
+            'bigint' => 'integer',
+            'smallint' => 'integer',
+            'numeric' => 'decimal',
+            'decimal' => 'decimal',
+            'boolean' => 'boolean',
+            'date' => 'date',
+            'timestamp' => 'datetime',
+            'timestamptz' => 'datetime',
+            'json' => 'json',
+            'jsonb' => 'json'
+        ];
+
+        return $mapping[$pgType] ?? 'string';
+    }
+
 }

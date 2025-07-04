@@ -67,7 +67,7 @@
     <div class="text-center mb-3">
         <div class="security-badge">
             <i class="fas fa-shield-alt mr-1"></i>
-            KKP Security Project Tracker
+            Administration Area
         </div>
     </div>
     <h4 class="text-center mb-3">Sign in to start your session</h4>
@@ -157,7 +157,7 @@
     <p class="mb-0 text-center">
         <small class="text-muted">
             <i class="fas fa-lock mr-1"></i>
-            Secure access to KKP Security systems
+            Secure access to administration systems
         </small>
     </p>
 @stop
@@ -165,7 +165,7 @@
 @section('adminlte_js')
 <script>
 $(document).ready(function() {
-    console.log('KKP Security login form loaded');
+    console.log('Administration area login form loaded');
 
     // Form validation
     $('#login-form').on('submit', function(e) {

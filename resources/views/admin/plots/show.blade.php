@@ -58,7 +58,7 @@
                                 <strong>Associated HB837 Project:</strong>
                                 <p>
                                     <a href="{{ route('admin.hb837.show', $plot->hb837) }}" class="text-primary">
-                                        {{ $plot->hb837->project_name }}
+                                        {{ $plot->hb837->property_name }}
                                     </a>
                                 </p>
                             </div>
@@ -230,7 +230,7 @@
                                 <p><strong>Address:</strong> {{ $plot->address->address_line_1 }}</p>
                             @endif
                             @if($plot->hb837)
-                                <p><strong>Project:</strong> {{ $plot->hb837->project_name }}</p>
+                                <p><strong>Project:</strong> {{ $plot->hb837->property_name }}</p>
                             @endif
                         </div>
                     `

@@ -92,7 +92,7 @@
     <div class="text-center mb-3">
         <div class="security-badge">
             <i class="fas fa-shield-alt mr-1"></i>
-            KKP Security Project Tracker
+            Administration Area
         </div>
     </div>
     <h4 class="text-center mb-3">Reset Your Password</h4>
@@ -162,7 +162,7 @@
     <p class="mb-0 text-center">
         <small class="text-muted">
             <i class="fas fa-lock mr-1"></i>
-            Secure password recovery for KKP Security systems
+            Secure password recovery for administration systems
         </small>
     </p>
 

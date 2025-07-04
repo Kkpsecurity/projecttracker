@@ -162,6 +162,26 @@ class SiteSettings extends Model
     }
 
     /**
+     * Update multiple settings at once
+     */
+    public function updateSettings($data)
+    {
+        foreach ($data as $key => $value) {
+            // Determine type based on key or value
+            $type = 'string';
+            if ($key === 'maintenance_mode') {
+                $type = 'boolean';
+            } elseif ($key === 'api_keys') {
+                $type = 'json';
+            }
+
+            $this->updateSetting($key, $value, $type);
+        }
+
+        return true;
+    }
+
+    /**
      * Clear settings cache
      */
     public static function clearCache()

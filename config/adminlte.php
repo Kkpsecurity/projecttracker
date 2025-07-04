@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'KKP Security Project Tracker',
+    'title' => 'Administration Portal',
     'title_prefix' => '',
     'title_postfix' => ' - Secure Access',
 
@@ -63,12 +63,12 @@ return [
     |
     */
 
-    'logo' => '<b>KKP</b> Security',
+    'logo' => '<b>Admin</b> Portal',
     'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'KKP Security Logo',
+    'logo_img_alt' => 'Administration Portal Logo',
 
     /*
     |--------------------------------------------------------------------------

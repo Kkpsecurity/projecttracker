@@ -7,6 +7,195 @@ return [
     0 => 'Test Column',
     1 => 'Alt Test',
   ),
+    'address' =>
+      array(
+        0 => 'Address',
+        1 => 'Property Address',
+      ),
+    'agreement_submitted' =>
+      array(
+        0 => 'Agreement Submitted',
+      ),
+    'assigned_consultant' =>
+      array(
+        0 => 'Assigned Consultant',
+      ),
+    'assigned_consultant_id' =>
+      array(
+        0 => 'Assigned Consultant ID',
+        1 => 'Consultant ID',
+      ),
+    'billing_req_sent' =>
+      array(
+        0 => 'Billing Req Sent',
+        1 => 'Billing Request Sent',
+      ),
+    'city' =>
+      array(
+        0 => 'City',
+      ),
+    'consultant_name' =>
+      array(
+        0 => 'Consultant Name',
+      ),
+    'consultant_notes' =>
+      array(
+        0 => 'Consultant Notes',
+      ),
+    'contracting_status' =>
+      array(
+        0 => 'Contracting Status',
+      ),
+    'county' =>
+      array(
+        0 => 'County',
+      ),
+    'financial_notes' =>
+      array(
+        0 => 'Financial Notes',
+      ),
+    'macro_client' =>
+      array(
+        0 => 'Macro Client',
+      ),
+    'macro_client_contact' =>
+      array(
+        0 => 'Macro Client Contact',
+      ),
+    'macro_client_email' =>
+      array(
+        0 => 'Macro Client Email',
+      ),
+    'macro_contact' =>
+      array(
+        0 => 'Macro Contact',
+      ),
+    'macro_email' =>
+      array(
+        0 => 'Macro Email',
+      ),
+    'management_company' =>
+      array(
+        0 => 'Management Company',
+      ),
+    'notes' =>
+      array(
+        0 => 'Notes',
+      ),
+    'owner' =>
+      array(
+        0 => 'Owner',
+      ),
+    'owner_id' =>
+      array(
+        0 => 'Owner ID',
+      ),
+    'owner_name' =>
+      array(
+        0 => 'Owner Name',
+      ),
+    'pm_email' =>
+      array(
+        0 => 'PM Email',
+      ),
+    'phone' =>
+      array(
+        0 => 'Phone',
+        1 => 'Phone Number',
+      ),
+    'project_net_profit' =>
+      array(
+        0 => 'Project Net Profit',
+        1 => 'Net Profit',
+      ),
+    'property_manager_pm' =>
+      array(
+        0 => 'Property Manager (PM)',
+      ),
+    'property_manager_email' =>
+      array(
+        0 => 'Property Manager Email',
+      ),
+    'property_manager_name' =>
+      array(
+        0 => 'Property Manager Name',
+      ),
+    'property_name' =>
+      array(
+        0 => 'Property Name',
+        1 => 'Property',
+      ),
+    'property_type' =>
+      array(
+        0 => 'Property Type',
+        1 => 'Type',
+      ),
+    'quoted_price' =>
+      array(
+        0 => 'Quoted Price',
+        1 => 'Price',
+      ),
+    'quoted_rate' =>
+      array(
+        0 => 'Quoted Rate',
+      ),
+    'rm_email' =>
+      array(
+        0 => 'RM Email',
+      ),
+    'regional_manager_rm' =>
+      array(
+        0 => 'Regional Manager (RM)',
+      ),
+    'regional_manager_email' =>
+      array(
+        0 => 'Regional Manager Email',
+      ),
+    'regional_manager_name' =>
+      array(
+        0 => 'Regional Manager Name',
+      ),
+    'report_status' =>
+      array(
+        0 => 'Report Status',
+      ),
+    'report_submitted' =>
+      array(
+        0 => 'Report Submitted',
+      ),
+    'scheduled_date_of_inspection' =>
+      array(
+        0 => 'Scheduled Date of Inspection',
+        1 => 'Inspection Date',
+      ),
+    'securitygauge_crime_risk' =>
+      array(
+        0 => 'SecurityGauge Crime Risk',
+      ),
+    'state' =>
+      array(
+        0 => 'State',
+      ),
+    'sub_fees_estimated_expenses' =>
+      array(
+        0 => 'Sub Fees Estimated Expenses',
+        1 => 'Estimated Expenses',
+        2 => 'Subcontractor Fees or Estimated Expenses',
+      ),
+    'units' =>
+      array(
+        0 => 'Units',
+        1 => 'Number of Units',
+      ),
+    'user_id' =>
+      array(
+        0 => 'User ID',
+      ),
+    'zip' =>
+      array(
+        0 => 'Zip',
+        1 => 'Zip Code',
+      ),
 ),
 
     'import_rules' => array (
@@ -88,8 +277,9 @@ return [
   'money_fields' => 
   array (
     0 => 'quoted_price',
-    1 => 'sub_fees_estimated_expenses',
-    2 => 'project_net_profit',
+        1 => 'quoted_rate',
+        2 => 'sub_fees_estimated_expenses',
+        3 => 'project_net_profit',
   ),
   'integer_fields' => 
   array (
@@ -105,6 +295,36 @@ return [
     2 => 'city',
     3 => 'county',
     4 => 'state',
+        5 => 'zip',
+        6 => 'phone',
+        7 => 'assigned_consultant',
+        8 => 'consultant_name',
+        9 => 'owner',
+        10 => 'owner_name',
+        11 => 'property_manager_pm',
+        12 => 'property_manager_name',
+        13 => 'regional_manager_rm',
+        14 => 'regional_manager_name',
+        15 => 'management_company',
+        16 => 'macro_client',
+        17 => 'macro_client_contact',
+        18 => 'macro_contact',
+        19 => 'securitygauge_crime_risk',
+      ),
+    'email_fields' =>
+      array(
+        0 => 'pm_email',
+        1 => 'property_manager_email',
+        2 => 'rm_email',
+        3 => 'regional_manager_email',
+        4 => 'macro_client_email',
+        5 => 'macro_email',
+      ),
+    'note_fields' =>
+      array(
+        0 => 'notes',
+        1 => 'consultant_notes',
+        2 => 'financial_notes',
   ),
 ),
 

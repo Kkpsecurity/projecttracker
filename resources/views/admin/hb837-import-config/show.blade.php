@@ -1,106 +1,107 @@
 @extends('adminlte::page')
 
-@section('title', 'Field Configuration Details')
+@section('title', 'Field Details - ' . $fieldDetails['database_field'])
 
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
-        <h1>Field Configuration: {{ $hb837ImportConfig->field_label }}</h1>
-        <div>
-            @if($hb837ImportConfig->canBeModified())
-                <a href="{{ route('admin.hb837-import-config.edit', $hb837ImportConfig) }}" class="btn btn-primary">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
-            @endif
-            <a href="{{ route('admin.hb837-import-config.index') }}" class="btn btn-secondary ml-2">
-                <i class="fas fa-arrow-left"></i> Back to List
-            </a>
-        </div>
+        <h1>Field Details: <code>{{ $fieldDetails['database_field'] }}</code></h1>
+        <a href="{{ route('admin.hb837-import-config.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
     </div>
 @stop
 
 @section('content')
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-            <i class="icon fas fa-check"></i> {{ session('success') }}
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-            <i class="icon fas fa-ban"></i> {{ session('error') }}
-        </div>
-    @endif
-
     <div class="row">
         <div class="col-md-8">
-            <!-- Basic Information -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Basic Information</h3>
+                    <h3 class="card-title">Field Information</h3>
                 </div>
                 <div class="card-body">
                     <dl class="row">
                         <dt class="col-sm-3">Database Field:</dt>
+                        <dd class="col-sm-9"><code>{{ $fieldDetails['database_field'] }}</code></dd>
+                        
+                        <dt class="col-sm-3">Excel Columns:</dt>
                         <dd class="col-sm-9">
-                            <code>{{ $hb837ImportConfig->database_field }}</code>
-                            @if($hb837ImportConfig->is_system_field)
-                                <span class="badge badge-warning ml-1">System Field</span>
-                            @endif
-                            @if($hb837ImportConfig->is_foreign_key)
-                                <span class="badge badge-info ml-1">Foreign Key</span>
+                            @if($fieldDetails['excel_columns'])
+                                @foreach($fieldDetails['excel_columns'] as $column)
+                                    <span class="badge badge-info">{{ $column }}</span>
+                                @endforeach
+                            @else
+                                <span class="text-muted">None</span>
                             @endif
                         </dd>
-
-                        <dt class="col-sm-3">Field Label:</dt>
-                        <dd class="col-sm-9">{{ $hb837ImportConfig->field_label }}</dd>
-
-                        @if($hb837ImportConfig->description)
-                        <dt class="col-sm-3">Description:</dt>
-                        <dd class="col-sm-9">{{ $hb837ImportConfig->description }}</dd>
-                        @endif
-
+                        
+                        <dt class="col-sm-3">Column Exists:</dt>
+                        <dd class="col-sm-9">
+                            @if($fieldDetails['column_exists'])
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check"></i> Yes
+                                </span>
+                            @else
+                                <span class="badge badge-danger">
+                                    <i class="fas fa-times"></i> No
+                                </span>
+                            @endif
+                        </dd>
+                        
+                        <dt class="col-sm-3">Column Type:</dt>
+                        <dd class="col-sm-9">{{ $fieldDetails['column_type'] }}</dd>
+                        
                         <dt class="col-sm-3">Field Type:</dt>
                         <dd class="col-sm-9">
-                            <span class="badge badge-secondary">{{ $hb837ImportConfig->field_type }}</span>
-                            @if($hb837ImportConfig->max_length)
-                                <small class="text-muted">(max: {{ $hb837ImportConfig->max_length }})</small>
+                            @if($fieldDetails['is_system_field'])
+                                <span class="badge badge-warning">System Field</span>
+                            @endif
+                            @if($fieldDetails['is_foreign_key'])
+                                <span class="badge badge-info">Foreign Key</span>
                             @endif
                         </dd>
-
-                        @if($hb837ImportConfig->default_value)
-                        <dt class="col-sm-3">Default Value:</dt>
-                        <dd class="col-sm-9"><code>{{ $hb837ImportConfig->default_value }}</code></dd>
-                        @endif
-
-                        @if($hb837ImportConfig->is_foreign_key && $hb837ImportConfig->foreign_table)
-                        <dt class="col-sm-3">Foreign Reference:</dt>
-                        <dd class="col-sm-9">
-                            <code>{{ $hb837ImportConfig->foreign_table }}.{{ $hb837ImportConfig->foreign_key_column ?? 'id' }}</code>
-                        </dd>
-                        @endif
-
-                        <dt class="col-sm-3">Sort Order:</dt>
-                        <dd class="col-sm-9">{{ $hb837ImportConfig->sort_order }}</dd>
                     </dl>
                 </div>
             </div>
-
-            <!-- Excel Column Mapping -->
+        </div>
+        
+        <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Excel Column Mapping</h3>
+                    <h3 class="card-title">Actions</h3>
                 </div>
                 <div class="card-body">
-                    @if($hb837ImportConfig->excel_column_mappings && count($hb837ImportConfig->excel_column_mappings) > 0)
-                        <p>This field will match any of the following Excel column headers:</p>
-                        <ul class="list-unstyled">
-                            @foreach($hb837ImportConfig->excel_column_mappings as $mapping)
-                                <li><span class="badge badge-light">{{ $mapping }}</span></li>
-                            @endforeach
-                        </ul>
-                    @else
+                    <div class="btn-group-vertical btn-block">
+                        <a href="{{ route('admin.hb837-import-config.edit', $fieldDetails['database_field']) }}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Mapping
+                        </a>
+                        
+                        @if(!$fieldDetails['column_exists'])
+                            <form method="POST" action="{{ route('admin.hb837-import-config.create-column', $fieldDetails['database_field']) }}" 
+                                  onsubmit="return confirm('Create database column for this field?')">
+                                @csrf
+                                <button type="submit" class="btn btn-success btn-block">
+                                    <i class="fas fa-plus"></i> Create Database Column
+                                </button>
+                            </form>
+                        @endif
+                        
+                        @if(!$fieldDetails['is_system_field'])
+                            <form method="POST" action="{{ route('admin.hb837-import-config.destroy', $fieldDetails['database_field']) }}" 
+                                  onsubmit="return confirm('Are you sure you want to delete this field mapping?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-block">
+                                    <i class="fas fa-trash"></i> Delete Mapping
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@stop
                         <p class="text-muted">No Excel column mappings defined.</p>
                     @endif
                 </div>

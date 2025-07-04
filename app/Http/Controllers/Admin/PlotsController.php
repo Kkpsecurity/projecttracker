@@ -64,7 +64,7 @@ class PlotsController extends Controller
      */
     public function create()
     {
-        $hb837Projects = HB837::select('id', 'project_name', 'address', 'city', 'state')
+        $hb837Projects = HB837::select('id', 'property_name', 'address', 'city', 'state')
                              ->get();
 
         return view('admin.plots.create', compact('hb837Projects'));
@@ -129,7 +129,7 @@ class PlotsController extends Controller
     {
         $plot->load('address');
 
-        $hb837Projects = HB837::select('id', 'project_name', 'address', 'city', 'state')
+        $hb837Projects = HB837::select('id', 'property_name', 'address', 'city', 'state')
                              ->get();
 
         return view('admin.plots.edit', compact('plot', 'hb837Projects'));
@@ -229,7 +229,7 @@ class PlotsController extends Controller
             ->editColumn('hb837', function($plot) {
                 if ($plot->hb837) {
                     return '<a href="' . route('admin.hb837.show', $plot->hb837_id) . '">' .
-                           $plot->hb837->project_name . '</a>';
+                        $plot->hb837->property_name . '</a>';
                 }
                 return 'Not linked';
             })
@@ -299,7 +299,7 @@ class PlotsController extends Controller
                 $plot->block_number,
                 $plot->subdivision_name,
                 $plot->address ? $plot->address->full_address : '',
-                $plot->hb837 ? $plot->hb837->project_name : '',
+                $plot->hb837 ? $plot->hb837->property_name : '',
                 $plot->description,
             ];
         }

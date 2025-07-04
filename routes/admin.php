@@ -7,7 +7,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Admin\HB837\HB837Controller;
 use App\Http\Controllers\Admin\HB837\InspectionCalendarController;
-use App\Http\Controllers\Admin\HB837ImportConfigController;
+use App\Http\Controllers\Admin\HB837\HB837ImportConfigController;
 use App\Http\Controllers\Admin\ConsultantController;
 use App\Http\Controllers\Admin\GoogleMapsController;
 use App\Http\Controllers\Admin\PlotsController;
@@ -105,6 +105,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::post('/smart-import/analyze', [HB837Controller::class, 'analyzeImportFile'])->name('import.analyze');
         Route::post('/smart-import/preview', [HB837Controller::class, 'previewImportData'])->name('import.preview');
         Route::post('/smart-import/execute', [HB837Controller::class, 'executeSmartImport'])->name('import.execute');
+        Route::get('/import/results', [HB837Controller::class, 'showImportResults'])->name('import-results');
 
         Route::get('/export', [HB837Controller::class, 'export'])->name('export');
         Route::get('/export/{format}', [HB837Controller::class, 'exportFormat'])->name('export.format');
@@ -120,7 +121,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         // File Management (non-parameterized routes)
         Route::get('/files/{file}/download', [HB837Controller::class, 'downloadFile'])->name('files.download');
         Route::delete('/files/{file}', [HB837Controller::class, 'deleteFile'])->name('files.delete');
-        Route::post('/{hb837}/files/upload', [HB837Controller::class, 'uploadFile'])->name('files.upload');
 
         // Parameterized routes (must come LAST)
         Route::get('/{hb837}', [HB837Controller::class, 'show'])->name('show');
@@ -210,29 +210,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::post('/{consultant}/files', [ConsultantController::class, 'uploadFile'])->name('files.upload');
     });
 
-    // Google Maps & Plots Routes
-    Route::prefix('maps')->name('maps.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\GoogleMapsController::class, 'index'])->name('index');
-        Route::get('/plot/{id}', [App\Http\Controllers\Admin\GoogleMapsController::class, 'showPlot'])->name('plot');
-        Route::get('/api/plots', [App\Http\Controllers\Admin\GoogleMapsController::class, 'getPlotsData'])->name('api.plots');
-        Route::post('/plot/create', [App\Http\Controllers\Admin\GoogleMapsController::class, 'createPlot'])->name('plot.create');
-        Route::put('/plot/{id}/coordinates', [App\Http\Controllers\Admin\GoogleMapsController::class, 'updatePlotCoordinates'])->name('plot.coordinates');
-        Route::get('/nearby', [App\Http\Controllers\Admin\GoogleMapsController::class, 'getNearbyPlots'])->name('nearby');
-        Route::get('/export', [App\Http\Controllers\Admin\GoogleMapsController::class, 'exportPlots'])->name('export');
-    });
-
-    Route::prefix('plots')->name('plots.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\PlotsController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Admin\PlotsController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\Admin\PlotsController::class, 'store'])->name('store');
-        Route::get('/datatable', [App\Http\Controllers\Admin\PlotsController::class, 'datatable'])->name('datatable');
-        Route::post('/bulk-action', [App\Http\Controllers\Admin\PlotsController::class, 'bulkAction'])->name('bulk-action');
-        Route::get('/{plot}', [App\Http\Controllers\Admin\PlotsController::class, 'show'])->name('show');
-        Route::get('/{plot}/edit', [App\Http\Controllers\Admin\PlotsController::class, 'edit'])->name('edit');
-        Route::put('/{plot}', [App\Http\Controllers\Admin\PlotsController::class, 'update'])->name('update');
-        Route::delete('/{plot}', [App\Http\Controllers\Admin\PlotsController::class, 'destroy'])->name('destroy');
-    });
-
     // Future Admin Modules (placeholders)
 
     // Analytics & Reports
@@ -260,13 +237,17 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/', [HB837ImportConfigController::class, 'index'])->name('index');
         Route::get('/create', [HB837ImportConfigController::class, 'create'])->name('create');
         Route::post('/', [HB837ImportConfigController::class, 'store'])->name('store');
-        Route::get('/{hb837ImportConfig}', [HB837ImportConfigController::class, 'show'])->name('show');
-        Route::get('/{hb837ImportConfig}/edit', [HB837ImportConfigController::class, 'edit'])->name('edit');
-        Route::put('/{hb837ImportConfig}', [HB837ImportConfigController::class, 'update'])->name('update');
-        Route::delete('/{hb837ImportConfig}', [HB837ImportConfigController::class, 'destroy'])->name('destroy');
+
+        // Mapped Fields View - MUST be before parameterized routes
+        Route::get('/mapped-fields', [HB837ImportConfigController::class, 'mappedFields'])->name('mapped-fields');
+
+        Route::get('/{field}', [HB837ImportConfigController::class, 'show'])->name('show');
+        Route::get('/{field}/edit', [HB837ImportConfigController::class, 'edit'])->name('edit');
+        Route::put('/{field}', [HB837ImportConfigController::class, 'update'])->name('update');
+        Route::delete('/{field}', [HB837ImportConfigController::class, 'destroy'])->name('destroy');
 
         // Additional actions
-        Route::post('/{hb837ImportConfig}/create-column', [HB837ImportConfigController::class, 'createColumn'])->name('create-column');
+        Route::post('/{field}/create-column', [HB837ImportConfigController::class, 'createColumn'])->name('create-column');
         Route::post('/sync-config', [HB837ImportConfigController::class, 'syncConfig'])->name('sync');
         Route::post('/import-schema', [HB837ImportConfigController::class, 'importSchema'])->name('import-schema');
     });

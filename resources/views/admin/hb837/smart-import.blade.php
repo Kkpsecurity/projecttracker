@@ -148,6 +148,11 @@
                     <h3 class="card-title">
                         <i class="fas fa-chart-bar"></i> File Analysis Results
                     </h3>
+                    <div class="card-tools">
+                        <span class="badge badge-light">
+                            <i class="fas fa-magic"></i> AI Analysis Complete
+                        </span>
+                    </div>
                 </div>
                 <div class="card-body" id="analysis-content">
                     <!-- Analysis results will be populated here -->
@@ -200,6 +205,34 @@
 
 @section('css')
 <style>
+/* Smooth scrolling for all elements */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Analysis results animation */
+#analysis-results {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease-in-out;
+}
+
+#analysis-results.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Highlight effect when section comes into view */
+#analysis-results.highlight {
+    animation: highlightPulse 2s ease-in-out;
+}
+
+@keyframes highlightPulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0.1); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+}
+
 .upload-zone {
     border: 3px dashed #007bff;
     border-radius: 10px;
@@ -752,8 +785,37 @@ $(document).ready(function() {
     }
 
     function showAnalysisResults(data) {
-        // Show analysis results
-        $('#analysis-results').show();
+        // Show analysis results with smooth animation
+        const analysisSection = $('#analysis-results');
+        analysisSection.show();
+        
+        // Add show class for fade-in animation
+        setTimeout(function() {
+            analysisSection.addClass('show');
+        }, 50);
+
+        // Smooth scroll to analysis results section with enhanced timing
+        setTimeout(function() {
+            const analysisElement = document.getElementById('analysis-results');
+            if (analysisElement) {
+                // Add highlight effect
+                analysisSection.addClass('highlight');
+                
+                // Smooth scroll with custom offset for better viewing
+                const elementTop = analysisElement.offsetTop;
+                const offset = 20; // Small offset from top
+                
+                window.scrollTo({
+                    top: elementTop - offset,
+                    behavior: 'smooth'
+                });
+                
+                // Remove highlight effect after animation
+                setTimeout(function() {
+                    analysisSection.removeClass('highlight');
+                }, 2000);
+            }
+        }, 400); // Delay to let the fade-in animation complete
 
         let html = `
             <div class="file-info">

@@ -147,8 +147,8 @@
                         }
                     },
                     {
-                        data: 'hb837.project_name',
-                        name: 'hb837.project_name',
+                        data: 'hb837.property_name',
+                        name: 'hb837.property_name',
                         render: function(data, type, row) {
                             if (data) {
                                 return `<a href="/admin/hb837/${row.hb837.id}" class="text-primary">${data}</a>`;

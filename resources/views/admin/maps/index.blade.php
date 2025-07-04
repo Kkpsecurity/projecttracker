@@ -289,7 +289,7 @@
                     <h6>${plot.plot_name || 'Unnamed Plot'}</h6>
                     <p><strong>ID:</strong> ${plot.id}</p>
                     ${plot.plot_address ? `<p><strong>Address:</strong> ${plot.plot_address.address_line_1}</p>` : ''}
-                    ${plot.hb837 ? `<p><strong>Project:</strong> ${plot.hb837.project_name}</p>` : ''}
+                    ${plot.hb837 ? `<p><strong>Project:</strong> ${plot.hb837.property_name}</p>` : ''}
                     <div class="mt-2">
                         <a href="/admin/plots/${plot.id}" class="btn btn-primary btn-sm">View Details</a>
                         <a href="/admin/plots/${plot.id}/edit" class="btn btn-warning btn-sm">Edit</a>
@@ -326,7 +326,7 @@
                         ${plot.plot_address ? `<p><strong>Address:</strong> ${plot.plot_address.address_line_1}, ${plot.plot_address.city}, ${plot.plot_address.state}</p>` : ''}
                     </div>
                     <div class="col-md-6">
-                        ${plot.hb837 ? `<p><strong>Project:</strong> ${plot.hb837.project_name}</p>` : ''}
+                        ${plot.hb837 ? `<p><strong>Project:</strong> ${plot.hb837.property_name}</p>` : ''}
                         ${plot.plot_address ? `<p><strong>ZIP:</strong> ${plot.plot_address.zip_code}</p>` : ''}
                         <div class="mt-2">
                             <a href="/admin/plots/${plot.id}" class="btn btn-primary">View Full Details</a>

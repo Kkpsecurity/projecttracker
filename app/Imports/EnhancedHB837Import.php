@@ -340,6 +340,12 @@ class EnhancedHB837Import
             case 'contracting_status':
                 return $this->normalizeContractingStatus($value);
 
+            case 'property_type':
+                return $this->normalizePropertyType($value);
+
+            case 'assigned_consultant_id':
+                return $this->validateConsultantId($value);
+
             case 'property_name':
             case 'address':
             case 'city':
@@ -400,6 +406,65 @@ class EnhancedHB837Import
         $statusMap = config('hb837_field_mapping.status_maps.contracting_status', []);
         $lower = strtolower(trim($value));
         return $statusMap[$lower] ?? $lower;
+    }
+
+    private function normalizePropertyType($value)
+    {
+        if (is_null($value) || $value === '') {
+            return null;
+        }
+
+        // Normalize property types to lowercase to match database enum constraint
+        $propertyTypeMap = [
+            'garden' => 'garden',
+            'midrise' => 'midrise',
+            'mid-rise' => 'midrise',
+            'mid rise' => 'midrise',
+            'highrise' => 'highrise',
+            'high-rise' => 'highrise',
+            'high rise' => 'highrise',
+            'industrial' => 'industrial',
+            'bungalo' => 'bungalo',
+            'bungalow' => 'bungalo' // Handle common misspelling
+        ];
+        $lower = strtolower(trim($value));
+        return $propertyTypeMap[$lower] ?? $lower;
+    }
+
+    private function validateConsultantId($value)
+    {
+        if (is_null($value) || $value === '') {
+            return null;
+        }
+
+        // If it's a number, check if the consultant exists
+        if (is_numeric($value)) {
+            $consultantId = (int) $value;
+            if (Consultant::where('id', $consultantId)->exists()) {
+                return $consultantId;
+            }
+        }
+
+        // If it's a name, try to find consultant by first_name, last_name, or dba_company_name
+        if (is_string($value)) {
+            $searchValue = trim($value);
+            $consultant = Consultant::where('first_name', 'ilike', '%' . $searchValue . '%')
+                ->orWhere('last_name', 'ilike', '%' . $searchValue . '%')
+                ->orWhere('dba_company_name', 'ilike', '%' . $searchValue . '%')
+                ->first();
+
+            if ($consultant) {
+                return $consultant->id;
+            }
+        }
+
+        // If consultant not found, return null to avoid foreign key constraint violation
+        Log::warning('Consultant not found during import', [
+            'value' => $value,
+            'action' => 'Setting assigned_consultant_id to null to avoid foreign key constraint violation'
+        ]);
+
+        return null;
     }
 
     private function logFinalResults()

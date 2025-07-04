@@ -400,16 +400,17 @@ class HB837Controller extends Controller
 
     /**
      * Export HB837 data to Excel
-     * TODO: Implement HB837Export class
      */
     public function export(Request $request)
     {
         $filename = 'hb837_export_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
 
-        // TODO: Create HB837Export class
-        // return Excel::download(new HB837Export($request->get('tab', 'active')), $filename);
-
-        return redirect()->back()->with('info', 'Export functionality will be implemented with HB837Export class.');
+        try {
+            return Excel::download(new HB837Export($request->get('tab', 'active')), $filename);
+        } catch (\Exception $e) {
+            Log::error('HB837 Export Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Export failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -687,12 +688,12 @@ class HB837Controller extends Controller
     {
         $filename = 'hb837_export_' . now()->format('Y-m-d_H-i-s') . '.' . $format;
 
-        // TODO: Create HB837Export class with format support
-        // return Excel::download(new HB837Export($request->get('tab', 'active'), $format), $filename);
-
-        return redirect()->back()->with('info',
-            "Export functionality will be implemented with HB837Export class for {$format} format."
-        );
+        try {
+            return Excel::download(new HB837Export($request->get('tab', 'active'), $format), $filename);
+        } catch (\Exception $e) {
+            Log::error('HB837 Export Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Export failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -974,7 +975,7 @@ class HB837Controller extends Controller
             $fileId = uniqid();
             Cache::put("import_analysis_{$fileId}", [
                 'file_path' => $filePath,
-                'original_name' => $originalName,
+                'file_name' => $originalName,
                 'analysis' => $analysis
             ], 3600); // Store for 1 hour
 
@@ -1050,13 +1051,27 @@ class HB837Controller extends Controller
             Storage::delete($cacheData['file_path']);
             Cache::forget("import_analysis_{$fileId}");
 
+            // Store results in session for the results page
+            session([
+                'import_results' => [
+                    'file_name' => $cacheData['file_name'] ?? 'imported_file',
+                    'imported' => $result['imported'],
+                    'updated' => $result['updated'],
+                    'skipped' => $result['skipped'],
+                    'errors' => $result['errors'],
+                    'total_processed' => $result['imported'] + $result['updated'] + $result['skipped'],
+                    'analysis' => $analysis,
+                    'import_timestamp' => now()
+                ]
+            ]);
+
             return response()->json([
                 'success' => true,
                 'imported' => $result['imported'],
                 'updated' => $result['updated'],
                 'skipped' => $result['skipped'],
                 'errors' => $result['errors'],
-                'redirect_url' => route('admin.hb837.index', ['tab' => 'active'])
+                'redirect_url' => route('admin.hb837.import-results')
             ]);
 
         } catch (\Exception $e) {
@@ -1633,8 +1648,43 @@ class HB837Controller extends Controller
                 $lower = strtolower(trim($value));
                 return $statusMap[$lower] ?? $lower;
 
+            case 'property_type':
+                // Normalize property types to lowercase to match database enum constraint
+                $propertyTypeMap = [
+                    'garden' => 'garden',
+                    'midrise' => 'midrise',
+                    'mid-rise' => 'midrise',
+                    'mid rise' => 'midrise',
+                    'highrise' => 'highrise',
+                    'high-rise' => 'highrise',
+                    'high rise' => 'highrise',
+                    'industrial' => 'industrial',
+                    'bungalo' => 'bungalo',
+                    'bungalow' => 'bungalo' // Handle common misspelling
+                ];
+                $lower = strtolower(trim($value));
+                return $propertyTypeMap[$lower] ?? $lower;
+
             default:
                 return trim($value);
         }
+    }
+
+    /**
+     * Show import results page
+     */
+    public function showImportResults(Request $request)
+    {
+        $results = $request->session()->get('import_results');
+
+        if (!$results) {
+            return redirect()->route('admin.hb837.index')
+                ->with('error', 'No import results found.');
+        }
+
+        // Clear the session data so it's only shown once
+        $request->session()->forget('import_results');
+
+        return view('admin.hb837.import-results', compact('results'));
     }
 }
