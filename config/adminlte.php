@@ -412,11 +412,10 @@ return [
 
         ['header' => 'ANALYTICS & REPORTS'],
         [
-            'text' => 'Analytics',
-            'url' => '#',
+            'text' => 'Analytics Dashboard',
+            'route' => 'admin.analytics.index',
             'icon' => 'fas fa-chart-line',
-            'classes' => 'text-muted',
-            'tooltip' => 'Coming Soon',
+            'active' => ['admin/analytics*'],
         ],
 
         ['header' => 'ACCOUNT MANAGEMENT'],

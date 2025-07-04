@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ConsultantController;
 use App\Http\Controllers\Admin\GoogleMapsController;
 use App\Http\Controllers\Admin\PlotsController;
 use App\Http\Controllers\Admin\PlotGroupController;
+use App\Http\Controllers\Admin\AnalyticsController;
 // use App\Http\Controllers\Admin\MockPlotsController; // Uncomment for testing without database
 
 /*
@@ -30,6 +31,17 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Admin Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+
+    // Analytics Section
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+        Route::get('/', [AnalyticsController::class, 'index'])->name('index');
+        Route::get('/project-trends', [AnalyticsController::class, 'getProjectTrendsData'])->name('project-trends');
+        Route::get('/consultant-metrics', [AnalyticsController::class, 'getConsultantMetrics'])->name('consultant-metrics');
+        Route::get('/realtime-stats', [AnalyticsController::class, 'realtimeStats'])->name('realtime-stats');
+        Route::get('/export', [AnalyticsController::class, 'exportData'])->name('export');
+        Route::get('/filtered-data', [AnalyticsController::class, 'getFilteredData'])->name('filtered-data');
+        Route::get('/benchmarks', [AnalyticsController::class, 'getPerformanceBenchmarks'])->name('benchmarks');
+    });
 
     // Admin Center - User Management
     Route::prefix('users')->name('users.')->group(function () {
@@ -211,16 +223,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     });
 
     // Future Admin Modules (placeholders)
-
-    // Analytics & Reports
-    Route::prefix('analytics')->name('analytics.')->group(function () {
-        Route::get('/', function () {
-            return view('admin.analytics.index', [
-                'title' => 'Analytics Dashboard',
-                'message' => 'Analytics and reporting functionality will be implemented here.'
-            ]);
-        })->name('index');
-    });
 
     // System Backup & Maintenance
     Route::prefix('maintenance')->name('maintenance.')->group(function () {
