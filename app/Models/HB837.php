@@ -33,6 +33,7 @@ class HB837 extends Model
         'scheduled_date_of_inspection',
         'report_submitted',
         'billing_req_sent',
+        'billing_req_submitted',
         'agreement_submitted',
         'quoted_price',
         'sub_fees_estimated_expenses',
@@ -48,7 +49,6 @@ class HB837 extends Model
         'macro_client',
         'macro_contact',
         'macro_email',
-        'assigned_consultant',
     ];
 
     protected $casts = [
@@ -88,10 +88,20 @@ class HB837 extends Model
         return $this->hasMany(HB837File::class, 'hb837_id');
     }
 
+    public function findings(): HasMany
+    {
+        return $this->hasMany(HB837Finding::class, 'hb837_id');
+    }
+
+    public function crimeStats(): HasOne
+    {
+        return $this->hasOne(HB837CrimeStat::class, 'hb837_id');
+    }
+
     // Scopes
     public function scopeActive($query)
     {
-        return $query->whereIn('report_status', ['in-progress', 'not-started']);
+        return $query->whereIn('report_status', ['underway', 'not-started']);
     }
 
     public function scopeCompleted($query)
@@ -101,7 +111,7 @@ class HB837 extends Model
 
     public function scopeInProgress($query)
     {
-        return $query->where('report_status', 'in-progress');
+        return $query->where('report_status', 'underway');
     }
 
     public function scopeByStatus($query, $status)
@@ -115,6 +125,31 @@ class HB837 extends Model
         return $this->scheduled_date_of_inspection &&
                $this->scheduled_date_of_inspection < now() &&
                $this->report_status !== 'completed';
+    }
+
+    public function getIs30DayOverdueAttribute(): bool
+    {
+        // Check if item is incomplete and older than 30 days
+        $daysSinceCreated = now()->diffInDays($this->created_at);
+        $isIncomplete = !in_array($this->report_status, ['completed']);
+
+        return $isIncomplete && $daysSinceCreated > 30;
+    }
+
+    public function getDaysSinceCreatedAttribute(): int
+    {
+        return now()->diffInDays($this->created_at);
+    }
+
+    public function getOverdueStatusBadgeAttribute(): string
+    {
+        if ($this->is_30_day_overdue) {
+            return '<span class="badge badge-danger">30+ Days Overdue</span>';
+        } elseif ($this->is_overdue) {
+            return '<span class="badge badge-warning">Overdue</span>';
+        }
+
+        return '';
     }
 
     public function getProgressPercentageAttribute(): float

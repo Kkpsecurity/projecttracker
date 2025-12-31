@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Controllers\Controller;
@@ -25,15 +26,16 @@ use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Maatwebsite\Excel\Concerns\FromArray;
+use Exception;
 
 class HB837Controller extends Controller
 {
     /**
      * Display HB837 index with tabs and DataTables
      */
-    public function index(Request $request, $tab = 'all')
+    public function index(Request $request, $tab = 'active')
     {
-        $tab = in_array($tab = Str::lower($tab), ['all', 'active', 'quoted', 'completed', 'closed']) ? $tab : 'all';
+        $tab = in_array($tab = Str::lower($tab), ['all', 'active', 'quoted', 'completed', 'closed']) ? $tab : 'active';
 
         if ($request->ajax()) {
             return $this->getDatatablesData($tab);
@@ -41,7 +43,7 @@ class HB837Controller extends Controller
 
         // Calculate statistics for dashboard cards
         $stats = [
-            'active' => HB837::whereIn('report_status', ['not-started', 'in-progress', 'in-review'])
+            'active' => HB837::whereIn('report_status', ['not-started', 'underway', 'in-review'])
                 ->where('contracting_status', 'executed')->count(),
             'quoted' => HB837::whereIn('contracting_status', ['quoted', 'started'])->count(),
             'completed' => HB837::where('report_status', 'completed')->count(),
@@ -49,9 +51,75 @@ class HB837Controller extends Controller
             'total' => HB837::count()
         ];
 
+        // Calculate overdue statistics (Task 18 Enhancement)
+        $stats['overdue'] = HB837::whereNotNull('scheduled_date_of_inspection')
+            ->where('scheduled_date_of_inspection', '<', now())
+            ->where('report_status', '!=', 'completed')
+            ->count();
+
+        // Calculate 30-day overdue statistics (Task 18 Enhancement)
+        $thirtyDaysAgo = now()->subDays(30);
+        $stats['thirty_day_overdue'] = HB837::where('created_at', '<', $thirtyDaysAgo)
+            ->whereNotIn('report_status', ['completed'])
+            ->count();
+
+        // Calculate detailed tab counts for navigation
+        $tabCounts = [
+            'all' => $stats['total'],
+            'active' => $stats['active'],
+            'quoted' => $stats['quoted'],
+            'completed' => $stats['completed'],
+            'closed' => $stats['closed']
+        ];
+
+        // Calculate Warning metrics (all active projects regardless of contracting status)
+        $warnings = Cache::remember('hb837_warnings', 60, function () {
+            return [
+                'unassigned_projects' => HB837::whereIn('report_status', ['not-started', 'underway', 'in-review'])
+                    ->where('contracting_status', 'executed')
+                    ->whereNull('assigned_consultant_id')
+                    ->count(),
+                'unscheduled_projects' => HB837::whereIn('report_status', ['not-started', 'underway', 'in-review'])
+                    ->where('contracting_status', 'executed')
+                    ->whereNull('scheduled_date_of_inspection')
+                    ->count(),
+                'late_reports' => HB837::where('report_status', 'not-started')
+                    ->where('contracting_status', 'executed')
+                    ->whereNotNull('scheduled_date_of_inspection')
+                    ->where('scheduled_date_of_inspection', '<', now()->subDays(30))
+                    ->count()
+            ];
+        });
+
+        // Calculate Current Business metrics (differentiate by contracting status)
+        $allActiveProjects = HB837::whereIn('report_status', ['not-started', 'underway', 'in-review'])
+            ->where('contracting_status', 'executed');
+        $executedProjects = HB837::whereIn('report_status', ['not-started', 'underway', 'in-review'])
+            ->where('contracting_status', 'executed');
+
+        // Calculate net profit with estimation for missing data
+        $actualNetProfit = $executedProjects->sum('project_net_profit') ?? 0;
+        $billingWithoutProfit = HB837::whereIn('report_status', ['not-started', 'underway', 'in-review'])
+            ->where('contracting_status', 'executed')
+            ->whereNull('project_net_profit')
+            ->sum('quoted_price') ?? 0;
+        $estimatedNetProfit = $billingWithoutProfit * 0.75; // 75% profit margin estimate
+        $totalEstimatedNetProfit = $actualNetProfit + $estimatedNetProfit;
+
+        $business = [
+            'active_projects' => $allActiveProjects->count(),
+            'gross_billing_in_process' => $executedProjects->sum('quoted_price') ?? 0,
+            'net_profit_in_process' => $totalEstimatedNetProfit,
+            'actual_net_profit' => $actualNetProfit,
+            'estimated_net_profit' => $estimatedNetProfit
+        ];
+
         return view('admin.hb837.index', [
             'tab' => $tab,
-            'stats' => $stats
+            'stats' => $stats,
+            'tabCounts' => $tabCounts,
+            'warnings' => $warnings,
+            'business' => $business
         ]);
     }
 
@@ -60,66 +128,172 @@ class HB837Controller extends Controller
      */
     private function getDatatablesData($tab)
     {
-        $query = HB837::query()->with(['consultant', 'user']);
+        try {
+            $query = HB837::query()->with(['consultant', 'user']);
 
-        // Apply tab filters
-        $this->applyTabFilters($query, $tab);
+            // Apply tab filters
+            $this->applyTabFilters($query, $tab);
 
-        return DataTables::of($query)
-            ->addColumn('checkbox', function ($hb837) {
-                return '<input type="checkbox" class="bulk-checkbox" value="' . $hb837->id . '">';
-            })
-            ->addColumn('action', function ($hb837) {
-                return '
-                    <div class="btn-group btn-group-sm" role="group">
-                        <a href="' . route('admin.hb837.show', $hb837->id) . '"
-                           class="btn btn-info" title="View Details" data-toggle="tooltip">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="' . route('admin.hb837.edit', $hb837->id) . '"
-                           class="btn btn-primary" title="Edit Record" data-toggle="tooltip">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <button onclick="duplicateRecord(' . $hb837->id . ')"
-                                class="btn btn-secondary" title="Duplicate Record" data-toggle="tooltip">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                        <button onclick="deleteRecord(' . $hb837->id . ')"
-                                class="btn btn-danger" title="Delete Record" data-toggle="tooltip">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                ';
-            })
-            ->editColumn('property_name', function ($hb837) {
-                return '<strong>' . e($hb837->property_name) . '</strong><br>
-                        <small class="text-muted">' . e($hb837->address) . ', ' . e($hb837->city) . ', ' . e($hb837->state) . '</small>';
-            })
-            ->editColumn('report_status', function ($hb837) {
-                return $this->getReportStatusCell($hb837->report_status);
-            })
-            ->editColumn('assigned_consultant_id', function ($hb837) {
-                return $hb837->consultant ?
-                    $hb837->consultant->first_name . ' ' . $hb837->consultant->last_name :
-                    '<span class="text-muted">Unassigned</span>';
-            })
-            ->editColumn('scheduled_date_of_inspection', function ($hb837) {
-                if ($hb837->scheduled_date_of_inspection) {
-                    $date = \Carbon\Carbon::parse($hb837->scheduled_date_of_inspection);
-                    $isOverdue = $date->isPast() && $hb837->report_status !== 'completed';
-                    $class = $isOverdue ? 'text-danger font-weight-bold' : '';
-                    return '<span class="' . $class . '">' . $date->format('M j, Y') . '</span>';
-                }
-                return '<span class="text-muted">Not scheduled</span>';
-            })
-            ->editColumn('county', function ($hb837) {
-                return $hb837->county ?: '<span class="text-muted">Not specified</span>';
-            })
-            ->editColumn('macro_client', function ($hb837) {
-                return $hb837->macro_client ?: '<span class="text-muted">Not assigned</span>';
-            })
-            ->rawColumns(['checkbox', 'action', 'property_name', 'county', 'macro_client', 'assigned_consultant_id', 'scheduled_date_of_inspection', 'report_status'])
-            ->make(true);
+            // Apply additional request filters (Task 18 Enhancement)
+            $this->applyRequestFilters($query);
+
+            return DataTables::of($query)
+                ->addColumn('checkbox', function ($hb837) {
+                    return '<input type="checkbox" class="bulk-checkbox" value="' . $hb837->id . '">';
+                })
+                ->addColumn('overdue_status_badge', function ($hb837) {
+                    // Task 18 Enhancement: 30-day overdue status indicators
+                    $daysSinceCreated = now()->diffInDays($hb837->created_at);
+                    $isIncomplete = !in_array($hb837->report_status, ['completed']);
+
+                    if ($isIncomplete && $daysSinceCreated > 30) {
+                        return '<span class="badge thirty-day-overdue-badge status-badge-critical">30+ Days</span>';
+                    } elseif ($hb837->is_overdue) {
+                        return '<span class="badge status-badge-overdue">Overdue</span>';
+                    } elseif ($daysSinceCreated > 14 && $isIncomplete) {
+                        return '<span class="badge badge-warning">14+ Days</span>';
+                    }
+
+                    return '<span class="badge badge-success">Current</span>';
+                })
+                ->addColumn('action', function ($hb837) {
+                    $editUrl = route('admin.hb837.edit', ['hb837' => $hb837->id]);
+                    $pdfUrl = route('admin.hb837.pdf-report', ['hb837' => $hb837->id]);
+
+                    return '
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button onclick="viewPropertyLocation(' . $hb837->id . ', \'' . addslashes($hb837->property_name) . '\', \'' . addslashes($hb837->address) . '\', \'' . addslashes($hb837->city) . '\', \'' . addslashes($hb837->state) . '\')"
+                                    class="btn btn-info" title="View Location" data-toggle="tooltip">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </button>
+                            <a href="' . $editUrl . '"
+                               class="btn btn-primary" title="Edit Record" data-toggle="tooltip">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="' . $pdfUrl . '"
+                               class="btn btn-warning" title="PDF Report" data-toggle="tooltip">
+                                <i class="fas fa-file-pdf"></i>
+                            </a>
+                            <button onclick="deleteRecord(' . $hb837->id . ')"
+                                    class="btn btn-danger" title="Delete Record" data-toggle="tooltip">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    ';
+                })
+                ->editColumn('property_name', function ($hb837) {
+                    return '<strong>' . e($hb837->property_name) . '</strong><br>
+                            <small class="text-muted">' . e($hb837->address) . ', ' . e($hb837->city) . ', ' . e($hb837->state) . '</small>';
+                })
+                ->editColumn('report_status', function ($hb837) {
+                    return $this->getReportStatusCell($hb837->report_status);
+                })
+                ->editColumn('assigned_consultant_id', function ($hb837) {
+                    return $hb837->consultant ?
+                        $hb837->consultant->first_name . ' ' . $hb837->consultant->last_name :
+                        '<span class="text-muted">Unassigned</span>';
+                })
+                ->editColumn('scheduled_date_of_inspection', function ($hb837) {
+                    if ($hb837->scheduled_date_of_inspection) {
+                        $date = \Carbon\Carbon::parse($hb837->scheduled_date_of_inspection);
+
+                        // Apply red bold styling for "Late Reports" criteria:
+                        // - Report status is "not-started"
+                        // - Contracting status is "executed" 
+                        // - Scheduled date is more than 30 days ago
+                        $isLateReport = $hb837->report_status === 'not-started'
+                            && $hb837->contracting_status === 'executed'
+                            && $date->lt(now()->subDays(30));
+
+                        $class = $isLateReport ? 'text-danger font-weight-bold' : '';
+                        return '<span class="' . $class . '">' . $date->format('M j, Y') . '</span>';
+                    }
+                    return '<span class="text-muted">Not scheduled</span>';
+                })
+                ->editColumn('county', function ($hb837) {
+                    return $hb837->county ?: '<span class="text-muted">Not specified</span>';
+                })
+                ->addColumn('type_unit_type', function ($hb837) {
+                    $typeText = $hb837->property_type ?: 'Unknown Type';
+                    // Capitalize the first letter of the property type
+                    $typeText = ucfirst($typeText);
+                    $unitsText = $hb837->units ? $hb837->units . ' units' : 'No units';
+                    return e($typeText) . '<br><small class="text-muted">' . e($unitsText) . '</small>';
+                })
+                ->editColumn('macro_client', function ($hb837) {
+                    return $hb837->macro_client ?: '<span class="text-muted">Not assigned</span>';
+                })
+                ->editColumn('securitygauge_crime_risk', function ($hb837) {
+                    return $this->getCrimeRiskCell($hb837->securitygauge_crime_risk);
+                })
+                ->editColumn('contracting_status', function ($hb837) {
+                    return $this->getContractingStatusCell($hb837->contracting_status);
+                })
+                ->editColumn('agreement_submitted', function ($hb837) {
+                    return $this->getAgreementSubmittedCell($hb837->agreement_submitted);
+                })
+                ->editColumn('quoted_price', function ($hb837) {
+                    if ($hb837->quoted_price) {
+                        return '<span class="font-weight-bold text-success">$' . number_format($hb837->quoted_price, 2) . '</span>';
+                    }
+                    return '<span class="text-muted">Not quoted</span>';
+                })
+                ->addColumn('days_until_renewal', function ($hb837) {
+                    return $this->getDaysUntilRenewalCell($hb837->scheduled_date_of_inspection);
+                })
+                ->addColumn('is_thirty_day_overdue', function ($hb837) {
+                    // Task 18 Enhancement: Data for JavaScript row styling
+                    $daysSinceCreated = now()->diffInDays($hb837->created_at);
+                    $isIncomplete = !in_array($hb837->report_status, ['completed']);
+                    return $isIncomplete && $daysSinceCreated > 30;
+                })
+                ->addColumn('is_overdue', function ($hb837) {
+                    return $hb837->is_overdue;
+                })
+                ->addColumn('days_since_created', function ($hb837) {
+                    return now()->diffInDays($hb837->created_at);
+                })
+                ->editColumn('billing_req_submitted', function ($hb837) {
+                    return $this->getBillingRequestCell($hb837->billing_req_submitted);
+                })
+                ->rawColumns([
+                    'checkbox',
+                    'overdue_status_badge',
+                    'property_name',
+                    'report_status',
+                    'assigned_consultant_id',
+                    'scheduled_date_of_inspection',
+                    'type_unit_type',
+                    'macro_client',
+                    'securitygauge_crime_risk',
+                    'contracting_status',
+                    'agreement_submitted',
+                    'quoted_price',
+                    'days_until_renewal',
+                    'billing_req_submitted',
+                    'action'
+                ])
+                ->orderColumn('assigned_consultant_id', function ($query, $order) {
+                    // Custom ordering for consultant column - use JOIN with explicit table aliases
+                    return $query->leftJoin('consultants as consultant_sort', 'hb837.assigned_consultant_id', '=', 'consultant_sort.id')
+                        ->orderByRaw("CASE WHEN consultant_sort.id IS NULL THEN 1 ELSE 0 END " . $order)
+                        ->orderByRaw("CONCAT(consultant_sort.first_name, ' ', consultant_sort.last_name) " . $order)
+                        ->select('hb837.*'); // Explicitly select only hb837 columns to avoid conflicts
+                })
+                ->make(true);
+        } catch (\Exception $e) {
+            Log::error('DataTables getDatatablesData error for tab ' . $tab . ': ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            // Return empty DataTables response structure
+            return response()->json([
+                'draw' => request('draw', 1),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'Error loading data: ' . $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -127,20 +301,20 @@ class HB837Controller extends Controller
      */
     private function getCrimeRiskCell($risk)
     {
-        if (!$risk) return '<span class="text-muted">Not assessed</span>';
+        if (!$risk)
+            return '<span class="text-muted" style="font-size: 14px; font-weight: 500;">Not Assessed</span>';
 
-        $colors = [
-            'Low' => ['bg' => '#72b862', 'text' => 'white'],
-            'Moderate' => ['bg' => '#95f181', 'text' => 'black'],
-            'Elevated' => ['bg' => '#fae099', 'text' => 'black'],
-            'High' => ['bg' => '#f2a36e', 'text' => 'black'],
-            'Severe' => ['bg' => '#c75845', 'text' => 'white']
+        $cssClasses = [
+            'Low' => 'risk-low',
+            'Moderate' => 'risk-moderate',
+            'Elevated' => 'risk-elevated',
+            'High' => 'risk-high',
+            'Severe' => 'risk-severe'
         ];
 
-        $style = isset($colors[$risk]) ?
-            'background-color: ' . $colors[$risk]['bg'] . '; color: ' . $colors[$risk]['text'] . ';' : '';
+        $class = isset($cssClasses[$risk]) ? $cssClasses[$risk] : '';
 
-        return '<span class="badge px-3 py-2" style="' . $style . '">' . e($risk) . '</span>';
+        return '<span class="badge px-3 py-2 ' . $class . '" style="font-size: 13px; font-weight: 500;">' . e($risk) . '</span>';
     }
 
     /**
@@ -152,7 +326,7 @@ class HB837Controller extends Controller
 
         $colors = [
             'not-started' => ['bg' => '#f8d7da', 'text' => '#721c24'],
-            'in-progress' => ['bg' => '#fff3cd', 'text' => '#856404'],
+            'underway' => ['bg' => '#fff3cd', 'text' => '#856404'],
             'in-review' => ['bg' => '#cce5ff', 'text' => '#004085'],
             'completed' => ['bg' => '#d4edda', 'text' => '#155724']
         ];
@@ -183,6 +357,67 @@ class HB837Controller extends Controller
 
         $displayStatus = ucfirst(str_replace('-', ' ', $status));
         return '<span class="badge px-3 py-2" style="' . $style . '">' . e($displayStatus) . '</span>';
+    }
+
+    /**
+     * Get agreement submitted status cell
+     */
+    private function getAgreementSubmittedCell($submitted)
+    {
+        if ($submitted) {
+            $date = \Carbon\Carbon::parse($submitted);
+            return '<span class="badge badge-success px-3 py-2" title="Submitted: ' . $date->format('M j, Y') . '" data-toggle="tooltip">
+                        <i class="fas fa-check"></i> Submitted
+                    </span>';
+        }
+        return '<span class="badge badge-warning px-3 py-2"><i class="fas fa-clock"></i> Pending</span>';
+    }
+
+    /**
+     * Get billing request submitted status cell
+     */
+    private function getBillingRequestCell($submitted)
+    {
+        if ($submitted) {
+            $date = \Carbon\Carbon::parse($submitted);
+            return '<span class="badge badge-success px-3 py-2" title="Submitted: ' . $date->format('M j, Y') . '" data-toggle="tooltip">
+                        <i class="fas fa-check-circle"></i> Submitted
+                    </span>';
+        }
+        return '<span class="badge badge-secondary px-3 py-2"><i class="fas fa-clock"></i> Not Submitted</span>';
+    }
+
+    /**
+     * Calculate days until renewal (3 years from scheduled inspection date)
+     */
+    private function getDaysUntilRenewalCell($scheduledDate)
+    {
+        if (!$scheduledDate) {
+            return '<span class="text-muted">No inspection date</span>';
+        }
+
+        $inspectionDate = \Carbon\Carbon::parse($scheduledDate);
+        $renewalDate = $inspectionDate->copy()->addYears(3);
+        $today = \Carbon\Carbon::now();
+        $daysUntilRenewal = $today->diffInDays($renewalDate, false);
+
+        // Show only 2 decimal places
+        $daysText = number_format($daysUntilRenewal, 2);
+
+        if ($daysUntilRenewal < 0) {
+            $badgeClass = 'badge-danger';
+            $icon = 'fas fa-exclamation-triangle';
+            $text = 'Overdue (' . abs($daysText) . ' days)';
+        } else {
+            $badgeClass = 'badge-success';
+            $icon = 'fas fa-check';
+            $text = $daysText . ' days';
+        }
+
+        $renewalDateFormatted = $renewalDate->format('M j, Y');
+
+        return '<span class="badge ' . $badgeClass . ' px-2 py-1" title="Renewal due: ' . $renewalDateFormatted . '" data-toggle="tooltip">' .
+            '<i class="' . $icon . '"></i> ' . $text . '</span>';
     }
 
     /**
@@ -227,7 +462,7 @@ class HB837Controller extends Controller
                 // No filters - show all records
                 break;
             case 'active':
-                $query->whereIn('report_status', ['not-started', 'in-progress', 'in-review'])
+                $query->whereIn('report_status', ['not-started', 'underway', 'in-review'])
                     ->where('contracting_status', 'executed');
                 break;
             case 'quoted':
@@ -239,6 +474,40 @@ class HB837Controller extends Controller
             case 'closed':
                 $query->where('contracting_status', 'closed');
                 break;
+        }
+    }
+
+    /**
+     * Apply additional request filters for DataTables (Task 18 Enhancement)
+     */
+    protected function applyRequestFilters($query)
+    {
+        $request = request();
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('report_status', $request->status);
+        }
+
+        // Consultant filter
+        if ($request->filled('consultant')) {
+            $query->where('assigned_consultant_id', $request->consultant);
+        }
+
+        // Date range filters
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // 30-day overdue filter (Task 18 Enhancement)
+        if ($request->filled('show_thirty_day_overdue') && $request->show_thirty_day_overdue) {
+            $thirtyDaysAgo = now()->subDays(30);
+            $query->where('created_at', '<', $thirtyDaysAgo)
+                ->whereNotIn('report_status', ['completed']);
         }
     }
 
@@ -273,11 +542,12 @@ class HB837Controller extends Controller
             'phone' => 'nullable|string|max:20',
             'assigned_consultant_id' => 'nullable|integer|exists:consultants,id',
             'scheduled_date_of_inspection' => 'nullable|date',
-            'report_status' => 'nullable|in:not-started,in-progress,in-review,completed',
+            'report_status' => 'nullable|in:not-started,underway,in-review,completed',
             'contracting_status' => 'nullable|in:quoted,started,executed,closed',
             'quoted_price' => 'nullable|numeric',
             'sub_fees_estimated_expenses' => 'nullable|numeric',
             'billing_req_sent' => 'nullable|date',
+            'billing_req_submitted' => 'nullable|date',
             'report_submitted' => 'nullable|date',
             'agreement_submitted' => 'nullable|date',
             'project_net_profit' => 'nullable|numeric',
@@ -289,7 +559,8 @@ class HB837Controller extends Controller
             'property_manager_email' => 'nullable|email|max:255',
             'regional_manager_name' => 'nullable|string|max:255',
             'regional_manager_email' => 'nullable|email|max:255',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            'consultant_notes' => 'nullable|string'
         ]);
 
         // Set user_id to current authenticated user
@@ -307,7 +578,7 @@ class HB837Controller extends Controller
 
         $hb837 = HB837::create($validated);
 
-        return redirect()->route('admin.hb837.edit', $hb837->id)
+        return redirect()->route('admin.hb837.edit', ['hb837' => $hb837->id])
             ->with('success', 'HB837 record created successfully!');
     }
 
@@ -319,6 +590,44 @@ class HB837Controller extends Controller
         $hb837->load(['consultant', 'user', 'files']);
 
         return view('admin.hb837.show', compact('hb837'));
+    }
+
+    /**
+     * Generate PDF report for a specific HB837 record
+     */
+    public function generatePdfReport(HB837 $hb837)
+    {
+        return app(\App\Services\HB837\HB837ReportService::class)->generatePdfReport($hb837);
+    }
+
+    /**
+     * Create a clean filename from property name
+     * Removes special characters and limits length for filesystem compatibility
+     */
+    private function createCleanFilename($propertyName, $suffix = '', $extension = '.pdf')
+    {
+        // Default fallback if no property name
+        if (!$propertyName) {
+            $propertyName = 'Unknown_Property';
+        }
+
+        // Clean property name for filename (remove special characters, spaces, etc.)
+        $cleanName = preg_replace('/[^A-Za-z0-9\-_]/', '_', $propertyName);
+        $cleanName = preg_replace('/_{2,}/', '_', $cleanName); // Replace multiple underscores with single
+        $cleanName = trim($cleanName, '_'); // Remove leading/trailing underscores
+
+        // Limit length to avoid filesystem issues
+        if (strlen($cleanName) > 50) {
+            $cleanName = substr($cleanName, 0, 50);
+            $cleanName = rtrim($cleanName, '_'); // Remove trailing underscore if substr cut in middle
+        }
+
+        // Add suffix if provided
+        if ($suffix) {
+            $cleanName .= '_' . $suffix;
+        }
+
+        return $cleanName . $extension;
     }
 
     /**
@@ -356,11 +665,12 @@ class HB837Controller extends Controller
             'phone' => 'nullable|string|max:20',
             'assigned_consultant_id' => 'nullable|integer|exists:consultants,id',
             'scheduled_date_of_inspection' => 'nullable|date',
-            'report_status' => 'nullable|in:not-started,in-progress,in-review,completed',
+            'report_status' => 'nullable|in:not-started,underway,in-review,completed',
             'contracting_status' => 'nullable|in:quoted,started,executed,closed',
             'quoted_price' => 'nullable|numeric',
             'sub_fees_estimated_expenses' => 'nullable|numeric',
             'billing_req_sent' => 'nullable|date',
+            'billing_req_submitted' => 'nullable|date',
             'report_submitted' => 'nullable|date',
             'agreement_submitted' => 'nullable|date',
             'project_net_profit' => 'nullable|numeric',
@@ -373,7 +683,8 @@ class HB837Controller extends Controller
             'regional_manager_name' => 'nullable|string|max:255',
             'regional_manager_email' => 'nullable|email|max:255',
             'notes' => 'nullable|string',
-            'financial_notes' => 'nullable|string'
+            'financial_notes' => 'nullable|string',
+            'consultant_notes' => 'nullable|string'
         ]);
 
         // Calculate net profit
@@ -381,9 +692,19 @@ class HB837Controller extends Controller
             $validated['project_net_profit'] = $validated['quoted_price'] - $validated['sub_fees_estimated_expenses'];
         }
 
-        $hb837->update($validated);
+        // Explicitly assign date fields if present to ensure they update
+        foreach (['scheduled_date_of_inspection', 'billing_req_submitted', 'report_submitted', 'agreement_submitted'] as $dateField) {
+            if (array_key_exists($dateField, $validated)) {
+                $hb837->$dateField = $validated[$dateField];
+            }
+        }
 
-        return redirect()->route('admin.hb837.edit', ['hb837' => $hb837->id, 'tab' => $tabId])
+
+
+        $hb837->fill($validated);
+        $hb837->save();
+
+        return redirect()->route('admin.hb837.edit', ['hb837' => $hb837->getKey(), 'tab' => $tabId])
             ->with('success', 'HB837 record updated successfully!');
     }
 
@@ -562,6 +883,7 @@ class HB837Controller extends Controller
             'agreement_submitted',
             'contracting_status',
             'billing_req_sent',
+            'billing_req_submitted',
             'report_submitted',
             'securitygauge_crime_risk'
         ];
@@ -594,7 +916,7 @@ class HB837Controller extends Controller
             'action' => 'required|in:delete,status_update,consultant_assign',
             'selected_ids' => 'required|array',
             'selected_ids.*' => 'integer|exists:hb837,id',
-            'bulk_status' => 'nullable|in:not-started,in-progress,in-review,completed',
+            'bulk_status' => 'nullable|in:not-started,underway,in-review,completed',
             'bulk_consultant_id' => 'nullable|integer|exists:consultants,id'
         ]);
 
@@ -636,7 +958,7 @@ class HB837Controller extends Controller
     public function updateStatus(Request $request, HB837 $hb837)
     {
         $request->validate([
-            'status' => 'required|in:not-started,in-progress,in-review,completed'
+            'status' => 'required|in:not-started,underway,in-review,completed'
         ]);
 
         $hb837->update(['report_status' => $request->status]);
@@ -689,11 +1011,81 @@ class HB837Controller extends Controller
         $filename = 'hb837_export_' . now()->format('Y-m-d_H-i-s') . '.' . $format;
 
         try {
+            // Handle PDF export differently
+            if ($format === 'pdf') {
+                return $this->exportBulkPdf($request);
+            }
+
             return Excel::download(new HB837Export($request->get('tab', 'active'), $format), $filename);
         } catch (\Exception $e) {
             Log::error('HB837 Export Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Export failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Export bulk PDF report
+     */
+    private function exportBulkPdf(Request $request)
+    {
+        $tab = $request->get('tab', 'active');
+        $search = $request->get('search', '');
+
+        // Get filtered records
+        $query = HB837::query()->with(['consultant', 'user']);
+
+        // Apply tab filters
+        switch ($tab) {
+            case 'active':
+                $query->whereIn('report_status', ['not-started', 'underway', 'in-review'])
+                    ->where('contracting_status', 'executed');
+                break;
+            case 'quoted':
+                $query->whereIn('contracting_status', ['quoted', 'started']);
+                break;
+            case 'completed':
+                $query->where('report_status', 'completed');
+                break;
+            case 'closed':
+                $query->where('contracting_status', 'closed');
+                break;
+        }
+
+        // Apply search filter if provided
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('property_name', 'ilike', '%' . $search . '%')
+                    ->orWhere('address', 'ilike', '%' . $search . '%')
+                    ->orWhere('city', 'ilike', '%' . $search . '%')
+                    ->orWhere('management_company', 'ilike', '%' . $search . '%');
+            });
+        }
+
+        $records = $query->orderBy('property_name')->get();
+
+        // Prepare data for PDF
+        $data = [
+            'records' => $records,
+            'tab' => $tab,
+            'search' => $search,
+            'total_count' => $records->count(),
+            'generated_at' => now()->format('F j, Y \a\t g:i A'),
+            'generated_by' => Auth::user()->name ?? 'System',
+            'tab_title' => ucfirst(str_replace('-', ' ', $tab)) . ' Projects'
+        ];
+
+        // Generate PDF
+        $pdf = Pdf::loadView('admin.hb837.bulk-pdf-report', $data);
+        $pdf->setPaper('letter', 'landscape'); // Landscape for better table layout
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
+            'defaultFont' => 'Arial'
+        ]);
+
+        $filename = 'HB837_Bulk_Report_' . ucfirst($tab) . '_' . date('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     /**
@@ -722,8 +1114,8 @@ class HB837Controller extends Controller
 
             HB837File::create([
                 'hb837_id' => $hb837->id,
-                'filename' => $file->getClientOriginalName(),
-                'stored_filename' => $filename,
+                'filename' => $filename,                           // stored filename with timestamp
+                'original_filename' => $file->getClientOriginalName(), // original filename from user
                 'file_path' => $path,
                 'file_size' => $file->getSize(),
                 'mime_type' => $file->getClientMimeType(),
@@ -749,7 +1141,7 @@ class HB837Controller extends Controller
         }
 
         $fullPath = Storage::disk('public')->path($file->file_path);
-        return Response::download($fullPath, $file->filename);
+        return Response::download($fullPath, $file->original_filename);
     }
 
     /**
@@ -844,7 +1236,7 @@ class HB837Controller extends Controller
                 ]);
             }
 
-            return redirect()->route('admin.hb837.edit', $duplicate->id)
+            return redirect()->route('admin.hb837.edit', ['hb837' => $duplicate->id])
                 ->with('success', 'Record duplicated successfully!');
 
         } catch (\Exception $e) {
@@ -884,12 +1276,13 @@ class HB837Controller extends Controller
     }
 
     /**
-     * Get updated statistics for dashboard cards (AJAX endpoint)
+     * Get updated statistics for dashboard cards and tab counts (AJAX endpoint)
      */
     public function getStats()
     {
+        // Basic statistics
         $stats = [
-            'active' => HB837::whereIn('report_status', ['not-started', 'in-progress', 'in-review'])
+            'active' => HB837::whereIn('report_status', ['not-started', 'underway', 'in-review'])
                 ->where('contracting_status', 'executed')->count(),
             'quoted' => HB837::whereIn('contracting_status', ['quoted', 'started'])->count(),
             'completed' => HB837::where('report_status', 'completed')->count(),
@@ -897,7 +1290,49 @@ class HB837Controller extends Controller
             'total' => HB837::count()
         ];
 
-        return response()->json($stats);
+        // Calculate overdue statistics
+        $stats['overdue'] = HB837::whereNotNull('scheduled_date_of_inspection')
+            ->where('scheduled_date_of_inspection', '<', now())
+            ->where('report_status', '!=', 'completed')
+            ->count();
+
+        // Calculate 30-day overdue statistics (Task 18 Enhancement)
+        $thirtyDaysAgo = now()->subDays(30);
+        $stats['thirty_day_overdue'] = HB837::where('created_at', '<', $thirtyDaysAgo)
+            ->whereNotIn('report_status', ['completed'])
+            ->count();
+
+        // Calculate tab counts for navigation
+        $tabCounts = [
+            'all' => $stats['total'],
+            'active' => $stats['active'],
+            'quoted' => $stats['quoted'],
+            'completed' => $stats['completed'],
+            'closed' => $stats['closed']
+        ];
+
+        // Add detailed status breakdown
+        $statusCounts = [
+            'not_started' => HB837::where('report_status', 'not-started')->count(),
+            'in_progress' => HB837::where('report_status', 'underway')->count(),
+            'in_review' => HB837::where('report_status', 'in-review')->count(),
+            'completed' => HB837::where('report_status', 'completed')->count(),
+        ];
+
+        // Add contracting status breakdown
+        $contractingCounts = [
+            'quoted' => HB837::where('contracting_status', 'quoted')->count(),
+            'started' => HB837::where('contracting_status', 'started')->count(),
+            'executed' => HB837::where('contracting_status', 'executed')->count(),
+            'closed' => HB837::where('contracting_status', 'closed')->count(),
+        ];
+
+        return response()->json([
+            'stats' => $stats,
+            'tabCounts' => $tabCounts,
+            'statusCounts' => $statusCounts,
+            'contractingCounts' => $contractingCounts
+        ]);
     }
 
     /**
@@ -1208,7 +1643,9 @@ class HB837Controller extends Controller
 
         // Analyze file content
         $stats = [
-            'total_rows' => count($data),
+            'total_rows' => count(array_filter($data, function ($row) {
+                return !empty(array_filter($row));
+            })),
             'valid_rows' => 0,
             'columns' => count($headers),
             'new_records' => 0,
@@ -1241,40 +1678,12 @@ class HB837Controller extends Controller
     }
 
     /**
-     * Intelligent column mapping using fuzzy matching
+     * Intelligent column mapping using precise matching first, then fuzzy matching
      */
     private function intelligentColumnMapping($headers)
     {
-        $fieldMappings = [
-            'property_name' => ['property name', 'property', 'building name', 'complex name', 'site name'],
-            'address' => ['address', 'street', 'location', 'street address'],
-            'city' => ['city', 'town'],
-            'county' => ['county', 'parish'],
-            'state' => ['state', 'province', 'st'],
-            'zip' => ['zip', 'zipcode', 'postal', 'postal code'],
-            'phone' => ['phone', 'telephone', 'tel', 'contact phone', 'phone number'],
-            'management_company' => ['management', 'company', 'mgmt', 'management company', 'mgmt company'],
-            'owner_name' => ['owner', 'property owner', 'landlord', 'owner name'],
-            'property_type' => ['type', 'property type', 'building type'],
-            'units' => ['units', 'unit count', 'number of units', '# units', 'total units'],
-            'securitygauge_crime_risk' => ['crime risk', 'risk', 'security risk', 'crime', 'risk level', 'securitygauge crime risk'],
-            'macro_client' => ['macro client', 'client', 'parent company'],
-            'macro_contact' => ['macro contact', 'primary contact', 'main contact'],
-            'macro_email' => ['macro email', 'primary email', 'main email'],
-            'property_manager_name' => ['property manager', 'pm', 'manager name', 'property manager name'],
-            'property_manager_email' => ['pm email', 'manager email', 'property manager email'],
-            'regional_manager_name' => ['regional manager', 'rm', 'regional', 'regional manager name'],
-            'regional_manager_email' => ['rm email', 'regional email', 'regional manager email'],
-            'report_status' => ['status', 'report status', 'progress'],
-            'contracting_status' => ['contract status', 'contract', 'phase', 'contracting status'],
-            'scheduled_date_of_inspection' => ['inspection date', 'scheduled', 'date', 'scheduled date', 'scheduled date of inspection'],
-            'quoted_price' => ['price', 'quote', 'quoted price', 'amount'],
-            'sub_fees_estimated_expenses' => ['sub fees', 'estimated expenses', 'sub fees estimated expenses', 'expenses', 'additional fees'],
-            'financial_notes' => ['financial notes', 'finance notes', 'financial', 'billing notes'],
-            'consultant_notes' => ['consultant notes', 'agent notes', 'inspector notes'],
-            'general_notes' => ['general notes', 'comments', 'remarks', 'additional notes', 'notes'],
-            'assigned_consultant' => ['assigned consultant', 'consultant', 'assigned to', 'inspector', 'agent']
-        ];
+        // Get field mappings from config
+        $fieldMappings = config('hb837_field_mapping.field_mapping', []);
 
         $mappings = [];
         $usedFields = []; // Track which fields have been mapped
@@ -1282,21 +1691,39 @@ class HB837Controller extends Controller
         foreach ($headers as $header) {
             $bestMatch = null;
             $bestScore = 0;
-            $headerLower = strtolower(trim($header));
+            $headerTrimmed = trim($header);
+            $headerLower = strtolower($headerTrimmed);
 
+            // First pass: Look for exact matches (case insensitive)
             foreach ($fieldMappings as $field => $patterns) {
-                // Skip field if already used with high confidence
-                if (isset($usedFields[$field]) && $usedFields[$field] > 0.8) {
+                if (isset($usedFields[$field]))
                     continue;
-                }
 
                 foreach ($patterns as $pattern) {
-                    $score = $this->calculateSimilarity($headerLower, strtolower($pattern));
-
-                    // Increase minimum threshold to 0.6 for better accuracy
-                    if ($score >= 0.6 && $score > $bestScore) {
-                        $bestScore = $score;
+                    if (strcasecmp($headerTrimmed, $pattern) === 0) {
                         $bestMatch = $field;
+                        $bestScore = 1.0;
+                        break 2; // Perfect match found, exit both loops
+                    }
+                }
+            }
+
+            // Second pass: If no exact match, use fuzzy matching with higher threshold
+            if (!$bestMatch) {
+                foreach ($fieldMappings as $field => $patterns) {
+                    // Skip field if already used with high confidence
+                    if (isset($usedFields[$field]) && $usedFields[$field] > 0.9) {
+                        continue;
+                    }
+
+                    foreach ($patterns as $pattern) {
+                        $score = $this->calculateSimilarity($headerLower, strtolower($pattern));
+
+                        // Use higher threshold (0.8) for fuzzy matching to reduce errors
+                        if ($score >= 0.8 && $score > $bestScore) {
+                            $bestScore = $score;
+                            $bestMatch = $field;
+                        }
                     }
                 }
             }
@@ -1307,8 +1734,8 @@ class HB837Controller extends Controller
                 'confidence' => $bestScore
             ];
 
-            // Mark field as used if mapped with reasonable confidence
-            if ($bestMatch && $bestScore > 0.7) {
+            // Mark field as used if mapped with any confidence
+            if ($bestMatch) {
                 $usedFields[$bestMatch] = $bestScore;
             }
         }
@@ -1626,7 +2053,7 @@ class HB837Controller extends Controller
                 // Map status values
                 $statusMap = [
                     'not started' => 'not-started',
-                    'in progress' => 'in-progress',
+                    'in progress' => 'underway',
                     'in review' => 'in-review',
                     'completed' => 'completed'
                 ];
