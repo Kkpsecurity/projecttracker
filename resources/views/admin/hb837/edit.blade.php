@@ -46,8 +46,11 @@
                     <div class="card-header">
                         <h3 class="card-title">Edit: {{ $hb837->property_name }}</h3>
                         <div class="card-tools">
-                            <a href="{{ route('admin.hb837.pdf-report', $hb837->id) }}" class="btn btn-danger" target="_blank">
-                                <i class="fas fa-file-pdf"></i> PDF Report
+                            <a href="{{ route('admin.hb837.pdf-report', ['hb837' => $hb837->id]) }}" class="btn btn-danger" target="_blank" title="Generate HB837 report PDF">
+                                <i class="fas fa-file-pdf"></i> HB837 PDF
+                            </a>
+                            <a href="{{ route('admin.hb837.pdf-report', ['hb837' => $hb837->id, 'mode' => 'appendix']) }}" class="btn btn-warning" target="_blank" title="Generate Crime Report PDF (Appendix page)">
+                                <i class="fas fa-file-alt"></i> Crime Report PDF
                             </a>
                             <a href="{{ route('admin.hb837.show', $hb837->id) }}" class="btn btn-info">
                                 <i class="fas fa-eye"></i> View
@@ -67,53 +70,63 @@
                             <!-- Nav tabs -->
                             <ul class="nav nav-tabs bg-dark px-2 pt-2" id="editTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link text-light {{ $tab === 'general' ? 'active' : '' }}" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="{{ $tab === 'general' ? 'true' : 'false' }}">
-                                        <i class="fas fa-home"></i> General
+                                    <a class="nav-link text-light {{ $tab === 'general' ? 'active' : '' }}" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="{{ $tab === 'general' ? 'true' : 'false' }}" title="General">
+                                        <i class="fas fa-home"></i> Gen
                                     </a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link text-light {{ $tab === 'address' ? 'active' : '' }}" id="address-tab" data-toggle="tab" href="#address" role="tab" aria-controls="address" aria-selected="{{ $tab === 'address' ? 'true' : 'false' }}">
-                                        <i class="fas fa-map-marker-alt"></i> Address
+                                    <a class="nav-link text-light {{ $tab === 'address' ? 'active' : '' }}" id="address-tab" data-toggle="tab" href="#address" role="tab" aria-controls="address" aria-selected="{{ $tab === 'address' ? 'true' : 'false' }}" title="Address">
+                                        <i class="fas fa-map-marker-alt"></i> Addr
                                     </a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link text-light {{ $tab === 'contact' ? 'active' : '' }}" id="contact-tab" data-toggle="tab" href="#contact" role="tab" aria-controls="contact" aria-selected="{{ $tab === 'contact' ? 'true' : 'false' }}">
+                                    <a class="nav-link text-light {{ $tab === 'contact' ? 'active' : '' }}" id="contact-tab" data-toggle="tab" href="#contact" role="tab" aria-controls="contact" aria-selected="{{ $tab === 'contact' ? 'true' : 'false' }}" title="Contact">
                                         <i class="fas fa-users"></i> Contact
                                     </a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link text-light {{ $tab === 'financial' ? 'active' : '' }}" id="financial-tab" data-toggle="tab" href="#financial" role="tab" aria-controls="financial" aria-selected="{{ $tab === 'financial' ? 'true' : 'false' }}">
-                                        <i class="fas fa-dollar-sign"></i> Financial
+                                    <a class="nav-link text-light {{ $tab === 'financial' ? 'active' : '' }}" id="financial-tab" data-toggle="tab" href="#financial" role="tab" aria-controls="financial" aria-selected="{{ $tab === 'financial' ? 'true' : 'false' }}" title="Financial">
+                                        <i class="fas fa-dollar-sign"></i> Fin
                                     </a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link text-light {{ $tab === 'notes' ? 'active' : '' }}" id="notes-tab" data-toggle="tab" href="#notes" role="tab" aria-controls="notes" aria-selected="{{ $tab === 'notes' ? 'true' : 'false' }}">
+                                    <a class="nav-link text-light {{ $tab === 'notes' ? 'active' : '' }}" id="notes-tab" data-toggle="tab" href="#notes" role="tab" aria-controls="notes" aria-selected="{{ $tab === 'notes' ? 'true' : 'false' }}" title="Notes">
                                         <i class="fas fa-sticky-note"></i> Notes
                                     </a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link text-light {{ $tab === 'findings' ? 'active' : '' }}" id="findings-tab" data-toggle="tab" href="#findings" role="tab" aria-controls="findings" aria-selected="{{ $tab === 'findings' ? 'true' : 'false' }}">
+                                    <a class="nav-link text-light {{ $tab === 'findings' ? 'active' : '' }}" id="findings-tab" data-toggle="tab" href="#findings" role="tab" aria-controls="findings" aria-selected="{{ $tab === 'findings' ? 'true' : 'false' }}" title="Findings">
                                         <i class="fas fa-clipboard-list"></i> Findings
                                     </a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link text-light {{ $tab === 'crime' ? 'active' : '' }}" id="crime-tab" data-toggle="tab" href="#crime" role="tab" aria-controls="crime" aria-selected="{{ $tab === 'crime' ? 'true' : 'false' }}">
-                                        <i class="fas fa-shield-alt"></i> Crime Stats
+                                    <a class="nav-link text-light {{ $tab === 'risk-measures' ? 'active' : '' }}" id="risk-measures-tab" data-toggle="tab" href="#risk-measures" role="tab" aria-controls="risk-measures" aria-selected="{{ $tab === 'risk-measures' ? 'true' : 'false' }}" title="Risk Measures">
+                                        <i class="fas fa-list-ol"></i> Risk
                                     </a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link text-light {{ $tab === 'files' ? 'active' : '' }}" id="files-tab" data-toggle="tab" href="#files" role="tab" aria-controls="files" aria-selected="{{ $tab === 'files' ? 'true' : 'false' }}">
-                                        <i class="fas fa-file-alt"></i> Files
+                                    <a class="nav-link text-light {{ $tab === 'recent-incidents' ? 'active' : '' }}" id="recent-incidents-tab" data-toggle="tab" href="#recent-incidents" role="tab" aria-controls="recent-incidents" aria-selected="{{ $tab === 'recent-incidents' ? 'true' : 'false' }}" title="Recent Incidents">
+                                        <i class="fas fa-exclamation-circle"></i> Incidents
                                     </a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link text-light {{ $tab === 'maps' ? 'active' : '' }}" id="maps-tab" data-toggle="tab" href="#maps" role="tab" aria-controls="maps" aria-selected="{{ $tab === 'maps' ? 'true' : 'false' }}">
+                                    <a class="nav-link text-light {{ $tab === 'statute-conditions' ? 'active' : '' }}" id="statute-conditions-tab" data-toggle="tab" href="#statute-conditions" role="tab" aria-controls="statute-conditions" aria-selected="{{ $tab === 'statute-conditions' ? 'true' : 'false' }}" title="Statute Conditions">
+                                        <i class="fas fa-balance-scale"></i> Statutes
+                                    </a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link text-light {{ $tab === 'crime' ? 'active' : '' }}" id="crime-tab" data-toggle="tab" href="#crime" role="tab" aria-controls="crime" aria-selected="{{ $tab === 'crime' ? 'true' : 'false' }}" title="Crime Stats">
+                                        <i class="fas fa-shield-alt"></i> Crime
+                                    </a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link text-light {{ $tab === 'files' ? 'active' : '' }}" id="files-tab" data-toggle="tab" href="#files" role="tab" aria-controls="files" aria-selected="{{ $tab === 'files' ? 'true' : 'false' }}" title="Crime Report Files">
+                                        <i class="fas fa-file-alt"></i> Crime Files
+                                    </a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link text-light {{ $tab === 'maps' ? 'active' : '' }}" id="maps-tab" data-toggle="tab" href="#maps" role="tab" aria-controls="maps" aria-selected="{{ $tab === 'maps' ? 'true' : 'false' }}" title="Maps">
                                         <i class="fas fa-map"></i> Maps
-                                    </a>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <a class="nav-link text-light {{ $tab === 'custom' ? 'active' : '' }}" id="custom-tab" data-toggle="tab" href="#custom" role="tab" aria-controls="custom" aria-selected="{{ $tab === 'custom' ? 'true' : 'false' }}">
-                                        <i class="fas fa-wrench"></i> Custom Fields
                                     </a>
                                 </li>
                             </ul>
@@ -150,6 +163,21 @@
                                     @include('admin.hb837.partials.tabs.findings')
                                 </div>
 
+                                <!-- Risk Measures Tab -->
+                                <div class="tab-pane fade {{ $tab === 'risk-measures' ? 'show active' : '' }}" id="risk-measures" role="tabpanel" aria-labelledby="risk-measures-tab">
+                                    @include('admin.hb837.partials.tabs.risk-measures')
+                                </div>
+
+                                <!-- Recent Incidents Tab -->
+                                <div class="tab-pane fade {{ $tab === 'recent-incidents' ? 'show active' : '' }}" id="recent-incidents" role="tabpanel" aria-labelledby="recent-incidents-tab">
+                                    @include('admin.hb837.partials.tabs.recent-incidents')
+                                </div>
+
+                                <!-- Statute Conditions Tab -->
+                                <div class="tab-pane fade {{ $tab === 'statute-conditions' ? 'show active' : '' }}" id="statute-conditions" role="tabpanel" aria-labelledby="statute-conditions-tab">
+                                    @include('admin.hb837.partials.tabs.statute-conditions')
+                                </div>
+
                                 <!-- Crime Stats Tab -->
                                 <div class="tab-pane fade {{ $tab === 'crime' ? 'show active' : '' }}" id="crime" role="tabpanel" aria-labelledby="crime-tab">
                                     @include('admin.hb837.partials.tabs.crime')
@@ -163,11 +191,6 @@
                                 <!-- Maps Tab -->
                                 <div class="tab-pane fade {{ $tab === 'maps' ? 'show active' : '' }}" id="maps" role="tabpanel" aria-labelledby="maps-tab">
                                     @include('admin.hb837.partials.tabs.maps')
-                                </div>
-
-                                <!-- Custom Fields Tab -->
-                                <div class="tab-pane fade {{ $tab === 'custom' ? 'show active' : '' }}" id="custom" role="tabpanel" aria-labelledby="custom-tab">
-                                    @include('admin.hb837.partials.tabs.custom')
                                 </div>
                             </div>
 
@@ -192,7 +215,20 @@
 
 @section('js')
     <script>
-        $(document).ready(function() {
+        (function initHb837EditPage(attempt) {
+            attempt = attempt || 0;
+
+            // Some layouts load jQuery after inline scripts; avoid "$ is not defined".
+            if (!window.jQuery) {
+                if (attempt < 100) {
+                    return window.setTimeout(function() { initHb837EditPage(attempt + 1); }, 50);
+                }
+                return;
+            }
+
+            var $ = window.jQuery;
+
+            $(function() {
             const storageKey = 'hb837_edit_active_tab_{{ $hb837->id }}';
 
             // Auto-calculate project net profit
@@ -386,12 +422,20 @@
                     const category = $row.find('.crime-offense-category').val();
                     const count = $row.find('.crime-offense-count').val();
                     const rate = $row.find('.crime-offense-rate').val();
+                    const stateRate = $row.find('.crime-offense-state-rate').val();
+                    const nationalRate = $row.find('.crime-offense-national-rate').val();
+                    const compare = $row.find('.crime-offense-compare').val();
+                    const sg = $row.find('.crime-offense-sg').val();
 
                     offenses.push({
                         label: label,
                         category: category,
                         count: count === '' ? null : parseInt(count, 10),
                         rate_per_1000: rate === '' ? null : parseFloat(rate),
+                        state_rate_per_1000: stateRate === '' ? null : parseFloat(stateRate),
+                        national_rate_per_1000: nationalRate === '' ? null : parseFloat(nationalRate),
+                        comparison_to_state: compare === '' ? null : compare,
+                        securitygauge_score: sg === '' ? null : parseInt(sg, 10),
                     });
                 });
 
@@ -402,6 +446,11 @@
                     crime_risk: $('#crime_risk').val(),
                     is_reviewed: $('#crime_is_reviewed').is(':checked') ? 1 : 0,
                     offenses: offenses,
+                    crime_risk_trends: {
+                        total_crime: $('#crime_trend_total').val() || null,
+                        violent_crime: $('#crime_trend_violent').val() || null,
+                        property_crime: $('#crime_trend_property').val() || null,
+                    },
                 };
 
                 const $alert = $('#crime-stats-alert');
@@ -437,6 +486,7 @@
                     }
                 });
             });
-        });
+            });
+        })(0);
     </script>
 @stop

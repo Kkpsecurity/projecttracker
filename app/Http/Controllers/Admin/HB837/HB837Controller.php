@@ -595,9 +595,16 @@ class HB837Controller extends Controller
     /**
      * Generate PDF report for a specific HB837 record
      */
-    public function generatePdfReport(HB837 $hb837)
+    public function generatePdfReport(\Illuminate\Http\Request $request, HB837 $hb837)
     {
-        return app(\App\Services\HB837\HB837ReportService::class)->generatePdfReport($hb837);
+        $mode = strtolower((string) $request->query('mode', ''));
+        $reportService = app(\App\Services\HB837\HB837ReportService::class);
+
+        if ($mode === 'appendix') {
+            return $reportService->generateCrimeReportPdf($hb837);
+        }
+
+        return $reportService->generatePdfReport($hb837);
     }
 
     /**
@@ -1102,9 +1109,35 @@ class HB837Controller extends Controller
      */
     public function uploadFile(Request $request, HB837 $hb837)
     {
+        $allowedCategories = (array) config('hb837.file_categories', []);
+        // Do not allow users to upload into system-only categories.
+        $allowedCategories = array_values(array_diff($allowedCategories, [
+            'generated_report',
+            'report_template',
+            'report_example',
+        ]));
+        $allowedPositions = (array) config('hb837.file_positions', []);
+
+        $requestedCategory = trim((string) ($request->input('file_category') ?? ''));
+
+        $fileRules = ['required', 'file', 'max:10240']; // 10MB max
+        if ($requestedCategory === 'crime_report') {
+            // MIME types vary by browser; enforce by extension.
+            $fileRules[] = 'mimes:pdf';
+        }
+        if ($requestedCategory === 'appendix') {
+            $fileRules[] = 'image';
+        }
+
         $request->validate([
-            'file' => 'required|file|max:10240', // 10MB max
-            'description' => 'nullable|string|max:255'
+            'file' => $fileRules,
+            'file_category' => empty($allowedCategories)
+                ? 'nullable|string|max:50'
+                : 'nullable|string|in:' . implode(',', $allowedCategories),
+            'file_position' => empty($allowedPositions)
+                ? 'nullable|string|max:50'
+                : 'nullable|string|in:' . implode(',', $allowedPositions) . '|required_if:file_category,appendix',
+            'description' => 'nullable|string|max:2000'
         ]);
 
         try {
@@ -1112,16 +1145,59 @@ class HB837Controller extends Controller
             $filename = time() . '_' . $file->getClientOriginalName();
             $path = $file->storeAs('hb837/' . $hb837->id, $filename, 'public');
 
-            HB837File::create([
+            $fileCategory = trim((string) ($request->input('file_category') ?? ''));
+            if ($fileCategory === '') {
+                $fileCategory = 'other';
+            }
+
+            $filePosition = trim((string) ($request->input('file_position') ?? ''));
+            if ($filePosition === '') {
+                $filePosition = null;
+            }
+
+            // If a position is specified, treat it as a single-slot upload and replace any existing file in that slot.
+            $existing = null;
+            if ($filePosition) {
+                $existing = HB837File::query()
+                    ->where('hb837_id', $hb837->id)
+                    ->where('file_position', $filePosition)
+                    ->first();
+
+                if ($existing && Storage::disk('public')->exists($existing->file_path)) {
+                    Storage::disk('public')->delete($existing->file_path);
+                }
+            }
+
+            $payload = [
                 'hb837_id' => $hb837->id,
-                'filename' => $filename,                           // stored filename with timestamp
+                'filename' => $filename,                               // stored filename with timestamp
                 'original_filename' => $file->getClientOriginalName(), // original filename from user
                 'file_path' => $path,
                 'file_size' => $file->getSize(),
                 'mime_type' => $file->getClientMimeType(),
+                'file_category' => $fileCategory,
+                'file_position' => $filePosition,
                 'description' => $request->description,
-                'uploaded_by' => \Illuminate\Support\Facades\Auth::id()
-            ]);
+                'uploaded_by' => \Illuminate\Support\Facades\Auth::id(),
+            ];
+
+            if ($filePosition) {
+                $hb837File = HB837File::updateOrCreate(
+                    ['hb837_id' => $hb837->id, 'file_position' => $filePosition],
+                    $payload
+                );
+            } else {
+                $hb837File = HB837File::create($payload);
+            }
+
+            // Auto-extract crime stats for uploaded crime report PDFs.
+            $original = strtolower((string) ($hb837File->original_filename ?? $hb837File->filename ?? ''));
+            $mime = strtolower((string) ($hb837File->mime_type ?? ''));
+            $looksLikePdf = str_contains($mime, 'pdf') || str_ends_with($original, '.pdf');
+
+            if ($fileCategory === 'crime_report' && $looksLikePdf) {
+                \App\Jobs\HB837\ExtractHB837CrimeStatsJob::dispatch($hb837File->id);
+            }
 
             return redirect()->back()->with('success', 'File uploaded successfully!');
 
@@ -1141,7 +1217,20 @@ class HB837Controller extends Controller
         }
 
         $fullPath = Storage::disk('public')->path($file->file_path);
-        return Response::download($fullPath, $file->original_filename);
+
+        $original = (string) ($file->original_filename ?? $file->filename ?? 'file');
+        $mime = strtolower((string) ($file->mime_type ?? ''));
+        $isPdf = str_contains($mime, 'pdf') || str_ends_with(strtolower($original), '.pdf');
+
+        // PDFs are more useful opened inline (user can still save from browser).
+        if ($isPdf) {
+            return response()->file($fullPath, [
+                'Content-Type' => $file->mime_type ?: 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . addslashes($original) . '"',
+            ]);
+        }
+
+        return Response::download($fullPath, $original);
     }
 
     /**
