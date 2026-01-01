@@ -6,8 +6,8 @@
     <div class="d-flex justify-content-between align-items-center">
         <h1><i class="fas fa-plus-circle"></i> Create New Plot</h1>
         <div>
-            <a href="{{ route('admin.plots.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Plots
+            <a href="{{ route('admin.plot-groups-management.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Group Plots
             </a>
             <a href="{{ route('admin.maps.index') }}" class="btn btn-info">
                 <i class="fas fa-map"></i> View Map
@@ -229,7 +229,7 @@
                         <button type="submit" class="btn btn-primary btn-block">
                             <i class="fas fa-save"></i> Create Plot
                         </button>
-                        <a href="{{ route('admin.plots.index') }}" class="btn btn-secondary btn-block">
+                        <a href="{{ route('admin.plot-groups-management.index') }}" class="btn btn-secondary btn-block">
                             <i class="fas fa-times"></i> Cancel
                         </a>
                     </div>

@@ -158,10 +158,10 @@
                     },
                     {
                         data: 'plot_address',
-                        name: 'plot_address.address_line_1',
+                        name: 'plot_address.street_address',
                         render: function(data, type, row) {
-                            if (data && data.address_line_1) {
-                                return `${data.address_line_1}<br><small class="text-muted">${data.city}, ${data.state} ${data.zip_code}</small>`;
+                            if (data && data.street_address) {
+                                return `${data.street_address}<br><small class="text-muted">${data.city}, ${data.state} ${data.zip_code}</small>`;
                             }
                             return '<em class="text-muted">No address</em>';
                         }

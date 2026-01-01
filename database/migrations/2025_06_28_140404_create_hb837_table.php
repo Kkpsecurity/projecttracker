@@ -68,14 +68,14 @@ return new class extends Migration
             $table->timestamps();
 
             // Indexes for performance and common queries
-            $table->index('report_status');
+            // Note: report_status index removed due to enum constraint conflicts
+            // $table->index('report_status');
             $table->index('contracting_status');
             $table->index('assigned_consultant_id');
             $table->index('scheduled_date_of_inspection');
             $table->index('property_name');
             $table->index('county');
             $table->index('macro_client');
-            $table->index(['report_status', 'contracting_status']);
             $table->index('created_at');
         });
     }

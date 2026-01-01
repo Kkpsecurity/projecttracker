@@ -3,7 +3,7 @@
     <div class="modal-dialog">
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-danger text-light">
-                <h5 class="modal-title"><i class="fa fa-history me-2"></i>Restore Backup – {{ $backup->name }}</h5>
+                <h5 class="modal-title text-shadow-sm"><i class="fa fa-history me-2"></i>Restore Backup – {{ $backup->name }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 

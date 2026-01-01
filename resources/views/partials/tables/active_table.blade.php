@@ -28,7 +28,6 @@
         'property_name',
         'management_company',
         'macro_client',
-        'billing_req_sent',
         'report_submitted',
         'scheduled_date_of_inspection',
         'days_until_renewal',

@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="fas fa-save me-2"></i>Create New Backup</h5>
+                <h5 class="modal-title text-shadow-sm"><i class="fas fa-save me-2"></i>Create New Backup</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                     aria-label="Close"></button>
             </div>

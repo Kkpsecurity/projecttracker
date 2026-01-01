@@ -5,7 +5,7 @@
 @section('content_header')
     <div class="row">
         <div class="col-sm-6">
-            <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+            <h1 class="text-shadow-md"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
         </div>
         <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
@@ -34,7 +34,7 @@
         <div class="col-lg-3 col-6">
             <div class="small-box bg-info">
                 <div class="inner">
-                    <h3>{{ App\Models\HB837::count() }}</h3>
+                    <h3 class="text-shadow-sm">{{ App\Models\HB837::count() }}</h3>
                     <p>HB837 Records</p>
                 </div>
                 <div class="icon">
@@ -48,7 +48,7 @@
         <div class="col-lg-3 col-6">
             <div class="small-box bg-success">
                 <div class="inner">
-                    <h3>{{ App\Models\User::count() }}</h3>
+                    <h3 class="text-shadow-sm">{{ App\Models\User::count() }}</h3>
                     <p>Total Users</p>
                 </div>
                 <div class="icon">
@@ -62,13 +62,13 @@
         <div class="col-lg-3 col-6">
             <div class="small-box bg-warning">
                 <div class="inner">
-                    <h3>{{ App\Models\HB837::where('report_status', 'in-progress')->count() }}</h3>
+                    <h3 class="text-shadow-sm">{{ App\Models\HB837::where('report_status', 'in-progress')->count() }}</h3>
                     <p>Active Projects</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-project-diagram"></i>
                 </div>
-                <a href="{{ route('admin.hb837.index', 'active') }}" class="small-box-footer">
+                <a href="{{ route('admin.hb837.index') }}" class="small-box-footer">
                     More info <i class="fas fa-arrow-circle-right"></i>
                 </a>
             </div>
@@ -76,13 +76,13 @@
         <div class="col-lg-3 col-6">
             <div class="small-box bg-danger">
                 <div class="inner">
-                    <h3>{{ App\Models\HB837::where('report_status', 'completed')->count() }}</h3>
+                    <h3 class="text-shadow-sm">{{ App\Models\HB837::where('report_status', 'completed')->count() }}</h3>
                     <p>Completed</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-check-circle"></i>
                 </div>
-                <a href="{{ route('admin.hb837.index', 'completed') }}" class="small-box-footer">
+                <a href="{{ route('admin.hb837.index') }}" class="small-box-footer">
                     More info <i class="fas fa-arrow-circle-right"></i>
                 </a>
             </div>
@@ -94,7 +94,7 @@
         <div class="col-12">
             <div class="card card-success">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-rocket"></i> Latest System Improvements</h3>
+                    <h3 class="card-title text-shadow-sm"><i class="fas fa-rocket"></i> Latest System Improvements</h3>
                     <div class="card-tools">
                         <span class="badge badge-success">{{ date('Y-m-d') }}</span>
                     </div>
@@ -151,7 +151,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h3>
+                    <h3 class="card-title text-shadow-sm"><i class="fas fa-bolt"></i> Quick Actions</h3>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -198,7 +198,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-server"></i> System Status</h3>
+                    <h3 class="card-title text-shadow-sm"><i class="fas fa-server"></i> System Status</h3>
                 </div>
                 <div class="card-body">
                     <div class="info-box">
@@ -230,7 +230,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-clock"></i> Recent Activity</h3>
+                    <h3 class="card-title text-shadow-sm"><i class="fas fa-clock"></i> Recent Activity</h3>
                 </div>
                 <div class="card-body">
                     <div class="timeline">
@@ -241,7 +241,7 @@
                             <i class="fas fa-user bg-blue"></i>
                             <div class="timeline-item">
                                 <span class="time"><i class="fas fa-clock"></i> {{ now()->format('H:i') }}</span>
-                                <h3 class="timeline-header">{{ Auth::user()->name }} logged in</h3>
+                                <h3 class="timeline-header text-shadow-sm">{{ Auth::user()->name }} logged in</h3>
                                 <div class="timeline-body">
                                     User login from {{ request()->ip() }}
                                 </div>
@@ -251,7 +251,7 @@
                             <i class="fas fa-question-circle bg-success"></i>
                             <div class="timeline-item">
                                 <span class="time"><i class="fas fa-clock"></i> {{ now()->subMinutes(10)->format('H:i') }}</span>
-                                <h3 class="timeline-header">Help Center Deployed</h3>
+                                <h3 class="timeline-header text-shadow-sm">Help Center Deployed</h3>
                                 <div class="timeline-body">
                                     New comprehensive help system with guides, FAQ, and support resources
                                 </div>
@@ -261,7 +261,7 @@
                             <i class="fas fa-bars bg-info"></i>
                             <div class="timeline-item">
                                 <span class="time"><i class="fas fa-clock"></i> {{ now()->subMinutes(15)->format('H:i') }}</span>
-                                <h3 class="timeline-header">Menu System Updated</h3>
+                                <h3 class="timeline-header text-shadow-sm">Menu System Updated</h3>
                                 <div class="timeline-body">
                                     Removed redundant settings items and optimized navigation structure
                                 </div>
@@ -271,7 +271,7 @@
                             <i class="fas fa-database bg-green"></i>
                             <div class="timeline-item">
                                 <span class="time"><i class="fas fa-clock"></i> {{ now()->subMinutes(30)->format('H:i') }}</span>
-                                <h3 class="timeline-header">System Cache Cleared</h3>
+                                <h3 class="timeline-header text-shadow-sm">System Cache Cleared</h3>
                                 <div class="timeline-body">
                                     Configuration and route caches refreshed for optimal performance
                                 </div>

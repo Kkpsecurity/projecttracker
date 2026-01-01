@@ -93,6 +93,21 @@ class HB837 extends Model
         return $this->hasMany(HB837Finding::class, 'hb837_id');
     }
 
+    public function riskMeasures(): HasMany
+    {
+        return $this->hasMany(HB837RiskMeasure::class, 'hb837_id');
+    }
+
+    public function recentIncidents(): HasMany
+    {
+        return $this->hasMany(HB837RecentIncident::class, 'hb837_id');
+    }
+
+    public function statuteConditions(): HasMany
+    {
+        return $this->hasMany(HB837StatuteCondition::class, 'hb837_id');
+    }
+
     public function crimeStats(): HasOne
     {
         return $this->hasOne(HB837CrimeStat::class, 'hb837_id');

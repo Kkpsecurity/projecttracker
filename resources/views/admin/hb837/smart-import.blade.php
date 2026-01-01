@@ -395,6 +395,112 @@ html {
     min-width: 150px;
 }
 
+/* Enhanced Progress Section Styling */
+#progress-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #007bff;
+    border-radius: 12px;
+    padding: 30px;
+    margin: 20px 0;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+#progress-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #007bff, transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+#progress-section h4 {
+    color: #495057;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+#progress-text {
+    font-size: 1.1rem;
+    color: #007bff;
+    font-weight: 500;
+    margin-bottom: 10px;
+    display: block;
+}
+
+#progress-percentage {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #28a745;
+    margin-left: 10px;
+}
+
+#progress-section .progress {
+    height: 20px;
+    background-color: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 15px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#progress-bar {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    height: 100%;
+    transition: width 0.6s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background-image: linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.2) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.2) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 30px 30px;
+    animation: progressStripes 1s linear infinite;
+}
+
+@keyframes progressStripes {
+    0% { background-position: 0 0; }
+    100% { background-position: 30px 0; }
+}
+
+/* Upload progress icon */
+#progress-section .fa-spinner {
+    font-size: 2rem;
+    color: #007bff;
+    margin-bottom: 15px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* Results styling */
 .result-summary {
     display: flex;
@@ -848,25 +954,42 @@ $(document).ready(function() {
                 </div>
             </div>
 
-            <h6><i class="fas fa-map"></i> Column Mapping</h6>
+            <div class="mapping-controls">
+                <h6><i class="fas fa-map"></i> Column Mapping</h6>
+                <div class="form-check form-check-inline mb-2">
+                    <input class="form-check-input" type="checkbox" id="hideUnmapped" checked>
+                    <label class="form-check-label" for="hideUnmapped">
+                        Hide unmapped fields (0% confidence)
+                    </label>
+                </div>
+            </div>
+            <div class="mapping-results">
         `;
 
-        // Add column mappings
+        // Add column mappings with filtering
         data.mapping.forEach(function(map) {
+            // Skip unmapped fields if hiding is enabled
+            const hideUnmapped = true; // Default to hiding unmapped fields
+            if (hideUnmapped && map.confidence === 0) {
+                return; // Skip this mapping
+            }
+            
             const cssClass = map.confidence > 0.8 ? 'mapping-result' :
                            map.confidence > 0.5 ? 'mapping-result warning' : 'mapping-result error';
-
+           
             html += `
                 <div class="${cssClass}">
                     <strong>${map.source_column}</strong> → ${map.target_field}
                     <span class="float-right">
                         <span class="badge badge-${map.confidence > 0.8 ? 'success' : map.confidence > 0.5 ? 'warning' : 'danger'}">
                             ${Math.round(map.confidence * 100)}% confidence
-                        </span>
+                        </span>                    
                     </span>
                 </div>
             `;
         });
+        
+        html += '</div>'; // Close mapping-results container
 
         // Add warnings if any
         if (data.warnings.length > 0) {
@@ -892,6 +1015,40 @@ $(document).ready(function() {
         `;
 
         $('#analysis-content').html(html);
+        
+        // Add event listener for the hide unmapped checkbox
+        $('#hideUnmapped').on('change', function() {
+            renderMappings(data);
+        });
+    }
+    
+    function renderMappings(data) {
+        const hideUnmapped = $('#hideUnmapped').is(':checked');
+        let mappingHtml = '';
+        
+        data.mapping.forEach(function(map) {
+            // Skip unmapped fields if hiding is enabled
+            if (hideUnmapped && map.confidence === 0) {
+                return; // Skip this mapping
+            }
+            
+            const cssClass = map.confidence > 0.8 ? 'mapping-result' :
+                           map.confidence > 0.5 ? 'mapping-result warning' : 'mapping-result error';
+
+            mappingHtml += `
+                <div class="${cssClass}">
+                    <strong>${map.source_column}</strong> → ${map.target_field}
+                    <span class="float-right">
+                        <span class="badge badge-${map.confidence > 0.8 ? 'success' : map.confidence > 0.5 ? 'warning' : 'danger'}">
+                            ${Math.round(map.confidence * 100)}% confidence
+                        </span>
+                    </span>
+                </div>
+            `;
+        });
+        
+        // Update only the mappings container
+        $('.mapping-results').html(mappingHtml);
     }
 
     window.showPreview = function() {
@@ -960,7 +1117,29 @@ $(document).ready(function() {
             return;
         }
 
-        showProgress('Importing data...');
+        // Hide the preview section and show loading state
+        $('#preview-section').hide();
+        showProgress('Preparing import...');
+        
+        // Add a more detailed progress simulation for upload
+        let progress = 0;
+        const progressSteps = [
+            { percent: 10, text: 'Validating data...' },
+            { percent: 25, text: 'Processing records...' },
+            { percent: 40, text: 'Importing data...' },
+            { percent: 60, text: 'Updating database...' },
+            { percent: 80, text: 'Finalizing import...' },
+            { percent: 95, text: 'Almost done...' }
+        ];
+        
+        let stepIndex = 0;
+        const progressInterval = setInterval(() => {
+            if (stepIndex < progressSteps.length) {
+                const step = progressSteps[stepIndex];
+                updateProgress(step.percent, step.text);
+                stepIndex++;
+            }
+        }, 500);
 
         $.ajax({
             url: '{{ route("admin.hb837.import.execute") }}',
@@ -970,8 +1149,14 @@ $(document).ready(function() {
                 _token: $('meta[name="csrf-token"]').attr('content')
             },
             success: function(response) {
-                hideProgress();
-                showImportResults(response);
+                clearInterval(progressInterval);
+                updateProgress(100, 'Import completed!');
+                
+                // Brief delay to show completion
+                setTimeout(() => {
+                    hideProgress();
+                    showImportResults(response);
+                }, 1000);
 
                 // Auto-redirect with countdown after showing results
                 if (response.redirect_url) {
@@ -992,7 +1177,9 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr, status, error) {
+                clearInterval(progressInterval);
                 hideProgress();
+                $('#preview-section').show(); // Show preview again on error
                 alert('Error during import: ' + (xhr.responseJSON?.message || error));
             }
         });

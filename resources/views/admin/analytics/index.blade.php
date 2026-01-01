@@ -547,26 +547,146 @@
 </style>
 @stop
 
+@section('adminlte_js')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js">
+/* Cache Buster: 2025-07-16 13:26:50 - jQuery fixes applied */
+</script>
+@stop
+
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-$(document).ready(function() {
+// Global safe jQuery implementation to prevent "$ is not defined" errors
+window.safeJQuery = function(callback) {
+    if (typeof jQuery !== 'undefined' && typeof $ !== 'undefined') {
+        return callback($);
+    } else {
+        console.warn('jQuery not available, skipping function');
+        return null;
+    }
+};
+
+// Override $ globally for safety
+window.$ = function() {
+    if (typeof jQuery !== 'undefined' && typeof jQuery.fn !== 'undefined') {
+        return jQuery.apply(this, arguments);
+    } else {
+        console.warn('jQuery not available, call ignored:', arguments);
+        return {
+            // Return a dummy object that won't break chaining
+            on: function() { return this; },
+            click: function() { return this; },
+            change: function() { return this; },
+            text: function() { return this; },
+            html: function() { return this; },
+            val: function() { return this; },
+            show: function() { return this; },
+            hide: function() { return this; },
+            addClass: function() { return this; },
+            removeClass: function() { return this; },
+            css: function() { return this; },
+            append: function() { return this; },
+            remove: function() { return this; },
+            serialize: function() { return ''; },
+            modal: function() { return this; },
+            next: function() { return this; },
+            parent: function() { return this; },
+            find: function() { return this; },
+            get: function() { 
+                return {
+                    done: function() { return this; },
+                    fail: function() { return this; }
+                };
+            }
+        };
+    }
+};
+
+// Ensure $.get is safe too
+window.$.get = function() {
+    if (typeof jQuery !== 'undefined' && typeof jQuery.get === 'function') {
+        return jQuery.get.apply(jQuery, arguments);
+    } else {
+        console.warn('jQuery.get not available, returning mock promise');
+        return {
+            done: function(callback) { 
+                console.warn('jQuery.get done callback skipped');
+                return this; 
+            },
+            fail: function(callback) { 
+                console.warn('jQuery.get fail callback skipped');
+                return this; 
+            }
+        };
+    }
+};
+
+// Wait for DOM and ensure jQuery is available
+document.addEventListener('DOMContentLoaded', function() {
+    // Give a small delay to ensure all scripts are loaded
+    setTimeout(function() {
+        if (typeof jQuery !== 'undefined') {
+            console.log('jQuery is available, restoring normal functionality');
+            window.$ = jQuery;
+            window.$.get = jQuery.get;
+            initializeAnalytics();
+        } else {
+            console.log('jQuery not available, loading it dynamically');
+            var script = document.createElement('script');
+            script.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
+            script.onload = function() {
+                console.log('jQuery loaded successfully');
+                window.$ = jQuery;
+                window.$.get = jQuery.get;
+                setTimeout(initializeAnalytics, 100);
+            };
+            document.head.appendChild(script);
+        }
+    }, 200);
+});
+
+function initializeAnalytics() {
     // Initialize real-time updates
     initializeRealtimeUpdates();
     
-    // Initialize charts when tabs are shown
-    $('#analytics-tabs a').on('shown.bs.tab', function (e) {
-        const target = $(e.target).attr("href");
-        if (target === '#projects') {
-            initializeProjectCharts();
-        } else if (target === '#team') {
-            initializeTeamCharts();
-        } else if (target === '#system') {
-            initializeSystemCharts();
-        } else if (target === '#financial') {
-            initializeFinancialCharts();
-        }
-    });
+    // Wrap all jQuery calls in safeJQuery
+    safeJQuery(function($) {
+        // Initialize charts when tabs are shown
+        $('#analytics-tabs a').on('shown.bs.tab', function (e) {
+            const target = $(e.target).attr("href");
+            if (target === '#projects') {
+                initializeProjectCharts();
+            } else if (target === '#team') {
+                initializeTeamCharts();
+            } else if (target === '#system') {
+                initializeSystemCharts();
+            } else if (target === '#financial') {
+                initializeFinancialCharts();
+            }
+        });
+        
+        // Handle date range filter changes
+        $('#date_range').change(function() {
+            if ($(this).val() === 'custom') {
+                $('#custom-date-range').show();
+            } else {
+                $('#custom-date-range').hide();
+            }
+        });
+        
+        // Apply filters
+        $('#apply-filters').click(function() {
+            const filters = {
+                date_range: $('#date_range').val(),
+                consultant: $('#consultant_filter').val(),
+                status: $('#status_filter').val(),
+                start_date: $('#start_date').val(),
+                end_date: $('#end_date').val()
+            };
+            
+            applyAnalyticsFilters(filters);
+        });
+    }); // End safeJQuery wrapper
     
     // Initialize default charts
     initializeProjectCharts();
@@ -574,38 +694,18 @@ $(document).ready(function() {
     // Load performance benchmarks
     setTimeout(loadBenchmarks, 1000);
     
-    // Handle date range filter changes
-    $('#date_range').change(function() {
-        if ($(this).val() === 'custom') {
-            $('#custom-date-range').show();
-        } else {
-            $('#custom-date-range').hide();
-        }
-    });
-    
-    // Apply filters
-    $('#apply-filters').click(function() {
-        const filters = {
-            date_range: $('#date_range').val(),
-            consultant: $('#consultant_filter').val(),
-            status: $('#status_filter').val(),
-            start_date: $('#start_date').val(),
-            end_date: $('#end_date').val()
-        };
-        
-        applyAnalyticsFilters(filters);
-    });
-    
     // Load consultants for filter dropdown
     loadConsultantsForFilter();
-});
+}
 
 // Modal and detailed analytics functionality
 function showProjectDetails() {
-    $('#projectDetailsModal').modal('show');
-    
-    // Load detailed analytics when modal is shown
-    loadDetailedProjectAnalytics();
+    safeJQuery(function($) {
+        $('#projectDetailsModal').modal('show');
+        
+        // Load detailed analytics when modal is shown
+        loadDetailedProjectAnalytics();
+    });
 }
 
 function loadDetailedProjectAnalytics() {
@@ -673,9 +773,11 @@ function loadDetailedProjectAnalytics() {
     }
     
     // Update KPI values
-    $('#avgProjectDuration').text('24 days');
-    $('#onTimeDeliveryRate').text('87%');
-    $('#projectsAtRisk').text('3');
+    safeJQuery(function($) {
+        $('#avgProjectDuration').text('24 days');
+        $('#onTimeDeliveryRate').text('87%');
+        $('#projectsAtRisk').text('3');
+    });
 }
 
 function exportDetailedData() {
@@ -683,25 +785,36 @@ function exportDetailedData() {
     window.open('{{ route("admin.analytics.export", ["type" => "projects", "format" => "csv", "detailed" => "true"]) }}');
 }
 
-// Filter functionality
-$('#date_range').on('change', function() {
-    if ($(this).val() === 'custom') {
-        $('#custom-date-range').show();
-    } else {
-        $('#custom-date-range').hide();
-    }
-});
+// Additional jQuery functionality (safe wrapper)
+function initializeAdditionalFeatures() {
+    safeJQuery(function($) {
+        // Filter functionality
+        $('#date_range').on('change', function() {
+            if ($(this).val() === 'custom') {
+                $('#custom-date-range').show();
+            } else {
+                $('#custom-date-range').hide();
+            }
+        });
 
-$('#apply-filters').on('click', function() {
-    const filters = $('#analytics-filters').serialize();
-    refreshAnalyticsData(filters);
+        $('#apply-filters').on('click', function() {
+            const filters = $('#analytics-filters').serialize();
+            refreshAnalyticsData(filters);
+        });
+    });
+}
+
+// Initialize additional features when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initializeAdditionalFeatures, 500);
 });
 
 function refreshAnalyticsData(filters) {
-    // Show loading indicators
-    $('.card-body').append('<div class="overlay"><i class="fas fa-2x fa-sync fa-spin"></i></div>');
-    
-    // Fetch filtered data
+    safeJQuery(function($) {
+        // Show loading indicators
+        $('.card-body').append('<div class="overlay"><i class="fas fa-2x fa-sync fa-spin"></i></div>');
+        
+        // Fetch filtered data
     fetch('{{ route("admin.analytics.index") }}?' + filters)
         .then(response => response.text())
         .then(html => {
@@ -735,6 +848,7 @@ function refreshAnalyticsData(filters) {
             $('.overlay').remove();
             toastr.error('Failed to refresh analytics data');
         });
+    }); // End safeJQuery wrapper
 }
 
 function destroyExistingCharts() {
@@ -744,27 +858,32 @@ function destroyExistingCharts() {
     });
 }
 
-// Load consultant options for filter
-fetch('{{ route("admin.analytics.consultant-metrics") }}')
-    .then(response => response.json())
-    .then(data => {
-        const consultantSelect = $('#consultant_filter');
-        if (data.consultant_workload) {
-            data.consultant_workload.forEach(consultant => {
-                consultantSelect.append(`<option value="${consultant.consultant_id}">${consultant.consultant_name}</option>`);
+function loadConsultantsForFilter() {
+    // Load consultant options for filter
+    fetch('{{ route("admin.analytics.consultant-metrics") }}')
+        .then(response => response.json())
+        .then(data => {
+            safeJQuery(function($) {
+                const consultantSelect = $('#consultant_filter');
+                if (data.consultant_workload) {
+                    data.consultant_workload.forEach(consultant => {
+                        consultantSelect.append(`<option value="${consultant.consultant_id}">${consultant.consultant_name}</option>`);
+                    });
+                }
             });
-        }
-    })
-    .catch(error => {
-        console.error('Error loading consultants:', error);
-    });
+        })
+        .catch(error => {
+            console.error('Error loading consultants:', error);
+        });
+}
 
 function initializeRealtimeUpdates() {
     // Update real-time stats every 30 seconds
     setInterval(function() {
-        $.get('{{ route("admin.analytics.realtime-stats") }}')
-            .done(function(data) {
-                // Update status indicators
+        safeJQuery(function($) {
+            $.get('{{ route("admin.analytics.realtime-stats") }}')
+                .done(function(data) {
+                    // Update status indicators
                 $('#active-projects-count').text(data.active_projects);
                 $('#pending-reviews-count').text(data.pending_reviews);
                 $('#completed-today-count').text(data.completed_today);
@@ -795,16 +914,19 @@ function initializeRealtimeUpdates() {
                 $('#live-indicator').removeClass('badge-success').addClass('badge-danger');
                 console.error('Failed to update real-time stats');
             });
+        }); // End safeJQuery wrapper
     }, 30000);
     
     // Initial update
     setTimeout(function() {
-        $.get('{{ route("admin.analytics.realtime-stats") }}')
-            .done(function(data) {
-                $('#active-projects-count').text(data.active_projects);
-                $('#pending-reviews-count').text(data.pending_reviews);
-                $('#system-health-score').text(data.system_health);
-            });
+        safeJQuery(function($) {
+            $.get('{{ route("admin.analytics.realtime-stats") }}')
+                .done(function(data) {
+                    $('#active-projects-count').text(data.active_projects);
+                    $('#pending-reviews-count').text(data.pending_reviews);
+                    $('#system-health-score').text(data.system_health);
+                });
+        });
     }, 2000);
 }
 
@@ -1202,32 +1324,33 @@ function initializeFinancialCharts() {
 
 // Performance comparison functions
 function loadBenchmarks() {
-    $.get('{{ route("admin.analytics.benchmarks") }}')
-        .done(function(data) {
-            // Update current vs last month data
-            $('#current-month-projects').text(data.current_month.total_projects);
-            $('#last-month-projects').text(data.last_month.total_projects);
-            
-            // Calculate and show completion rate
-            const currentRate = data.current_month.total_projects > 0 ? 
-                Math.round((data.current_month.completed_projects / data.current_month.total_projects) * 100) : 0;
-            $('#current-completion-rate').text(currentRate);
-            $('#completion-progress').css('width', currentRate + '%');
-            
-            // Update project progress bar
-            const projectProgress = data.last_month.total_projects > 0 ? 
-                Math.min(100, (data.current_month.total_projects / data.last_month.total_projects) * 100) : 100;
-            $('#projects-progress').css('width', projectProgress + '%');
-            
-            // Update growth indicators
-            const projectGrowth = data.trends.project_growth;
-            $('#project-growth').text(projectGrowth + '%');
-            
-            // Color code growth
-            const growthElement = $('#project-growth').parent().find('.info-box-icon');
-            if (projectGrowth > 0) {
-                growthElement.removeClass('bg-danger bg-warning').addClass('bg-success');
-                growthElement.find('i').removeClass('fa-arrow-down').addClass('fa-arrow-up');
+    safeJQuery(function($) {
+        $.get('{{ route("admin.analytics.benchmarks") }}')
+            .done(function(data) {
+                // Update current vs last month data
+                $('#current-month-projects').text(data.current_month.total_projects);
+                $('#last-month-projects').text(data.last_month.total_projects);
+                
+                // Calculate and show completion rate
+                const currentRate = data.current_month.total_projects > 0 ? 
+                    Math.round((data.current_month.completed_projects / data.current_month.total_projects) * 100) : 0;
+                $('#current-completion-rate').text(currentRate);
+                $('#completion-progress').css('width', currentRate + '%');
+                
+                // Update project progress bar
+                const projectProgress = data.last_month.total_projects > 0 ? 
+                    Math.min(100, (data.current_month.total_projects / data.last_month.total_projects) * 100) : 100;
+                $('#projects-progress').css('width', projectProgress + '%');
+                
+                // Update growth indicators
+                const projectGrowth = data.trends.project_growth;
+                $('#project-growth').text(projectGrowth + '%');
+                
+                // Color code growth
+                const growthElement = $('#project-growth').parent().find('.info-box-icon');
+                if (projectGrowth > 0) {
+                    growthElement.removeClass('bg-danger bg-warning').addClass('bg-success');
+                    growthElement.find('i').removeClass('fa-arrow-down').addClass('fa-arrow-up');
             } else if (projectGrowth < 0) {
                 growthElement.removeClass('bg-success bg-warning').addClass('bg-danger');
                 growthElement.find('i').removeClass('fa-arrow-up').addClass('fa-arrow-down');
@@ -1248,6 +1371,7 @@ function loadBenchmarks() {
             console.error('Failed to load benchmarks');
             toastr.error('Failed to load performance benchmarks');
         });
+    }); // End safeJQuery wrapper
 }
 
 function initializeBenchmarkRadar(data) {

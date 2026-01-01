@@ -157,7 +157,8 @@ return [
     'layout_fixed_sidebar' => null,
     'layout_fixed_navbar' => null,
     'layout_fixed_footer' => null,
-    'layout_dark_mode' => null,
+    // Enable AdminLTE dark-mode skin by default.
+    'layout_dark_mode' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -198,7 +199,7 @@ return [
     'classes_content' => '',
     'classes_sidebar' => 'sidebar-dark-primary elevation-4',
     'classes_sidebar_nav' => '',
-    'classes_topnav' => 'navbar-white navbar-light',
+    'classes_topnav' => 'navbar-dark navbar-black',
     'classes_topnav_nav' => 'navbar-expand',
     'classes_topnav_container' => 'container',
 
@@ -219,7 +220,7 @@ return [
     'sidebar_collapse_auto_size' => false,
     'sidebar_collapse_remember' => false,
     'sidebar_collapse_remember_no_transition' => true,
-    'sidebar_scrollbar_theme' => 'os-theme-light',
+    'sidebar_scrollbar_theme' => 'os-theme-dark',
     'sidebar_scrollbar_auto_hide' => 'l',
     'sidebar_nav_accordion' => true,
     'sidebar_nav_animation_speed' => 300,
@@ -390,24 +391,30 @@ return [
                     'active' => ['admin/maps*'],
                 ],
                 [
-                    'text' => 'Manage Plots',
-                    'route' => 'admin.plots.index',
-                    'icon' => 'fas fa-map-marker-alt',
-                    'active' => ['admin/plots*'],
+                    'text' => 'Macro Clients',
+                    'route' => 'admin.macro-clients.index',
+                    'icon' => 'fas fa-building',
+                    'active' => ['admin/macro-clients*'],
                 ],
                 [
-                    'text' => 'Plot Groups',
-                    'route' => 'admin.plot-groups.index',
+                    'text' => 'Group Plots',
+                    'route' => 'admin.plot-groups-management.index',
                     'icon' => 'fas fa-layer-group',
-                    'active' => ['admin/plot-groups*'],
+                    'active' => ['admin/plot-groups*', 'admin/plot-groups-management*'],
                 ],
             ],
         ],
         [
             'text' => 'Consultant Records',
-            'route' => 'admin.consultants.index',
             'icon' => 'fas fa-user-tie',
+            'route' => 'admin.consultants.index',
             'active' => ['admin/consultants*'],
+        ],
+        [
+            'text' => 'HB 837 Compliance',
+            'route' => 'admin.hb837.complience.index',
+            'icon' => 'fas fa-clipboard-check',
+            'active' => ['admin/hb837*'],
         ],
 
         ['header' => 'ANALYTICS & REPORTS'],

@@ -334,4 +334,38 @@ class HB837ThreePhaseImport implements ToModel, WithHeadingRow, WithValidation
     public function isValid(): bool { return empty($this->criticalErrors) && empty($this->validationErrors); }
     public function getValidRowCount(): int { return $this->validRowCount; }
     public function getInvalidRowCount(): int { return $this->invalidRowCount; }
+
+    /**
+     * Truncate the HB837 table (delete all records)
+     */
+    public function truncateTable(): bool
+    {
+        try {
+            Log::info('Truncating HB837 table');
+
+            // Delete all records from HB837 table
+            $deletedCount = HB837::count();
+            HB837::truncate();
+
+            Log::info('HB837 table truncated successfully', ['deleted_records' => $deletedCount]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to truncate HB837 table', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            throw new \Exception('Failed to truncate HB837 table: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Truncate table before import (helper method)
+     */
+    public function truncateBeforeImport(): self
+    {
+        $this->truncateTable();
+        return $this;
+    }
 }

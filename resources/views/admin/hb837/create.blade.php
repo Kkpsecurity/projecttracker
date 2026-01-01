@@ -255,11 +255,9 @@
                                     <select class="form-control @error('securitygauge_crime_risk') is-invalid @enderror" 
                                             id="securitygauge_crime_risk" name="securitygauge_crime_risk">
                                         <option value="">Not Assessed</option>
-                                        <option value="Low" {{ old('securitygauge_crime_risk') == 'Low' ? 'selected' : '' }}>Low</option>
-                                        <option value="Moderate" {{ old('securitygauge_crime_risk') == 'Moderate' ? 'selected' : '' }}>Moderate</option>
-                                        <option value="Elevated" {{ old('securitygauge_crime_risk') == 'Elevated' ? 'selected' : '' }}>Elevated</option>
-                                        <option value="High" {{ old('securitygauge_crime_risk') == 'High' ? 'selected' : '' }}>High</option>
-                                        <option value="Severe" {{ old('securitygauge_crime_risk') == 'Severe' ? 'selected' : '' }}>Severe</option>
+                                        @foreach(config('hb837.security_gauge', []) as $key => $value)
+                                            <option value="{{ $value }}" {{ old('securitygauge_crime_risk') == $value ? 'selected' : '' }}>{{ $value }}</option>
+                                        @endforeach
                                     </select>
                                     @error('securitygauge_crime_risk')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -415,19 +413,29 @@ $(document).ready(function() {
         let expenses = parseFloat($('#sub_fees_estimated_expenses').val()) || 0;
         let profit = quoted - expenses;
         
-        // Add visual indicator (optional)
+        // Update the net profit field
+        $('#project_net_profit').val(profit.toFixed(2));
+        
+        // Add visual feedback
+        const $profitField = $('#project_net_profit');
+        $profitField.removeClass('text-success text-danger text-warning');
+        
         if (quoted > 0 && expenses > 0) {
-            let profitText = 'Estimated Net Profit: $' + profit.toFixed(2);
-            if (profit < 0) {
-                profitText += ' (Loss)';
+            if (profit > 0) {
+                $profitField.addClass('text-success');
+            } else if (profit < 0) {
+                $profitField.addClass('text-danger');
+            } else {
+                $profitField.addClass('text-warning');
             }
-            
-            // You can add a profit display element if needed
-            console.log(profitText);
         }
     }
     
-    $('#quoted_price, #sub_fees_estimated_expenses').on('input', calculateNetProfit);
+    // Bind calculation to input events
+    $('#quoted_price, #sub_fees_estimated_expenses').on('input change', calculateNetProfit);
+    
+    // Calculate on page load if values exist
+    calculateNetProfit();
     
     // Form validation
     $('#hb837-form').on('submit', function(e) {

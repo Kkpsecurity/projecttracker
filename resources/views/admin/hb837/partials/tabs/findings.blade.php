@@ -6,11 +6,6 @@
     $findingStatuses = config('hb837.finding_statuses', []);
 @endphp
 
-<div class="tab-header">
-    <h4 class="tab-title"><i class="fas fa-clipboard-list"></i> Findings</h4>
-    <p class="mb-0 text-muted">Create structured findings that will feed the final report.</p>
-</div>
-
 <div class="card mb-3">
     <div class="card-header">
         <h3 class="card-title" id="findingFormTitle">Add Finding</h3>
@@ -152,9 +147,21 @@
 
 @push('js')
 <script>
-(function() {
-    const hb837Id = @json($hb837->id);
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+(function initHb837Findings(attempt) {
+    attempt = attempt || 0;
+
+    if (!window.jQuery) {
+        if (attempt < 100) {
+            return window.setTimeout(function() { initHb837Findings(attempt + 1); }, 50);
+        }
+        return;
+    }
+
+    var $ = window.jQuery;
+
+    $(function() {
+        const hb837Id = @json($hb837->id);
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
     function resetFindingForm() {
         $('#findingFormTitle').text('Add Finding');
@@ -254,8 +261,9 @@
         });
     });
 
-    // Initialize
-    resetFindingForm();
-})();
+        // Initialize
+        resetFindingForm();
+    });
+})(0);
 </script>
 @endpush

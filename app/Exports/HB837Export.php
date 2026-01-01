@@ -15,9 +15,19 @@ class HB837Export implements FromCollection, WithHeadings, WithMapping, WithTitl
 {
     protected $tab;
     protected $format;
+    protected $collection;
 
-    public function __construct($tab = 'active', $format = 'xlsx')
+    public function __construct($tab = null, $format = 'xlsx')
     {
+        // Prefer explicit argument, then query string, then default to 'all'
+        if ($tab === null) {
+            $tab = request()->query('tab', 'all');
+        }
+
+        // Debugging line to check the full URL from the browser
+        // You can get the full URL using request()->fullUrl()
+        // Example:
+
         $this->tab = $tab;
         $this->format = $format;
     }
@@ -27,12 +37,17 @@ class HB837Export implements FromCollection, WithHeadings, WithMapping, WithTitl
      */
     public function collection()
     {
+        // Return cached collection if already built
+        if ($this->collection !== null) {
+            return $this->collection;
+        }
+
         $query = HB837::query()->with(['consultant', 'user']);
         
         // Apply tab filters similar to controller
         switch ($this->tab) {
             case 'active':
-                $query->whereIn('report_status', ['not-started', 'in-progress', 'in-review'])
+                $query->whereIn('report_status', ['not-started', 'underway', 'in-review'])
                     ->where('contracting_status', 'executed');
                 break;
             case 'quoted':
@@ -44,51 +59,57 @@ class HB837Export implements FromCollection, WithHeadings, WithMapping, WithTitl
             case 'closed':
                 $query->where('contracting_status', 'closed');
                 break;
+            case 'all':
+                // No additional filters for all
+                break;
         }
 
-        return $query->get();
-    }
+        // Cache the collection
+        $this->collection = $query->get();
 
-    /**
-     * @return array
-     */
+        return $this->collection;
+    }    /**
+         * @return array
+         */
     public function headings(): array
     {
         return [
-            'ID',
-            'Property Name',
-            'Management Company',
-            'Owner Name',
-            'Property Type',
-            'Units',
-            'Address',
-            'City',
-            'County', 
-            'State',
-            'ZIP',
-            'Phone',
-            'Assigned Consultant',
-            'Scheduled Date',
-            'Report Status',
-            'Contracting Status',
-            'Quoted Price',
-            'Sub Fees/Expenses',
-            'Billing Req Sent',
-            'Report Submitted',
-            'Agreement Submitted',
-            'Project Net Profit',
-            'SecurityGauge Crime Risk',
-            'Macro Client',
-            'Macro Contact',
-            'Macro Email',
-            'Property Manager Name',
-            'Property Manager Email',
-            'Regional Manager Name',
-            'Regional Manager Email',
-            'Notes',
-            'Financial Notes',
-            'Created At',
-            'Updated At'
+            'id',
+            'user_id',
+            'property_name',
+            'management_company',
+            'owner_name',
+            'property_type',
+            'units',
+            'address',
+            'city',
+            'county',
+            'state',
+            'zip',
+            'phone',
+            'assigned_consultant',
+            'scheduled_date_of_inspection',
+            'report_status',
+            'contracting_status',
+            'quoted_price',
+            'sub_fees_estimated_expenses',
+            'billing_req_submitted',
+            'report_submitted',
+            'agreement_submitted',
+            'project_net_profit',
+            'securitygauge_crime_risk',
+            'macro_client',
+            'macro_contact',
+            'macro_email',
+            'property_manager_name',
+            'property_manager_email',
+            'regional_manager_name',
+            'regional_manager_email',
+            'notes',
+            'financial_notes',
+            'consultant_notes',
+            'created_at',
+            'updated_at'
         ];
     }
 
@@ -100,6 +121,7 @@ class HB837Export implements FromCollection, WithHeadings, WithMapping, WithTitl
     {
         return [
             $hb837->id,
+            $hb837->user ? $hb837->user->name : ($hb837->user ? $hb837->user->first_name . ' ' . $hb837->user->last_name : 'Unknown User'),
             $hb837->property_name,
             $hb837->management_company,
             $hb837->owner_name,
@@ -111,13 +133,13 @@ class HB837Export implements FromCollection, WithHeadings, WithMapping, WithTitl
             $hb837->state,
             $hb837->zip,
             $hb837->phone,
-            $hb837->consultant ? $hb837->consultant->first_name . ' ' . $hb837->consultant->last_name : '',
+            $hb837->consultant ? $hb837->consultant->first_name . ' ' . $hb837->consultant->last_name : 'Unassigned',
             $hb837->scheduled_date_of_inspection ? \Carbon\Carbon::parse($hb837->scheduled_date_of_inspection)->format('Y-m-d') : '',
             $hb837->report_status,
             $hb837->contracting_status,
             $hb837->quoted_price,
             $hb837->sub_fees_estimated_expenses,
-            $hb837->billing_req_sent ? \Carbon\Carbon::parse($hb837->billing_req_sent)->format('Y-m-d') : '',
+            $hb837->billing_req_submitted ? \Carbon\Carbon::parse($hb837->billing_req_submitted)->format('Y-m-d') : '',
             $hb837->report_submitted ? \Carbon\Carbon::parse($hb837->report_submitted)->format('Y-m-d') : '',
             $hb837->agreement_submitted ? \Carbon\Carbon::parse($hb837->agreement_submitted)->format('Y-m-d') : '',
             $hb837->project_net_profit,
@@ -131,6 +153,7 @@ class HB837Export implements FromCollection, WithHeadings, WithMapping, WithTitl
             $hb837->regional_manager_email,
             $hb837->notes,
             $hb837->financial_notes,
+            $hb837->consultant_notes,
             $hb837->created_at ? \Carbon\Carbon::parse($hb837->created_at)->format('Y-m-d H:i:s') : '',
             $hb837->updated_at ? \Carbon\Carbon::parse($hb837->updated_at)->format('Y-m-d H:i:s') : ''
         ];
@@ -141,7 +164,10 @@ class HB837Export implements FromCollection, WithHeadings, WithMapping, WithTitl
      */
     public function title(): string
     {
-        return 'HB837 ' . ucfirst($this->tab) . ' Export';
+        // Get the count of records for this tab
+        $count = $this->collection()->count();
+
+        return 'HB837 ' . ucfirst($this->tab) . ' Export (' . $count . ' records)';
     }
 
     /**

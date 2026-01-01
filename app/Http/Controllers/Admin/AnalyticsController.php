@@ -374,8 +374,26 @@ class AnalyticsController extends Controller
             ->limit(10)
             ->get(['type', 'changes', 'created_at'])
             ->toArray();
-            
-        $monthlyStats = ImportAudit::selectRaw('
+
+        // Use database-agnostic date formatting
+        $dbDriver = config('database.default');
+
+        if ($dbDriver === 'pgsql') {
+            // PostgreSQL syntax
+            $monthlyStats = ImportAudit::selectRaw("
+                TO_CHAR(created_at, 'YYYY-MM') as month,
+                COUNT(*) as total_operations,
+                SUM(CASE WHEN type = 'import' THEN 1 ELSE 0 END) as imports,
+                SUM(CASE WHEN type = 'backup' THEN 1 ELSE 0 END) as backups
+            ")
+                ->where('created_at', '>=', Carbon::now()->subMonths(12))
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->toArray();
+        } else {
+            // MySQL syntax (fallback)
+            $monthlyStats = ImportAudit::selectRaw('
                 DATE_FORMAT(created_at, "%Y-%m") as month,
                 COUNT(*) as total_operations,
                 SUM(CASE WHEN type = "import" THEN 1 ELSE 0 END) as imports,
@@ -386,6 +404,7 @@ class AnalyticsController extends Controller
             ->orderBy('month')
             ->get()
             ->toArray();
+        }
             
         return [
             'recent_activity' => $recentActivity,

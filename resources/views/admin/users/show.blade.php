@@ -163,12 +163,9 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form id="passwordForm">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Reset Password</h5>
-                        <button type="button" class="close" data-dismiss="modal">
-                            <span>&times;</span>
-                        </button>
-                    </div>
+                                        <div class="modal-header">
+                        <h5 class="modal-title text-shadow-sm">Reset Password</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="new_password">New Password</label>

@@ -1,10 +1,9 @@
 <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="importModalLabel"><i class="fas fa-file-import me-2"></i>Import HB837 Data</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+                        <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title text-shadow-sm" id="importModalLabel"><i class="fas fa-file-import me-2"></i>Import HB837 Data</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
 
             <form id="importForm" action="{{ route('admin.hb837.backup.import') }}" method="POST" enctype="multipart/form-data" onsubmit="return confirmImport()">
                 @csrf

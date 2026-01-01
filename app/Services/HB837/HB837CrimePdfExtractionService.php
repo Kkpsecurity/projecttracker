@@ -121,6 +121,12 @@ class HB837CrimePdfExtractionService
         ]);
         $crimeStat->save();
 
+        // Also copy the extracted risk into the primary HB837 field for easy filtering/visibility.
+        if ($crimeRisk !== null && ($hb837->securitygauge_crime_risk ?? null) !== $crimeRisk) {
+            $hb837->securitygauge_crime_risk = $crimeRisk;
+            $hb837->save();
+        }
+
         return $crimeStat;
     }
 

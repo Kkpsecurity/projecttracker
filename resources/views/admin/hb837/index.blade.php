@@ -2,17 +2,21 @@
 
 @section('plugins.Datatables', true)
 
-@section('title', 'HB837 Management - KKP Security Project Tracker')
+@php
+    $pageTitle = $pageTitle ?? 'HB837 Management';
+@endphp
+
+@section('title', $pageTitle . ' - KKP Security Project Tracker')
 
 @section('content_header')
     <div class="row">
         <div class="col-sm-6">
-            <h1><i class="fas fa-shield-alt"></i> HB837 Management</h1>
+            <h1 class="text-shadow-md"><i class="fas fa-shield-alt"></i> {{ $pageTitle }}</h1>
         </div>
         <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
                 <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">HB837 Management</li>
+                <li class="breadcrumb-item active">{{ $pageTitle }}</li>
             </ol>
         </div>
     </div>
@@ -20,76 +24,12 @@
 
 @section('content')
 <div class="container-fluid">
-    <!-- Statistics Cards (Updated: {{ now() }}) -->
-    <div class="row">
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-info">
-                <div class="inner">
-                    <h3>{{ $stats['active'] }}</h3>
-                    <p>Active Projects</p>
-                    <!-- Debug: Active={{ $stats['active'] }}, Total={{ $stats['total'] }} -->
-                </div>
-                <div class="icon">
-                    <i class="fas fa-project-diagram"></i>
-                </div>
-                <a href="#" onclick="showTab('active')" class="small-box-footer">
-                    View Details <i class="fas fa-arrow-circle-right"></i>
-                </a>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-warning">
-                <div class="inner">
-                    <h3>{{ $stats['quoted'] }}</h3>
-                    <p>Quoted Projects</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <a href="#" onclick="showTab('quoted')" class="small-box-footer">
-                    View Details <i class="fas fa-arrow-circle-right"></i>
-                </a>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-success">
-                <div class="inner">
-                    <h3>{{ $stats['completed'] }}</h3>
-                    <p>Completed</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <a href="#" onclick="showTab('completed')" class="small-box-footer">
-                    View Details <i class="fas fa-arrow-circle-right"></i>
-                </a>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-danger">
-                <div class="inner">
-                    <h3>{{ $stats['closed'] }}</h3>
-                    <p>Closed</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-times-circle"></i>
-                </div>
-                <a href="#" onclick="showTab('closed')" class="small-box-footer">
-                    View Details <i class="fas fa-arrow-circle-right"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-
     <!-- Action Buttons -->
     <div class="row mb-3">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">
+                    <h3 class="card-title text-shadow-sm">
                         <i class="fas fa-tools"></i> Actions
                     </h3>
                 </div>
@@ -100,7 +40,7 @@
                     <a href="{{ route('admin.hb837.smart-import.show') }}" class="btn btn-primary mr-2">
                         <i class="fas fa-magic"></i> Smart Import
                     </a>
-                    <a href="{{ route('admin.hb837.export') }}" class="btn btn-info mr-2">
+                    <a href="#" id="export-data-btn" class="btn btn-info mr-2" onclick="exportCurrentTab()">
                         <i class="fas fa-file-download"></i> Export Data
                     </a>
                     <button type="button" class="btn btn-warning mr-2 bulk-actions-container" onclick="bulkActions()">
@@ -111,26 +51,58 @@
         </div>
     </div>
 
+    <!-- Simple Warnings & Business Summary -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex flex-wrap align-items-center justify-content-between" style="background:#f8f9fa;border-radius:8px;padding:16px 22px;font-size:1rem;color:#333;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                <div class="mb-2 mb-md-0">
+                    <strong class="mr-2"><i class="fas fa-exclamation-triangle text-warning"></i> Warnings:</strong>
+                    <span class="badge badge-warning mr-2">
+                        Unassigned: {{ $warnings['unassigned_projects'] }}
+                        <span 
+                            class="ml-1" 
+                            data-toggle="tooltip" 
+                            title="This count reflects properties that are not assigned to any consultant and have not been completed.">
+                            <i class="fas fa-question-circle text-muted"></i>
+                        </span>
+                    </span>
+                    <span class="badge badge-info mr-2">
+                        Unscheduled: {{ $warnings['unscheduled_projects'] }}
+                        <span 
+                            class="ml-1" 
+                            data-toggle="tooltip" 
+                            title="This count reflects properties that have not yet been scheduled for inspection.">
+                            <i class="fas fa-question-circle text-muted"></i>
+                        </span>
+                    </span>
+                    <span class="badge badge-danger">Late Reports: {{ $warnings['late_reports'] }}</span>
+                </div>
+                <div>
+                    <strong class="mr-2"><i class="fas fa-briefcase text-primary"></i> Current Business:</strong>
+                    <span class="badge badge-success mr-2">Active: {{ $business['active_projects'] }}</span>
+                    <span class="badge badge-primary mr-2">Gross Billing: ${{ number_format($business['gross_billing_in_process'], 0) }}</span>
+                    <span class="badge badge-secondary mr-2">Net Profit: ${{ number_format($business['net_profit_in_process'], 0) }}</span>
+                    <span class="text-muted" style="font-size:0.95em;">
+                        (Actual: ${{ number_format($business['actual_net_profit'], 0) }}, Est: ${{ number_format($business['estimated_net_profit'], 0) }})
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content Card with Tabs -->
     <div class="row">
-        <div class="col-12">
+">        <div class="col-12
             <div class="card card-primary card-tabs">
                 <div class="card-header p-0 pt-1">
                     <ul class="nav nav-tabs" id="hb837-tabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link {{ $tab == 'all' ? 'active' : '' }}"
-                               id="all-tab" data-toggle="tab" href="#all" role="tab"
-                               aria-controls="all" aria-selected="{{ $tab == 'all' ? 'true' : 'false' }}"
-                               onclick="changeTab('all')">
-                                <i class="fas fa-list"></i> All
-                            </a>
-                        </li>
                         <li class="nav-item">
                             <a class="nav-link {{ $tab == 'active' ? 'active' : '' }}"
                                id="active-tab" data-toggle="tab" href="#active" role="tab"
                                aria-controls="active" aria-selected="{{ $tab == 'active' ? 'true' : 'false' }}"
                                onclick="changeTab('active')">
-                                <i class="fas fa-project-diagram"></i> Active
+                                <i class="fas fa-project-diagram"></i> Active 
+                                <span class="badge badge-{{ $tab == 'active' ? 'light' : 'info' }} ml-1">{{ $tabCounts['active'] }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -138,7 +110,8 @@
                                id="quoted-tab" data-toggle="tab" href="#quoted" role="tab"
                                aria-controls="quoted" aria-selected="{{ $tab == 'quoted' ? 'true' : 'false' }}"
                                onclick="changeTab('quoted')">
-                                <i class="fas fa-file-invoice-dollar"></i> Quoted
+                                <i class="fas fa-file-invoice-dollar"></i> Quoted 
+                                <span class="badge badge-{{ $tab == 'quoted' ? 'light' : 'warning' }} ml-1">{{ $tabCounts['quoted'] }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -146,7 +119,8 @@
                                id="completed-tab" data-toggle="tab" href="#completed" role="tab"
                                aria-controls="completed" aria-selected="{{ $tab == 'completed' ? 'true' : 'false' }}"
                                onclick="changeTab('completed')">
-                                <i class="fas fa-check-circle"></i> Completed
+                                <i class="fas fa-check-circle"></i> Completed 
+                                <span class="badge badge-{{ $tab == 'completed' ? 'light' : 'success' }} ml-1">{{ $tabCounts['completed'] }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -154,7 +128,17 @@
                                id="closed-tab" data-toggle="tab" href="#closed" role="tab"
                                aria-controls="closed" aria-selected="{{ $tab == 'closed' ? 'true' : 'false' }}"
                                onclick="changeTab('closed')">
-                                <i class="fas fa-times-circle"></i> Closed
+                                <i class="fas fa-times-circle"></i> Closed 
+                                <span class="badge badge-{{ $tab == 'closed' ? 'light' : 'danger' }} ml-1">{{ $tabCounts['closed'] }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ $tab == 'all' ? 'active' : '' }}"
+                               id="all-tab" data-toggle="tab" href="#all" role="tab"
+                               aria-controls="all" aria-selected="{{ $tab == 'all' ? 'true' : 'false' }}"
+                               onclick="changeTab('all')">
+                                <i class="fas fa-list"></i> All 
+                                <span class="badge badge-{{ $tab == 'all' ? 'light' : 'secondary' }} ml-1">{{ $tabCounts['all'] }}</span>
                             </a>
                         </li>
                     </ul>
@@ -173,7 +157,7 @@
                                             <th width="20%" class="text-left">Property Name</th>
                                             <th width="12%" class="text-center">County</th>
                                             <th width="15%" class="text-left">Macro Client</th>
-                                            <th width="15%" class="text-center">Assigned Consultant Id</th>
+                                            <th width="15%" class="text-center">Assigned Consultant</th>
                                             <th width="15%" class="text-center">Scheduled Date Of Inspection</th>
                                             <th width="12%" class="text-center">Report Status</th>
                                             <th width="8%" class="text-center">Action</th>
@@ -196,13 +180,14 @@
                                             <th width="3%" class="text-center">
                                                 <input type="checkbox" id="select-all-active" class="form-check-input">
                                             </th>
-                                            <th width="20%" class="text-left">Property Name</th>
-                                            <th width="12%" class="text-center">County</th>
-                                            <th width="15%" class="text-left">Macro Client</th>
-                                            <th width="15%" class="text-center">Assigned Consultant Id</th>
-                                            <th width="15%" class="text-center">Scheduled Date Of Inspection</th>
-                                            <th width="12%" class="text-center">Report Status</th>
-                                            <th width="8%" class="text-center">Action</th>
+                                            <th width="18%" class="text-left">Property Name</th>
+                                            <th width="10%" class="text-center">Type/Unit No</th>
+                                            <th width="12%" class="text-center">SecurityGauge Crime Risk</th>
+                                            <th width="14%" class="text-left">Macro Client</th>
+                                            <th width="14%" class="text-center">Assigned Consultant</th>
+                                            <th width="14%" class="text-center">Scheduled Date Of Inspection</th>
+                                            <th width="10%" class="text-center">Report Status</th>
+                                            <th width="5%" class="text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -221,13 +206,13 @@
                                             <th width="3%" class="text-center">
                                                 <input type="checkbox" id="select-all-quoted" class="form-check-input">
                                             </th>
-                                            <th width="20%" class="text-left">Property Name</th>
+                                            <th width="25%" class="text-left">Property Name</th>
                                             <th width="12%" class="text-center">County</th>
-                                            <th width="15%" class="text-left">Macro Client</th>
-                                            <th width="15%" class="text-center">Assigned Consultant Id</th>
-                                            <th width="15%" class="text-center">Scheduled Date Of Inspection</th>
-                                            <th width="12%" class="text-center">Report Status</th>
-                                            <th width="8%" class="text-center">Action</th>
+                                            <th width="18%" class="text-left">Macro Client</th>
+                                            <th width="15%" class="text-center">Contracting Status</th>
+                                            <th width="12%" class="text-center">Agreement Submitted</th>
+                                            <th width="10%" class="text-center">Quoted Price</th>
+                                            <th width="5%" class="text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -247,12 +232,13 @@
                                                 <input type="checkbox" id="select-all-completed" class="form-check-input">
                                             </th>
                                             <th width="20%" class="text-left">Property Name</th>
-                                            <th width="12%" class="text-center">County</th>
+                                            <th width="10%" class="text-center">County</th>
+                                            <th width="12%" class="text-center">SecurityGauge Crime Risk</th>
                                             <th width="15%" class="text-left">Macro Client</th>
-                                            <th width="15%" class="text-center">Assigned Consultant Id</th>
+                                            <th width="12%" class="text-center">Billing Request Submitted</th>
                                             <th width="15%" class="text-center">Scheduled Date Of Inspection</th>
-                                            <th width="12%" class="text-center">Report Status</th>
-                                            <th width="8%" class="text-center">Action</th>
+                                            <th width="8%" class="text-center">Days Until Renewal</th>
+                                            <th width="5%" class="text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -274,7 +260,7 @@
                                             <th width="20%" class="text-left">Property Name</th>
                                             <th width="12%" class="text-center">County</th>
                                             <th width="15%" class="text-left">Macro Client</th>
-                                            <th width="15%" class="text-center">Assigned Consultant Id</th>
+                                            <th width="15%" class="text-center">Assigned Consultant</th>
                                             <th width="15%" class="text-center">Scheduled Date Of Inspection</th>
                                             <th width="12%" class="text-center">Report Status</th>
                                             <th width="8%" class="text-center">Action</th>
@@ -294,58 +280,10 @@
 </div>
 
 <!-- Bulk Actions Modal -->
-<div class="modal fade" id="bulkActionsModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">Bulk Actions</h4>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <form id="bulk-actions-form">
-                @csrf
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="bulk-action">Action</label>
-                        <select id="bulk-action" name="action" class="form-control" required>
-                            <option value="">Select Action</option>
-                            <option value="status_update">Update Status</option>
-                            <option value="consultant_assign">Assign Consultant</option>
-                            <option value="delete">Delete Records</option>
-                        </select>
-                    </div>
+@include('admin.hb837.partials.modals.bulk-actions')
 
-                    <div class="form-group" id="status-group" style="display: none;">
-                        <label for="bulk-status">New Status</label>
-                        <select id="bulk-status" name="bulk_status" class="form-control">
-                            <option value="not-started">Not Started</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="in-review">In Review</option>
-                            <option value="completed">Completed</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" id="consultant-group" style="display: none;">
-                        <label for="bulk-consultant">Consultant</label>
-                        <select id="bulk-consultant" name="bulk_consultant_id" class="form-control">
-                            <option value="">Unassigned</option>
-                            <!-- Populated via AJAX -->
-                        </select>
-                    </div>
-
-                    <div id="selected-count" class="alert alert-info">
-                        No records selected
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Execute Action</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Property Location Modal -->
+@include('admin.hb837.partials.modals.property-location')
 @stop
 
 @section('css')
@@ -448,6 +386,13 @@
 .priority-urgent {
     background-color: #c75845 !important;
     color: white !important;
+}
+
+/* Late Reports Styling */
+.text-danger.font-weight-bold {
+    color: #dc3545 !important;
+    font-weight: 700 !important;
+    text-shadow: 0 1px 2px rgba(220, 53, 69, 0.3);
 }
 
 /* DataTables custom styling */
@@ -967,6 +912,88 @@ table.dataTable tbody td.dataTables_empty {
         display: none;
     }
 }
+
+/* Property Location Modal Styling */
+.modal-xl {
+    max-width: 1200px;
+}
+
+#propertyLocationModal .modal-body {
+    padding: 1.5rem;
+}
+
+#propertyLocationModal .card {
+    border: none;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#propertyLocationModal .card-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+#propertyLocationModal .card-text {
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+#propertyMap {
+    transition: all 0.3s ease;
+}
+
+#mapLoadingIndicator,
+#mapErrorIndicator {
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+}
+
+#mapLoadingIndicator .fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Google Maps styling */
+.gm-style-iw {
+    border-radius: 8px;
+}
+
+.gm-style-iw-d {
+    overflow: hidden !important;
+}
+
+/* Modal responsiveness */
+@media (max-width: 992px) {
+    .modal-xl {
+        max-width: 90%;
+    }
+    
+    #propertyMap {
+        height: 350px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-xl {
+        max-width: 95%;
+        margin: 10px auto;
+    }
+    
+    #propertyMap {
+        height: 300px !important;
+    }
+    
+    #propertyLocationModal .modal-body {
+        padding: 1rem;
+    }
+}
 </style>
 @stop
 
@@ -1029,6 +1056,54 @@ $(document).ready(function() {
     function initializeDataTables() {
         console.log('Initializing DataTables...');
 
+        // Test AJAX connectivity first
+        console.log('Testing AJAX connectivity for tab:', currentTab);
+        $.ajax({
+            url: '/admin/hb837/data/' + currentTab,
+            method: 'GET',
+            data: {
+                draw: 1,
+                start: 0,
+                length: 10
+            },
+            success: function(response) {
+                console.log('✓ AJAX connectivity test successful:', response);
+                console.log('Response structure:', {
+                    draw: response.draw,
+                    recordsTotal: response.recordsTotal,
+                    recordsFiltered: response.recordsFiltered,
+                    dataLength: response.data ? response.data.length : 'no data'
+                });
+                
+                // Now initialize the actual DataTables
+                initializeDataTablesAfterConnectivityTest();
+            },
+            error: function(xhr, status, error) {
+                console.error('✗ AJAX connectivity test failed:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error
+                });
+                
+                // Try to show a helpful error message
+                if (xhr.status === 404) {
+                    alert('Error: The data endpoint was not found (404). Please check the route configuration.');
+                } else if (xhr.status === 500) {
+                    alert('Error: Server error (500). Please check the server logs.');
+                } else {
+                    alert('Error: Failed to connect to data endpoint. Status: ' + xhr.status);
+                }
+                
+                // Still try to initialize DataTables in case it's a temporary issue
+                initializeDataTablesAfterConnectivityTest();
+            }
+        });
+    }
+
+    function initializeDataTablesAfterConnectivityTest() {
+        console.log('Proceeding with DataTables initialization...');
+
         // Initialize tabs first
         initializeTabs();
 
@@ -1050,7 +1125,7 @@ $(document).ready(function() {
             <tr>
                 <td colspan="13" class="text-center p-4">
                     <div class="alert alert-warning">
-                        <h5><i class="fas fa-exclamation-triangle"></i> DataTables Loading Issue</h5>
+                        <h5 class="text-shadow-sm"><i class="fas fa-exclamation-triangle"></i> DataTables Loading Issue</h5>
                         <p>The advanced table features are temporarily unavailable.</p>
                         <button onclick="location.reload()" class="btn btn-primary btn-sm">
                             <i class="fas fa-refresh"></i> Refresh Page
@@ -1102,7 +1177,7 @@ $(document).ready(function() {
                     <div class="empty-state-icon text-${state.color}">
                         <i class="${state.icon}"></i>
                     </div>
-                    <h4 class="empty-state-title">${state.title}</h4>
+                    <h4 class="empty-state-title text-shadow-sm">${state.title}</h4>
                     <p class="empty-state-message">${state.message}</p>
                     <p class="empty-state-action text-muted">${state.action}</p>
                     <div class="empty-state-buttons">
@@ -1126,7 +1201,7 @@ $(document).ready(function() {
                     <div class="search-empty-state-icon text-secondary">
                         <i class="fas fa-search"></i>
                     </div>
-                    <h5 class="search-empty-state-title">No Matching Results</h5>
+                    <h5 class="search-empty-state-title text-shadow-sm">No Matching Results</h5>
                     <p class="search-empty-state-message">
                         No properties match your search criteria. Try adjusting your search terms or clearing the search to see all properties.
                     </p>
@@ -1136,6 +1211,109 @@ $(document).ready(function() {
                 </div>
             </div>
         `;
+    }
+
+    // Get tab-specific column configurations
+    function getTabColumns(tab) {
+        const baseConfig = {
+            checkbox: { data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, width: '3%', className: 'text-center' },
+            property_name: { data: 'property_name', name: 'property_name', className: 'text-left' },
+            county: { data: 'county', name: 'county', className: 'text-center' },
+            type_unit_type: { data: 'type_unit_type', name: 'type_unit_type', orderable: false, className: 'text-center' },
+            securitygauge_crime_risk: { data: 'securitygauge_crime_risk', name: 'securitygauge_crime_risk', orderable: true, className: 'text-center' },
+            macro_client: { data: 'macro_client', name: 'macro_client', className: 'text-left' },
+            assigned_consultant_id: { data: 'assigned_consultant_id', name: 'assigned_consultant_id', orderable: true, className: 'text-center' },
+            scheduled_date_of_inspection: { data: 'scheduled_date_of_inspection', name: 'scheduled_date_of_inspection', className: 'text-center' },
+            report_status: { data: 'report_status', name: 'report_status', orderable: false, className: 'text-center' },
+            contracting_status: { data: 'contracting_status', name: 'contracting_status', orderable: false, className: 'text-center' },
+            agreement_submitted: { data: 'agreement_submitted', name: 'agreement_submitted', orderable: false, className: 'text-center' },
+            quoted_price: { data: 'quoted_price', name: 'quoted_price', orderable: true, className: 'text-center' },
+            billing_req_submitted: { data: 'billing_req_submitted', name: 'billing_req_submitted', orderable: false, className: 'text-center' },
+            days_until_renewal: { data: 'days_until_renewal', name: 'days_until_renewal', orderable: false, className: 'text-center' },
+            action: { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' }
+        };
+
+        switch (tab) {
+            case 'active':
+                return {
+                    columns: [
+                        baseConfig.checkbox,
+                        { ...baseConfig.property_name, width: '18%' },
+                        { ...baseConfig.type_unit_type, width: '10%' },
+                        { ...baseConfig.securitygauge_crime_risk, width: '12%' },
+                        { ...baseConfig.macro_client, width: '14%' },
+                        { ...baseConfig.assigned_consultant_id, width: '14%' },
+                        { ...baseConfig.scheduled_date_of_inspection, width: '14%' },
+                        { ...baseConfig.report_status, width: '10%' },
+                        { ...baseConfig.action, width: '5%' }
+                    ],
+                    order: [[6, 'asc']], // Order by scheduled_date_of_inspection ascending (oldest to newest, including "Not Scheduled")
+                    columnDefs: [
+                        { targets: [0, 2, 7, 8], orderable: false },
+                        { targets: '_all', className: 'align-middle' }
+                    ]
+                };
+
+            case 'quoted':
+                return {
+                    columns: [
+                        baseConfig.checkbox,
+                        { ...baseConfig.property_name, width: '25%' },
+                        { ...baseConfig.county, width: '12%' },
+                        { ...baseConfig.macro_client, width: '18%' },
+                        { ...baseConfig.contracting_status, width: '15%' },
+                        { ...baseConfig.agreement_submitted, width: '12%' },
+                        { ...baseConfig.quoted_price, width: '10%' },
+                        { ...baseConfig.action, width: '5%' }
+                    ],
+                    order: [[6, 'desc']], // Order by quoted_price descending
+                    columnDefs: [
+                        { targets: [0, 4, 5, 7], orderable: false },
+                        { targets: '_all', className: 'align-middle' }
+                    ]
+                };
+
+            case 'completed':
+                return {
+                    columns: [
+                        baseConfig.checkbox,
+                        { ...baseConfig.property_name, width: '20%' },
+                        { ...baseConfig.county, width: '10%' },
+                        { ...baseConfig.securitygauge_crime_risk, width: '12%' },
+                        { ...baseConfig.macro_client, width: '15%' },
+                        { ...baseConfig.billing_req_submitted, width: '12%' },
+                        { ...baseConfig.scheduled_date_of_inspection, width: '15%' },
+                        { ...baseConfig.days_until_renewal, width: '8%' },
+                        { ...baseConfig.action, width: '5%' }
+                    ],
+                    order: [[6, 'asc']], // Order by scheduled_date_of_inspection ascending (earliest first for renewal planning)
+                    columnDefs: [
+                        { targets: [0, 5, 7, 8], orderable: false },
+                        { targets: '_all', className: 'align-middle' }
+                    ]
+                };
+
+            case 'closed':
+            case 'all':
+            default:
+                return {
+                    columns: [
+                        baseConfig.checkbox,
+                        { ...baseConfig.property_name, width: '20%' },
+                        { ...baseConfig.county, width: '12%' },
+                        { ...baseConfig.macro_client, width: '15%' },
+                        { ...baseConfig.assigned_consultant_id, width: '15%' },
+                        { ...baseConfig.scheduled_date_of_inspection, width: '15%' },
+                        { ...baseConfig.report_status, width: '12%' },
+                        { ...baseConfig.action, width: '8%' }
+                    ],
+                    order: [[5, 'desc']], // Order by scheduled_date_of_inspection descending
+                    columnDefs: [
+                        { targets: [0, 6, 7], orderable: false },
+                        { targets: '_all', className: 'align-middle' }
+                    ]
+                };
+        }
     }
 
     function initDataTable(tab, tableId) {
@@ -1158,7 +1336,11 @@ $(document).ready(function() {
             $(tableId).DataTable().destroy();
         }
 
-        return $(tableId).DataTable({
+        // Get tab-specific column configuration
+        const columnConfig = getTabColumns(tab);
+
+        // Create the DataTable and store the reference
+        var dataTable = $(tableId).DataTable({
             processing: true,
             serverSide: true,
             ajax: {
@@ -1166,11 +1348,34 @@ $(document).ready(function() {
                 error: function(xhr, error, thrown) {
                     console.error('DataTables AJAX error:', error, thrown);
                     console.error('Response:', xhr.responseText);
-                    alert('Error loading data. Please refresh the page.');
+                    console.error('Status:', xhr.status);
+                    
+                    // Try to parse the error response
+                    try {
+                        var errorData = JSON.parse(xhr.responseText);
+                        console.error('Parsed error:', errorData);
+                    } catch (e) {
+                        console.error('Could not parse error response');
+                    }
+                    
+                    alert('Error loading data: ' + error + '. Please check the console and refresh the page.');
                 },
                 dataSrc: function(json) {
                     console.log('=== DataTables Response Debug for tab:', tab, '===');
                     console.log('Full JSON:', json);
+                    
+                    if (!json) {
+                        console.error('No JSON response received');
+                        return [];
+                    }
+                    
+                    // Check if server returned an error
+                    if (json.error) {
+                        console.error('Server returned error:', json.error);
+                        alert('Server Error: ' + json.error);
+                        return [];
+                    }
+                    
                     console.log('Records total:', json.recordsTotal);
                     console.log('Records filtered:', json.recordsFiltered);
                     console.log('Data array length:', json.data ? json.data.length : 'undefined');
@@ -1179,22 +1384,18 @@ $(document).ready(function() {
                     if (json.data && json.data.length > 0) {
                         console.log('First data item:', json.data[0]);
                         console.log('First data item keys:', Object.keys(json.data[0]));
+                        
+                        // Check if consultant data is present
+                        if (json.data[0].assigned_consultant_id !== undefined) {
+                            console.log('Consultant data sample:', json.data[0].assigned_consultant_id);
+                        }
                     }
 
-                    return json.data;
+                    return json.data || [];
                 }
             },
-            columns: [
-                { data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, width: '3%', className: 'text-center' },
-                { data: 'property_name', name: 'property_name', width: '20%', className: 'text-left' },
-                { data: 'county', name: 'county', width: '12%', className: 'text-center' },
-                { data: 'macro_client', name: 'macro_client', width: '15%', className: 'text-left' },
-                { data: 'assigned_consultant_id', name: 'assigned_consultant_id', orderable: false, width: '15%', className: 'text-center' },
-                { data: 'scheduled_date_of_inspection', name: 'scheduled_date_of_inspection', width: '15%', className: 'text-center' },
-                { data: 'report_status', name: 'report_status', orderable: false, width: '12%', className: 'text-center' },
-                { data: 'action', name: 'action', orderable: false, searchable: false, width: '8%', className: 'text-center' }
-            ],
-            order: [[5, 'desc']], // Order by scheduled_date_of_inspection descending
+            columns: columnConfig.columns,
+            order: columnConfig.order,
             pageLength: 25,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
             responsive: false,
@@ -1202,31 +1403,45 @@ $(document).ready(function() {
             scrollX: true,
             autoWidth: false,
             fixedColumns: false,
-            columnDefs: [
-                { targets: [0, 4, 5, 6, 7], orderable: false },
-                { targets: '_all', className: 'align-middle' }
-            ],
+            columnDefs: columnConfig.columnDefs,
             dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>' +
                  '<"row"<"col-sm-12"<"table-responsive"t>>>' +
                  '<"row"<"col-sm-5"i><"col-sm-7"p>>',
             drawCallback: function(settings) {
                 var api = this.api();
-                var pageInfo = api.page.info();
-                var data = api.rows().data();
+                var pageInfo = null;
+                var data = null;
+                var columnCount = columnConfig.columns.length; // Get actual column count
 
-                console.log('DrawCallback - Tab:', tab, 'Page Info:', pageInfo, 'Actual Data Length:', data.length);
+                try {
+                    pageInfo = api.page.info();
+                    data = api.rows().data();
+                } catch (error) {
+                    console.error('Error getting DataTables info:', error);
+                    // Fallback: try to get data another way
+                    try {
+                        data = api.rows().data();
+                        pageInfo = { recordsTotal: data.length || 0, recordsFiltered: data.length || 0 };
+                    } catch (fallbackError) {
+                        console.error('Fallback data retrieval failed:', fallbackError);
+                        data = [];
+                        pageInfo = { recordsTotal: 0, recordsFiltered: 0 };
+                    }
+                }
+
+                console.log('DrawCallback - Tab:', tab, 'Page Info:', pageInfo, 'Actual Data Length:', data ? data.length : 0, 'Column Count:', columnCount);
 
                 // Only show empty state if we truly have no data
                 // Don't interfere with DataTables rendering if there is data
-                if (data.length === 0 && pageInfo.recordsTotal === 0) {
+                if (data && data.length === 0 && pageInfo && pageInfo.recordsTotal === 0) {
                     var emptyStateHtml = getEmptyStateHTML(tab);
                     console.log('Showing empty state for tab:', tab);
                     $(this).find('tbody').html(
-                        '<tr class="empty-state-row"><td colspan="8" class="text-center p-0 border-0">' +
+                        '<tr class="empty-state-row"><td colspan="' + columnCount + '" class="text-center p-0 border-0">' +
                         emptyStateHtml +
                         '</td></tr>'
                     );
-                } else if (data.length > 0) {
+                } else if (data && data.length > 0) {
                     console.log('Data exists, letting DataTables render normally. Rows:', data.length);
 
                     // Re-initialize tooltips
@@ -1277,6 +1492,38 @@ $(document).ready(function() {
                 }
             }
         });
+        
+        // Add debugging event handlers for sorting
+        // Debug when sorting occurs
+        dataTable.on('order.dt', function() {
+            console.log('=== DataTable Sort Event ===');
+            console.log('Tab:', tab);
+            console.log('Current order:', dataTable.order());
+            console.log('Table ID:', tableId);
+        });
+
+        // Debug when data is reloaded
+        dataTable.on('xhr.dt', function(e, settings, json, xhr) {
+            console.log('=== DataTable XHR Event ===');
+            console.log('Tab:', tab);
+            console.log('XHR Status:', xhr.status);
+            console.log('Data received:', json ? json.data?.length : 'No data');
+            
+            if (xhr.status !== 200) {
+                console.error('XHR Error - Status:', xhr.status);
+                console.error('Response Text:', xhr.responseText);
+            }
+        });
+
+        // Debug draw events
+        dataTable.on('draw.dt', function() {
+            console.log('=== DataTable Draw Event ===');
+            console.log('Tab:', tab);
+            console.log('Visible rows:', dataTable.rows({ page: 'current' }).data().length);
+            console.log('Total rows:', dataTable.page.info().recordsTotal);
+        });
+
+        return dataTable;
     }
 
     // Initialize Bootstrap tabs properly
@@ -1312,6 +1559,9 @@ $(document).ready(function() {
         // Activate current tab on page load using global currentTab
         $('#' + currentTab + '-tab').tab('show');
 
+        // Update export button for initial tab
+        updateExportButton(currentTab);
+
         console.log('Bootstrap tabs initialized successfully');
     }
 
@@ -1319,61 +1569,40 @@ $(document).ready(function() {
     window.changeTab = function(tab) {
         console.log('Changing tab to:', tab);
 
-        // Save current state using global currentTab
+        // Destroy existing DataTable if it exists
         if (table && $.fn.DataTable.isDataTable(table.table().node())) {
-            try {
-                var currentPage = table.page();
-                var currentSearch = table.search();
-                sessionStorage.setItem('hb837_page_' + currentTab, currentPage);
-                sessionStorage.setItem('hb837_search_' + currentTab, currentSearch);
-
-                // Destroy current table
-                table.destroy();
-            } catch (e) {
-                console.warn('Error saving table state:', e);
-            }
+            console.log('Destroying existing DataTable');
+            table.destroy();
+            table = null;
         }
 
         // Update global currentTab variable
         currentTab = tab;
 
-        // Remove active classes from all tabs and content
+        // Update tab UI
         $('#hb837-tabs .nav-link').removeClass('active').attr('aria-selected', 'false');
         $('.tab-pane').removeClass('show active');
-
-        // Add active class to clicked tab
         $('#' + tab + '-tab').addClass('active').attr('aria-selected', 'true');
         $('#' + tab).addClass('show active');
 
-        // Initialize DataTable for the new tab using global table variable
+        // Initialize DataTable for the new tab - use single table approach
         var tableId = '#hb837-table-' + tab;
-        table = initDataTable(tab, tableId);
+        
+        // Make sure the table exists before trying to initialize
+        if ($(tableId).length > 0) {
+            console.log('Found table:', tableId);
+            table = initDataTable(tab, tableId);
+            console.log('DataTable initialized for tab:', tab, 'Table exists:', table !== null);
+        } else {
+            console.error('Table not found:', tableId);
+            console.log('Available tables:', $('table[id*="hb837-table"]').map(function() { return this.id; }).get());
+        }
 
         // Update URL
         updateUrl(tab);
 
-        // Restore state for new tab
-        setTimeout(function() {
-            if (table && $.fn.DataTable.isDataTable(table.table().node())) {
-                try {
-                    var savedPage = sessionStorage.getItem('hb837_page_' + tab);
-                    var savedSearch = sessionStorage.getItem('hb837_search_' + tab);
-
-                    if (savedSearch) {
-                        table.search(savedSearch);
-                    }
-                    if (savedPage) {
-                        table.page(parseInt(savedPage));
-                    }
-                    table.draw();
-                } catch (e) {
-                    console.warn('Error restoring table state:', e);
-                }
-            }
-        }, 100);
-
-        // Update tab statistics
-        updateTabStatistics(tab);
+        // Update export button href for current tab
+        updateExportButton(tab);
     };
 
     // Update URL when tab changes
@@ -1381,6 +1610,26 @@ $(document).ready(function() {
         const url = new URL(window.location);
         url.searchParams.set('tab', tab);
         window.history.pushState({}, '', url);
+    }
+
+    // Update export button href when tab changes
+    function updateExportButton(tab) {
+        // Update button text to show current tab and count
+        let tabDisplayName = tab.charAt(0).toUpperCase() + tab.slice(1);
+        let tabCount = 0;
+        
+        // Get count from tab badge
+        let tabBadge = $('#' + tab + '-tab .badge');
+        if (tabBadge.length > 0) {
+            tabCount = parseInt(tabBadge.text()) || 0;
+        }
+        
+        // Update button text
+        let exportBtn = $('#export-data-btn');
+        let newText = `<i class="fas fa-file-download"></i> Export ${tabDisplayName} (${tabCount})`;
+        exportBtn.html(newText);
+        
+        console.log('Export button updated for tab:', tab, 'with count:', tabCount);
     }
 
     // Update tab statistics dynamically
@@ -1414,29 +1663,6 @@ $(document).ready(function() {
     });
 
     // Enhanced functions for record management
-    window.duplicateRecord = function(id) {
-        if (confirm('Are you sure you want to duplicate this record?')) {
-            $.ajax({
-                url: '{{ route("admin.hb837.index") }}/' + id + '/duplicate',
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert('Record duplicated successfully!');
-                        table.ajax.reload();
-                    } else {
-                        alert('Error: ' + response.message);
-                    }
-                },
-                error: function() {
-                    alert('An error occurred while duplicating the record.');
-                }
-            });
-        }
-    };
-
     window.deleteRecord = function(id) {
         if (confirm('Are you sure you want to delete this record? This action cannot be undone.')) {
             $.ajax({
@@ -1447,8 +1673,9 @@ $(document).ready(function() {
                 },
                 success: function(response) {
                     if (response.success) {
-                        alert('Record deleted successfully!');
+                        toastr.success('Record deleted successfully!');
                         table.ajax.reload();
+                        updateTabCounts(); // Update tab counts after deletion
                     } else {
                         alert('Error: ' + response.message);
                     }
@@ -1459,6 +1686,30 @@ $(document).ready(function() {
             });
         }
     };
+
+    // Function to update tab counts dynamically
+    window.updateTabCounts = function() {
+        $.ajax({
+            url: '{{ route("admin.hb837.stats") }}',
+            method: 'GET',
+            success: function(data) {
+                // Update tab badges with new counts
+                $('#all-tab .badge').text(data.tabCounts.all);
+                $('#active-tab .badge').text(data.tabCounts.active);
+                $('#quoted-tab .badge').text(data.tabCounts.quoted);
+                $('#completed-tab .badge').text(data.tabCounts.completed);
+                $('#closed-tab .badge').text(data.tabCounts.closed);
+                
+                console.log('Tab counts updated successfully');
+            },
+            error: function() {
+                console.error('Failed to update tab counts');
+            }
+        });
+    };
+
+    // Auto-refresh tab counts every 30 seconds
+    setInterval(updateTabCounts, 30000);
 
     // Select all checkbox
     $('#select-all').on('click', function() {
@@ -1482,6 +1733,11 @@ $(document).ready(function() {
         $('#selected-count').text(count + ' record(s) selected');
     }
 
+    // Get current active tab
+    function getCurrentTab() {
+        return currentTab; // Return the dynamically updated client-side variable
+    }
+
     // Bulk actions modal
     window.bulkActions = function() {
         let selectedCount = $('.bulk-checkbox:checked').length;
@@ -1490,6 +1746,106 @@ $(document).ready(function() {
             return;
         }
         $('#bulkActionsModal').modal('show');
+    };
+
+    // Generate bulk PDF report
+    window.generateBulkPdfReport = function() {
+        // Get current filter parameters
+        let currentTab = getCurrentTab();
+        let searchValue = $('#hb837-table_filter input').val();
+        
+        // Create form to submit filters for PDF generation
+        let form = $('<form>', {
+            'method': 'GET',
+            'action': '{{ route("admin.hb837.export.format", "pdf") }}',
+            'target': '_blank'
+        });
+        
+        // Add current filters
+        form.append($('<input>', {
+            'type': 'hidden',
+            'name': 'tab',
+            'value': currentTab
+        }));
+        
+        if (searchValue) {
+            form.append($('<input>', {
+                'type': 'hidden',
+                'name': 'search',
+                'value': searchValue
+            }));
+        }
+        
+        // Add filter type
+        form.append($('<input>', {
+            'type': 'hidden',
+            'name': 'format',
+            'value': 'pdf'
+        }));
+        
+        // Submit form
+        $('body').append(form);
+        form.submit();
+        form.remove();
+        
+        // Show feedback message
+        console.log('PDF report generation started...');
+    };
+
+    // Export current tab data
+    window.exportCurrentTab = function() {
+        let currentTab = getCurrentTab();
+        
+        // Get the current tab count from the badge
+        let tabCount = 0;
+        let tabBadge = $('#' + currentTab + '-tab .badge');
+        if (tabBadge.length > 0) {
+            tabCount = parseInt(tabBadge.text()) || 0;
+        }
+        
+        // Get total records info from DataTable if available
+        let totalRecords = 0;
+        if (table && table.page && table.page.info) {
+            try {
+                let pageInfo = table.page.info();
+                totalRecords = pageInfo.recordsTotal || 0;
+            } catch (e) {
+                // Fallback to badge count
+                totalRecords = tabCount;
+            }
+        } else {
+            totalRecords = tabCount;
+        }
+        
+        // Show confirmation with count
+        let tabDisplayName = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
+        let confirmMessage = `Export ${totalRecords} ${tabDisplayName} properties to Excel?\n\nThis will download all ${totalRecords} records from the ${tabDisplayName} tab.`;
+        
+        if (confirm(confirmMessage)) {
+            let exportUrl = '{{ route("admin.hb837.export", ["tab" => "__TAB__"]) }}';
+            exportUrl = exportUrl.replace('__TAB__', currentTab);
+            
+            console.log('Exporting data for tab:', currentTab, 'with', totalRecords, 'records');
+            
+            // Show loading feedback
+            let originalBtn = $('#export-data-btn');
+            let originalText = originalBtn.html();
+            originalBtn.html('<i class="fas fa-spinner fa-spin"></i> Exporting...');
+            originalBtn.prop('disabled', true);
+            
+            // Reset button after a delay
+            setTimeout(function() {
+                originalBtn.html(originalText);
+                originalBtn.prop('disabled', false);
+                
+                // Show success notification if available
+                if (typeof toastr !== 'undefined') {
+                    toastr.success(`Export of ${totalRecords} ${tabDisplayName} properties initiated!`, 'Export Started');
+                }
+            }, 3000);
+            
+            window.open(exportUrl, '_blank');
+        }
     };
 
     // Bulk action type change
@@ -1632,6 +1988,7 @@ $(document).ready(function() {
         }
     }
 
+    // Report Status color class
     function getStatusClass(status) {
         if (!status) return '';
 
@@ -1641,13 +1998,24 @@ $(document).ready(function() {
             case 'notstarted':
                 return 'status-not-started';
             case 'in-progress':
-            case 'inprogress':
+            case 'underway':
                 return 'status-in-progress';
             case 'in-review':
             case 'inreview':
                 return 'status-in-review';
             case 'completed':
                 return 'status-completed';
+            default:
+                return '';
+        }
+    }
+
+    // Contracting Status color class
+    function getContractStatusClass(contractStatus) {
+        if (!contractStatus) return '';
+
+        const contract = contractStatus.toLowerCase().replace(/[\s-_]/g, '-');
+        switch (contract) {
             case 'quoted':
                 return 'status-quoted';
             case 'active':
@@ -1696,6 +2064,142 @@ $(document).ready(function() {
         }
     }
 
+    // Global variables for property location modal
+    let currentPropertyData = {};
+    let map;
+    let marker;
+
+    // Function to view property location in modal with Google Maps
+    window.viewPropertyLocation = function(id, propertyName, address, city, state) {
+        console.log('Opening location modal for property:', propertyName);
+        
+        // Store current property data
+        currentPropertyData = {
+            id: id,
+            name: propertyName,
+            address: address,
+            city: city,
+            state: state,
+            fullAddress: address + ', ' + city + ', ' + state
+        };
+        
+        // Update modal content
+        $('#modal-property-name').text(propertyName);
+        $('#modal-property-address').text(currentPropertyData.fullAddress);
+        
+        // Show modal
+        $('#propertyLocationModal').modal('show');
+        
+        // Initialize map when modal is shown
+        $('#propertyLocationModal').on('shown.bs.modal', function() {
+            initializePropertyMap();
+        });
+    };
+
+    // Initialize Google Maps
+    function initializePropertyMap() {
+        console.log('Initializing map for address:', currentPropertyData.fullAddress);
+        
+        // Show loading indicator
+        $('#mapLoadingIndicator').show();
+        $('#mapErrorIndicator').hide();
+        $('#propertyMap').hide();
+        
+        // Check if Google Maps API is loaded
+        if (typeof google === 'undefined') {
+            console.error('Google Maps API not loaded');
+            showMapError();
+            return;
+        }
+        
+        // Geocode the address
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: currentPropertyData.fullAddress }, function(results, status) {
+            if (status === 'OK') {
+                console.log('Geocoding successful:', results[0]);
+                
+                // Hide loading indicator
+                $('#mapLoadingIndicator').hide();
+                $('#propertyMap').show();
+                
+                // Get coordinates
+                const location = results[0].geometry.location;
+                
+                // Initialize map
+                map = new google.maps.Map(document.getElementById('propertyMap'), {
+                    zoom: 16,
+                    center: location,
+                    mapTypeId: google.maps.MapTypeId.SATELLITE,
+                    mapTypeControl: true,
+                    streetViewControl: true,
+                    fullscreenControl: true,
+                    zoomControl: true
+                });
+                
+                // Add marker
+                marker = new google.maps.Marker({
+                    position: location,
+                    map: map,
+                    title: currentPropertyData.name,
+                    animation: google.maps.Animation.DROP
+                });
+                
+                // Add info window
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div style="max-width: 250px;">
+                            <h6 class="mb-2"><strong>${currentPropertyData.name}</strong></h6>
+                            <p class="mb-1"><i class="fas fa-map-marker-alt text-danger"></i> ${currentPropertyData.fullAddress}</p>
+                            <small class="text-muted">Security assessment location</small>
+                        </div>
+                    `
+                });
+                
+                // Show info window on marker click
+                marker.addListener('click', function() {
+                    infoWindow.open(map, marker);
+                });
+                
+                // Open info window by default
+                infoWindow.open(map, marker);
+                
+            } else {
+                console.error('Geocoding failed:', status);
+                showMapError();
+            }
+        });
+    }
+    
+    // Show map error
+    function showMapError() {
+        $('#mapLoadingIndicator').hide();
+        $('#propertyMap').hide();
+        $('#mapErrorIndicator').show();
+    }
+    
+    // Open in Google Maps
+    window.openInGoogleMaps = function() {
+        if (currentPropertyData.fullAddress) {
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentPropertyData.fullAddress)}`;
+            window.open(url, '_blank');
+        }
+    };
+    
+    // Clean up map when modal is hidden
+    $('#propertyLocationModal').on('hidden.bs.modal', function() {
+        if (map) {
+            map = null;
+            marker = null;
+        }
+        $('#mapLoadingIndicator').hide();
+        $('#mapErrorIndicator').hide();
+        $('#propertyMap').show();
+    });
+
 });
 </script>
+
+<!-- Google Maps API -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.api_key', 'YOUR_API_KEY_HERE') }}&libraries=geometry,places"></script>
+
 @stop

@@ -18,6 +18,32 @@
         $offenses = [];
     }
 
+    // Allow manual entry even when no PDF has been uploaded/extracted.
+    if (empty($offenses)) {
+        $defaultCategories = (array) config('hb837.crime_stats_offense_categories', []);
+        $offenses = collect($defaultCategories)
+            ->map(function ($category) {
+                $label = ucwords(str_replace(['-', '_'], ' ', (string) $category));
+                return [
+                    'label' => $label,
+                    'category' => $category,
+                    'count' => null,
+                    'rate_per_1000' => null,
+                    'state_rate_per_1000' => null,
+                    'national_rate_per_1000' => null,
+                    'comparison_to_state' => null,
+                    'securitygauge_score' => null,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    $trends = data_get($stats, 'tables.crime_risk_trends', []);
+    if (!is_array($trends)) {
+        $trends = [];
+    }
+
     $crimeRiskOptions = collect(config('hb837.security_gauge', []))->values()->all();
     $crimeRiskValue = old('crime_risk', $crimeStat?->crime_risk ?? data_get($stats, 'summary.crime_risk'));
 @endphp
@@ -134,19 +160,24 @@
 
 <hr class="border-secondary">
 
-<h5>Offense Counts</h5>
+<h5>Offense Rates (for PDF)</h5>
 
-@if(empty($offenses))
-    <div class="alert alert-info">No offense rows were extracted yet. Uploading a different PDF layout or a scanned PDF may require manual entry later.</div>
-@else
+@if(!$crimeStat)
+    <div class="alert alert-info">No PDF extracted yet. You can fill these rows manually, or upload a Crime Report PDF to pre-fill them.</div>
+@endif
+
     <div class="table-responsive">
         <table class="table table-dark table-striped table-bordered mb-0" id="crime-offenses-table">
             <thead>
                 <tr>
-                    <th style="width: 45%">Label</th>
-                    <th style="width: 20%">Category</th>
-                    <th style="width: 15%">Count</th>
-                    <th style="width: 20%">Rate / 1000</th>
+                    <th style="width: 18%">Label</th>
+                    <th style="width: 14%">Category</th>
+                    <th style="width: 8%">Count</th>
+                    <th style="width: 12%">Prop / 1000</th>
+                    <th style="width: 12%">State / 1000</th>
+                    <th style="width: 12%">Nat / 1000</th>
+                    <th style="width: 12%">Compare</th>
+                    <th style="width: 12%">SG</th>
                 </tr>
             </thead>
             <tbody>
@@ -164,12 +195,52 @@
                         <td>
                             <input type="number" class="form-control form-control-sm crime-offense-rate" value="{{ data_get($row, 'rate_per_1000') }}" data-index="{{ $idx }}" min="0" step="0.01">
                         </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm crime-offense-state-rate" value="{{ data_get($row, 'state_rate_per_1000') }}" data-index="{{ $idx }}" min="0" step="0.01">
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm crime-offense-national-rate" value="{{ data_get($row, 'national_rate_per_1000') }}" data-index="{{ $idx }}" min="0" step="0.01">
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm crime-offense-compare" value="{{ data_get($row, 'comparison_to_state') }}" data-index="{{ $idx }}" placeholder="e.g. +1.2">
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm crime-offense-sg" value="{{ data_get($row, 'securitygauge_score') }}" data-index="{{ $idx }}" min="1" max="5" step="1" placeholder="1-5">
+                        </td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
-@endif
+
+<hr class="border-secondary">
+
+<h5>Crime Risk Trends (5-year trend vs nation)</h5>
+
+<div class="table-responsive">
+    <table class="table table-dark table-striped table-bordered mb-0" id="crime-trends-table">
+        <thead>
+            <tr>
+                <th style="width: 25%">Metric</th>
+                <th>Trend (display text)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Total Crime</td>
+                <td><input type="text" class="form-control form-control-sm" id="crime_trend_total" value="{{ data_get($trends, 'total_crime') }}" placeholder="e.g. -26% (decrease/improvement)"></td>
+            </tr>
+            <tr>
+                <td>Violent Crime</td>
+                <td><input type="text" class="form-control form-control-sm" id="crime_trend_violent" value="{{ data_get($trends, 'violent_crime') }}" placeholder="e.g. -15% (decrease/improvement)"></td>
+            </tr>
+            <tr>
+                <td>Property Crime</td>
+                <td><input type="text" class="form-control form-control-sm" id="crime_trend_property" value="{{ data_get($trends, 'property_crime') }}" placeholder="e.g. -36% (decrease/improvement)"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 <hr class="border-secondary">
 

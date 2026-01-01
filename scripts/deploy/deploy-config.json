@@ -1,0 +1,71 @@
+{
+  "forge": {
+    "server_id": "783941",
+    "site_id": "2763978",
+    "server_ip": "54.158.31.216",
+    "server_name": "projecttracker.hb837training.com",
+    "ssh_user": "projecttracker",
+    "project_path": "/home/projecttracker/projecttracker.hb837training.com",
+    "site_url": "https://projecttracker.hb837training.com",
+    "php_version": "8.2",
+    "private_ip": "10.0.1.86",
+    "region": "Virginia"
+  },
+  "deployment": {
+    "backup_before_deploy": true,
+    "backup_retention_days": 7,
+    "selective_folders": [
+      "app",
+      "bootstrap",
+      "config",
+      "database/migrations",
+      "database/seeders",
+      "public",
+      "resources",
+      "routes",
+      "composer.json",
+      "composer.lock",
+      "package.json",
+      "artisan"
+    ],
+    "exclude_folders": [
+      "node_modules",
+      "vendor",
+      "storage/logs",
+      "storage/framework/cache",
+      "storage/framework/sessions",
+      "storage/framework/views",
+      ".git",
+      "tests",
+      "docs"
+    ],
+    "preserve_files": [
+      ".env",
+      "storage",
+      "bootstrap/cache"
+    ],
+    "laravel_optimizations": [
+      "composer install --no-dev --optimize-autoloader",
+      "php artisan config:cache",
+      "php artisan route:cache",
+      "php artisan view:cache",
+      "php artisan optimize"
+    ],
+    "post_deploy_commands": [
+      "npm install --production",
+      "npm run build",
+      "php artisan storage:link"
+    ]
+  },
+  "database": {
+    "backup_before_migration": true,
+    "run_migrations": false,
+    "rollback_on_failure": true
+  },
+  "notifications": {
+    "slack_webhook": "",
+    "email": "",
+    "on_success": true,
+    "on_failure": true
+  }
+}

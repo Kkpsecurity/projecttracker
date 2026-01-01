@@ -1,0 +1,103 @@
+{
+    "timestamp": "2025-07-15 15:46:26",
+    "sheet_info": {
+        "sheet1": {
+            "file": "docs\/tasks\/extracted_reports\/TEST SHEET 01 - Initial Import & Quotation.xlsx",
+            "name": "TEST SHEET 01 - Initial Import & Quotation",
+            "phase": "initial",
+            "expected_records": 352
+        },
+        "sheet2": {
+            "file": "docs\/tasks\/extracted_reports\/TEST SHEET 02 - Executed & Contacts - VERIFY.XLSX",
+            "name": "TEST SHEET 02 - Executed & Contacts - VERIFY",
+            "phase": "executed",
+            "expected_records": 376
+        },
+        "sheet3": {
+            "file": "docs\/tasks\/extracted_reports\/TEST SHEET 03 - Details Updated - VERIFY.XLSX",
+            "name": "TEST SHEET 03 - Details Updated - VERIFY",
+            "phase": "details_updated",
+            "expected_records": 372
+        }
+    },
+    "common_properties": [
+        "TEST PROPERTY A",
+        "TEST PROPERTY B"
+    ],
+    "expected_progression": {
+        "TEST PROPERTY A": {
+            "property_name": "TEST PROPERTY A",
+            "phases": {
+                "initial": {
+                    "contracting_status": null,
+                    "report_status": null,
+                    "assigned_consultant": null,
+                    "address": "37 Bishop Creek Drive",
+                    "units": 666,
+                    "quoted_price": 9000,
+                    "macro_client": "Heavens Gate Investment Group"
+                },
+                "executed": {
+                    "contracting_status": "executed",
+                    "report_status": null,
+                    "assigned_consultant": "Craig",
+                    "address": "37 Bishop Creek Drive",
+                    "units": 666,
+                    "quoted_price": 9000,
+                    "macro_client": "Heavens Gate Investment Group"
+                },
+                "details_updated": {
+                    "contracting_status": null,
+                    "report_status": "completed",
+                    "assigned_consultant": "Ryland",
+                    "address": "37 Bishop Creek Drive",
+                    "units": 666,
+                    "quoted_price": 9000,
+                    "macro_client": "Heavens Gate Investment Group"
+                }
+            }
+        },
+        "TEST PROPERTY B": {
+            "property_name": "TEST PROPERTY B",
+            "phases": {
+                "initial": {
+                    "contracting_status": null,
+                    "report_status": null,
+                    "assigned_consultant": null,
+                    "address": "934 11th Street North",
+                    "units": 190,
+                    "quoted_price": 12000,
+                    "macro_client": "Heavens Gate Investment Group"
+                },
+                "executed": {
+                    "contracting_status": "executed",
+                    "report_status": null,
+                    "assigned_consultant": "Hector Rodriguez",
+                    "address": "934 11th Street North",
+                    "units": 190,
+                    "quoted_price": 12000,
+                    "macro_client": "Heavens Gate Investment Group"
+                },
+                "details_updated": {
+                    "contracting_status": null,
+                    "report_status": "not-started",
+                    "assigned_consultant": "Shannon",
+                    "address": "934 11th Street North",
+                    "units": 190,
+                    "quoted_price": 12000,
+                    "macro_client": "Heavens Gate Investment Group"
+                }
+            }
+        }
+    },
+    "field_mappings": {
+        "property_name": "Property Name",
+        "address": "Address",
+        "contracting_status": "Contracting Status",
+        "report_status": "Report Status",
+        "assigned_consultant": "Assigned Consultant",
+        "units": "Units",
+        "quoted_price": "Quoted Price",
+        "macro_client": "Macro Client"
+    }
+}

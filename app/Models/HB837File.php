@@ -19,6 +19,7 @@ class HB837File extends Model
         'mime_type',
         'file_size',
         'file_category',
+        'file_position',
         'description',
     ];
 
@@ -60,13 +61,13 @@ class HB837File extends Model
     // Methods
     public function getFile()
     {
-        return Storage::disk('local')->get($this->file_path);
+        return Storage::disk('public')->get($this->file_path);
     }
 
     public function deleteFile(): bool
     {
-        if (Storage::disk('local')->exists($this->file_path)) {
-            return Storage::disk('local')->delete($this->file_path);
+        if (Storage::disk('public')->exists($this->file_path)) {
+            return Storage::disk('public')->delete($this->file_path);
         }
         return true;
     }

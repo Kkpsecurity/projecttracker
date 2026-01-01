@@ -32,12 +32,25 @@
                 </div>
 
                 @if ($selectedPlotId)
-                    <div class="input-group address-forms">
-                        <input type="text" id="address-input" class="form-control" placeholder="Enter an address">
-                        <button id="add-address-btn" class="btn btn-secondary">
-                            <i class="fa fa-plus"></i>
+                    <div class="input-group address-forms mt-2">
+                        <input type="text" 
+                               id="address-input" 
+                               class="form-control" 
+                               placeholder="Start typing an address..."
+                               autocomplete="off"
+                               title="Search for addresses using Google Places"
+                               aria-label="Address search with autocomplete">
+                        <button id="add-address-btn" 
+                                class="btn btn-secondary" 
+                                type="button"
+                                title="Add selected address to plot">
+                            <i class="fa fa-plus"></i> Add
                         </button>
                     </div>
+                    <small class="text-muted d-block mt-1">
+                        <i class="fa fa-info-circle"></i> 
+                        Type to search addresses with Google Places autocomplete
+                    </small>
                 @endif
 
                 <!-- Plot Selection -->

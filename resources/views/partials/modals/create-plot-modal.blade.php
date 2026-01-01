@@ -1,4 +1,6 @@
-<div class="modal fade" id="createPlotModal" tabindex="-1" aria-labelledby="createPlotModalLabel" aria-hidden="true">
+<div                 <div class="modal-header">
+                    <h5 class="modal-title text-shadow-sm" id="createPlotModalLabel">Create New Plot</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">ss="modal fade" id="createPlotModal" tabindex="-1" aria-labelledby="createPlotModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form action="{{ route('admin.mapplots.store') }}" method="POST">

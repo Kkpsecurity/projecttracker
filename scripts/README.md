@@ -4,100 +4,119 @@ This directory contains all utility scripts, test files, and workflow tools for 
 
 ## 📂 Directory Structure
 
-### 🧪 **Test Scripts**
-Files prefixed with `test_` - These are debugging and testing utilities:
+### 📊 **analysis/** - Excel and Data Analysis Scripts (8 scripts)
+Scripts for analyzing Excel files, test sheets, and data structures:
 
-- `test_ajax_response.php` - Test AJAX endpoint responses
-- `test_consultant_validation.php` - Test consultant validation logic
-- `test_dashboard_live.php` - Test live dashboard functionality
-- `test_dashboard_stats.php` - Test dashboard statistics
-- `test_datatables_debug.php` - Debug DataTables issues
-- `test_datatables_fix.php` - DataTables fix validation
-- `test_field_mapping_config.php` - Test field mapping configuration
-- `test_fixes.php` - General fixes testing
-- `test_full_import_sanitization.php` - Test import data sanitization
-- `test_hb837_export.php` - Test HB837 export functionality
-- `test_hb837_stats.php` - Test HB837 statistics
-- `test_import_results_errors.php` - Test import error handling
-- `test_mapped_fields.php` - Test field mapping
-- `test_mock_datatables.php` - Mock DataTables testing
-- `test_plots_ajax.php` - Test plots AJAX functionality
-- `test_property_type_normalization.php` - Test property type normalization
+- Excel structure and header analysis
+- Test sheet validation and mapping
+- Consultant lookup analysis
+- Import log analysis and debugging
 
-### 📊 **Excel Analysis Scripts**
-Scripts for analyzing and debugging Excel imports:
+### 🐛 **debug/** - Debugging and Troubleshooting Tools (10 scripts)
+Scripts for debugging system components and issues:
 
-- `analyze_all_excel.php` - Comprehensive Excel file analysis
-- `analyze_excel_headers.php` - Excel header analysis
-- `analyze_excel_simple.php` - Simple Excel analysis
-- `analyze_excel_structure.php` - Excel structure analysis
+- Component debugging (consultant, contracting status, crime risk)
+- UI debugging (forms, AJAX, DataTables)
+- Import debugging and diagnostics
+- Live system troubleshooting
 
-### 🔧 **Utility Scripts**
-General purpose utility scripts:
+### 📥 **import/** - Import Testing and Validation Scripts (10 scripts)
+Scripts for testing and validating HB837 import functionality:
 
-- `check_missing_field.php` - Check for missing database fields
-- `check_missing_fields_upload.php` - Check missing fields in uploads
-- `clear_cache.php` - Clear application cache
-- `create_missing_columns.php` - Create missing database columns
-- `create_test_field.php` - Create test fields
-- `debug_plots_ajax.php` - Debug plots AJAX calls
-- `diagnostic_live_import.php` - Live import diagnostics
-- `scroll_feature_summary.php` - Scroll feature analysis
-- `upload_flow_changes.php` - Upload flow modifications
+- Comprehensive import testing
+- Live import validation
+- Import error handling and monitoring
+- Data sanitization and integrity checks
 
-### 🔄 **Workflow Scripts**
-Business process and workflow scripts:
+### 🧪 **test/** - General Testing Scripts and Test Runners (33 scripts)
+Comprehensive testing suite including:
 
-- `workflow_master.php` - Master workflow controller
-- `workflow_step_1_quotation.php` - Quotation workflow step
-- `workflow_step_2_execution.php` - Execution workflow step
-- `workflow_step_3_completion.php` - Completion workflow step
+- Test runners (PowerShell and Bash)
+- Component testing (AJAX, dashboard, DataTables)
+- Field validation and mapping tests
+- UI functionality testing
 
-### 🧪 **Test Runners**
-Scripts for running tests and validation:
+### 🔧 **util/** - Utility and Maintenance Scripts (18 scripts)
+System management and maintenance tools:
 
-- `run-tests-simple.ps1` - Simple PowerShell test runner
-- `run-tests.ps1` - Full PowerShell test suite
-- `run-tests.sh` - Bash test runner for Linux/Mac
-- `test-runner.ps1` - Advanced test runner
-- `setup_mock_mode.bat` - Setup mock mode for testing
+- Data management (add/clear test data)
+- Database management (check tables, create columns)
+- Field integrity checking
+- Export/import utilities
 
-### 🔗 **Git Hooks**
+### 🔄 **workflow/** - Business Workflow Scripts (6 scripts)
+Business process and workflow automation:
+
+- Master workflow controller and step-by-step execution
+- 3-phase business process (quotation → execution → completion)
+- Workflow testing and validation
+- Status progression management
+
+### � **hooks/** - Git Hooks and Automation (2 scripts)
 Git automation scripts:
 
-- `pre-commit-hook.ps1` - PowerShell pre-commit hook
-- `pre-commit-hook.sh` - Bash pre-commit hook
+- Pre-commit hooks for code quality
+- Cross-platform hook support (PowerShell and Bash)
 
-## 🚀 **Usage Instructions**
+### 📁 **archive/** - Archived and Obsolete Scripts
+Repository for outdated or unused scripts that may need future reference.
 
-### Running Test Scripts
+---
+
+## � **Usage Instructions**
+
+### Running Analysis Scripts
 ```bash
-# Run individual test
-php scripts/test_dashboard_live.php
+# Analyze Excel file structure
+php scripts/analysis/analyze_excel_structure.php /path/to/file.xlsx
 
-# Run test suite
-./scripts/run-tests.sh
+# Analyze all test sheets
+php scripts/analysis/analyze_all_test_sheets.php
 ```
 
-### Excel Analysis
+### Running Tests
 ```bash
-# Analyze an Excel file
-php scripts/analyze_all_excel.php /path/to/file.xlsx
+# Run full test suite
+./scripts/test/run-tests.sh
+
+# Run specific test
+php scripts/test/test_dashboard_live.php
 ```
 
-### Workflow Scripts
+### Import Testing
 ```bash
-# Execute workflow step
-php scripts/workflow_step_1_quotation.php
+# Run comprehensive import test
+php scripts/import/comprehensive_import_test.php
+
+# Test with live data
+php scripts/import/live_import_test.php
 ```
 
-### Utility Scripts
+### Using Utilities
 ```bash
 # Clear cache
-php scripts/clear_cache.php
+php scripts/util/clear_cache.php
 
-# Check missing fields
-php scripts/check_missing_field.php
+# Check database structure
+php scripts/util/check_tables.php
+```
+
+### Workflow Execution
+```bash
+# Run complete workflow
+php scripts/workflow/workflow_master.php
+
+# Execute specific workflow step
+php scripts/workflow/workflow_step_1_quotation.php
+```
+
+### Debugging Issues
+```bash
+# Debug consultant assignment
+php scripts/debug/debug_consultant.php
+
+# Debug import issues
+php scripts/debug/test_hb837_import_debug.php
 ```
 
 ## ⚠️ **Important Notes**
@@ -111,20 +130,31 @@ php scripts/check_missing_field.php
 
 When adding new scripts to this directory:
 
-1. Use descriptive names with appropriate prefixes (`test_`, `analyze_`, `workflow_`)
-2. Add documentation at the top of each file
-3. Update this README.md file
-4. Test thoroughly before committing
+1. **Choose the correct directory** based on script purpose:
+   - `analysis/` - Excel/data analysis tools
+   - `debug/` - Debugging and troubleshooting
+   - `import/` - Import testing and validation
+   - `test/` - General testing and test runners
+   - `util/` - Utilities and maintenance
+   - `workflow/` - Business process scripts
+   - `hooks/` - Git automation
+
+2. **Use descriptive names** with appropriate prefixes when helpful
+3. **Add documentation** at the top of each file
+4. **Update the relevant directory README.md** file
+5. **Test thoroughly** before committing
 
 ## 🔧 **Maintenance**
 
 Regular maintenance tasks:
-- Review and clean up outdated test scripts
+- Review and clean up outdated scripts (move to `archive/`)
 - Update documentation as scripts evolve
-- Archive or remove unused scripts
+- Ensure directory organization remains logical
+- Keep README files current with script purposes
 
 ---
 
-**Last Updated**: July 4, 2025  
+**Last Updated**: July 15, 2025  
 **Project**: KKP Security Project Tracker  
-**Version**: 1.0
+**Version**: 2.0 - Organized Structure  
+**Total Scripts**: 87 scripts organized into 7 functional directories

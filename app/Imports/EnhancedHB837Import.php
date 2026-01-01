@@ -35,6 +35,11 @@ class EnhancedHB837Import
     protected $completeFieldMapping;
 
     /**
+     * Track which fields were actually present in the import file
+     */
+    protected $fieldsInImport = [];
+
+    /**
      * Constructor - Load field mapping from database
      */
     public function __construct()
@@ -139,6 +144,7 @@ class EnhancedHB837Import
                 foreach ($possibleHeaders as $possibleHeader) {
                     if (strcasecmp($header, $possibleHeader) === 0) {
                         $headerMap[$dbField] = $index;
+                        $this->fieldsInImport[] = $dbField; // Track that this field was in import
                         break 2; // Break out of both loops
                     }
                 }
@@ -169,13 +175,11 @@ class EnhancedHB837Import
         $defaults = config('hb837_field_mapping.import_rules.default_values', []);
         $recordData['user_id'] = Auth::id() ?? $defaults['user_id'] ?? 1;
 
-        // Default status values if not provided
-        if (empty($recordData['report_status'])) {
-            $recordData['report_status'] = $defaults['report_status'] ?? 'not-started';
-        }
-        if (empty($recordData['contracting_status'])) {
-            $recordData['contracting_status'] = $defaults['contracting_status'] ?? 'quoted';
-        }
+        // NOTE: Status defaults will be handled in create/update logic based on record type
+        // For EXISTING records: preserve existing status if import data is empty
+        // For NEW records: apply defaults only if no status provided
+        // This prevents status downgrades during import
+
 
         Log::info('Processing row', [
             'row_index' => $rowIndex,
@@ -184,7 +188,7 @@ class EnhancedHB837Import
 
         // Check required fields
         if (empty($recordData['property_name']) && empty($recordData['address'])) {
-            Log::warning('Skipping row - no property name or address', [
+            Log::warning('Skipping row: Missing property_name and address', [
                 'row_index' => $rowIndex,
                 'row_data' => $row
             ]);
@@ -204,32 +208,112 @@ class EnhancedHB837Import
 
     /**
      * Enhanced logic to find existing records
-     * Checks both property_name and address for better matching
+     * Priority: Address first, then property name
+     * Logic: If same address + same property_name → UPDATE
+     *        If same address + different property_name → CREATE (different property at same address)
      */
     private function findExistingRecord($recordData)
     {
-        $query = HB837::query();
-
-        // Primary check: property name (exact match first, then fuzzy)
-        if (!empty($recordData['property_name'])) {
-            $existing = $query->where('property_name', $recordData['property_name'])->first();
-            if ($existing) return $existing;
-
-            // Fuzzy match on property name
-            $existing = $query->where('property_name', 'ILIKE', '%' . $recordData['property_name'] . '%')->first();
-            if ($existing) return $existing;
-        }
-
-        // Secondary check: address
+        // Primary check: Address first (exact match)
         if (!empty($recordData['address'])) {
-            $existing = HB837::where('address', $recordData['address'])->first();
-            if ($existing) return $existing;
+            // Find all records with the same address
+            $recordsWithSameAddress = HB837::where('address', $recordData['address'])->get();
 
-            // Fuzzy match on address
-            $existing = HB837::where('address', 'ILIKE', '%' . $recordData['address'] . '%')->first();
-            if ($existing) return $existing;
+            if ($recordsWithSameAddress->isNotEmpty()) {
+                Log::info('Found records with matching address', [
+                    'address' => $recordData['address'],
+                    'matching_records_count' => $recordsWithSameAddress->count(),
+                    'incoming_property_name' => $recordData['property_name'] ?? 'N/A'
+                ]);
+
+                // Check if any record has the same property_name
+                if (!empty($recordData['property_name'])) {
+                    foreach ($recordsWithSameAddress as $record) {
+                        if ($record->property_name === $recordData['property_name']) {
+                            Log::info('✅ UPDATE: Same address + same property_name found', [
+                                'existing_id' => $record->id,
+                                'address' => $recordData['address'],
+                                'property_name' => $recordData['property_name'],
+                                'action' => 'UPDATE_EXISTING'
+                            ]);
+                            return $record; // UPDATE existing record
+                        }
+                    }
+
+                    // Same address but different property_name → CREATE new record
+                    Log::info('🆕 CREATE: Same address but different property_name', [
+                        'address' => $recordData['address'],
+                        'incoming_property_name' => $recordData['property_name'],
+                        'existing_properties_at_address' => $recordsWithSameAddress->pluck('property_name')->toArray(),
+                        'action' => 'CREATE_NEW'
+                    ]);
+                    return null; // CREATE new record
+                } else {
+                    // No property_name provided, check if only one record exists at this address
+                    if ($recordsWithSameAddress->count() === 1) {
+                        Log::info('✅ UPDATE: Single record at address, no property_name conflict', [
+                            'existing_id' => $recordsWithSameAddress->first()->id,
+                            'address' => $recordData['address'],
+                            'action' => 'UPDATE_EXISTING'
+                        ]);
+                        return $recordsWithSameAddress->first(); // UPDATE the single record
+                    } else {
+                        // Multiple records at same address, can't determine which to update
+                        Log::warning('🤔 AMBIGUOUS: Multiple records at address, no property_name provided', [
+                            'address' => $recordData['address'],
+                            'existing_records_count' => $recordsWithSameAddress->count(),
+                            'action' => 'CREATE_NEW'
+                        ]);
+                        return null; // CREATE new record to avoid ambiguity
+                    }
+                }
+            }
+
+            // Try fuzzy address match as fallback
+            $fuzzyAddressMatch = HB837::where('address', 'ILIKE', '%' . $recordData['address'] . '%')->first();
+            if ($fuzzyAddressMatch) {
+                Log::info('📍 FUZZY ADDRESS MATCH found', [
+                    'exact_address' => $recordData['address'],
+                    'fuzzy_match_address' => $fuzzyAddressMatch->address,
+                    'fuzzy_match_id' => $fuzzyAddressMatch->id,
+                    'action' => 'UPDATE_EXISTING'
+                ]);
+                return $fuzzyAddressMatch; // UPDATE fuzzy match
+            }
         }
 
+        // Fallback: Property name only check (if no address provided)
+        if (!empty($recordData['property_name'])) {
+            // Exact property name match
+            $existing = HB837::where('property_name', $recordData['property_name'])->first();
+            if ($existing) {
+                Log::info('✅ UPDATE: Property name match (no address provided)', [
+                    'existing_id' => $existing->id,
+                    'property_name' => $recordData['property_name'],
+                    'action' => 'UPDATE_EXISTING'
+                ]);
+                return $existing;
+            }
+
+            // Fuzzy property name match
+            $existing = HB837::where('property_name', 'ILIKE', '%' . $recordData['property_name'] . '%')->first();
+            if ($existing) {
+                Log::info('🔍 FUZZY PROPERTY NAME MATCH found', [
+                    'exact_property_name' => $recordData['property_name'],
+                    'fuzzy_match_property_name' => $existing->property_name,
+                    'fuzzy_match_id' => $existing->id,
+                    'action' => 'UPDATE_EXISTING'
+                ]);
+                return $existing;
+            }
+        }
+
+        // No matches found → CREATE new record
+        Log::info('🆕 CREATE: No existing record found', [
+            'property_name' => $recordData['property_name'] ?? 'N/A',
+            'address' => $recordData['address'] ?? 'N/A',
+            'action' => 'CREATE_NEW'
+        ]);
         return null;
     }
 
@@ -246,6 +330,118 @@ class EnhancedHB837Import
 
             $currentValue = $existing->{$field};
 
+            // CRITICAL: Skip status fields that weren't in the import file
+            // This prevents applying default status values to existing records
+            if (in_array($field, ['report_status', 'contracting_status'])) {
+                // If this field was not explicitly mapped from import headers, skip it entirely
+                if (!$this->wasFieldInImport($field)) {
+                    Log::info('Skipping status field - not in import file', [
+                        'property_id' => $existing->id,
+                        'field' => $field,
+                        'current_value' => $currentValue,
+                        'action' => 'PRESERVE_EXISTING_STATUS'
+                    ]);
+                    continue;
+                }
+            }
+
+            // Special handling for contracting_status field with hierarchy protection
+            if ($field === 'contracting_status') {
+                // Define status hierarchy (higher index = better status)
+                $statusHierarchy = ['quoted' => 1, 'started' => 2, 'executed' => 3, 'closed' => 4];
+
+                $currentRank = $statusHierarchy[$currentValue] ?? 0;
+                $newRank = $statusHierarchy[$newValue] ?? 0;
+
+                // RULE 1: If database field is empty → Update with import value
+                if (empty($currentValue) && !empty($newValue)) {
+                    $updates[$field] = $newValue;
+                    $changes[$field] = [
+                        'type' => 'contracting_status_empty_to_value',
+                        'old' => $currentValue,
+                        'new' => $newValue
+                    ];
+                }
+                // RULE 2: Only update if import has BETTER status (prevent downgrades)
+                else if (!empty($currentValue) && !empty($newValue) && $newRank > $currentRank) {
+                    $updates[$field] = $newValue;
+                    $changes[$field] = [
+                        'type' => 'contracting_status_upgraded',
+                        'old' => $currentValue,
+                        'new' => $newValue
+                    ];
+                }
+                // RULE 3: Prevent status downgrades
+                else if (!empty($currentValue) && !empty($newValue) && $newRank <= $currentRank) {
+                    Log::info('Preventing contracting_status downgrade', [
+                        'property_id' => $existing->id,
+                        'current_status' => $currentValue,
+                        'import_status' => $newValue,
+                        'current_rank' => $currentRank,
+                        'import_rank' => $newRank,
+                        'action' => 'PRESERVE_HIGHER_STATUS'
+                    ]);
+                }
+                // RULE 4: If import has no value → Don't update database (skip)
+                else if (empty($newValue)) {
+                    Log::info('Skipping contracting_status update - no import value', [
+                        'property_id' => $existing->id,
+                        'current_db_value' => $currentValue,
+                        'import_value' => $newValue
+                    ]);
+                }
+                continue;
+            }
+
+            // Special handling for report_status field with hierarchy protection
+            if ($field === 'report_status') {
+                // Define status hierarchy (higher index = better status)
+                $statusHierarchy = ['not-started' => 1, 'underway' => 2, 'in-review' => 3, 'completed' => 4];
+
+                $currentRank = $statusHierarchy[$currentValue] ?? 0;
+                $newRank = $statusHierarchy[$newValue] ?? 0;
+
+                // RULE 1: If database field is empty → Update with import value
+                if (empty($currentValue) && !empty($newValue)) {
+                    $updates[$field] = $newValue;
+                    $changes[$field] = [
+                        'type' => 'report_status_empty_to_value',
+                        'old' => $currentValue,
+                        'new' => $newValue
+                    ];
+                }
+                // RULE 2: Only update if import has BETTER status (prevent downgrades)
+                else if (!empty($currentValue) && !empty($newValue) && $newRank > $currentRank) {
+                    $updates[$field] = $newValue;
+                    $changes[$field] = [
+                        'type' => 'report_status_upgraded',
+                        'old' => $currentValue,
+                        'new' => $newValue
+                    ];
+                }
+                // RULE 3: Prevent status downgrades
+                else if (!empty($currentValue) && !empty($newValue) && $newRank <= $currentRank) {
+                    Log::info('Preventing report_status downgrade', [
+                        'property_id' => $existing->id,
+                        'current_status' => $currentValue,
+                        'import_status' => $newValue,
+                        'current_rank' => $currentRank,
+                        'import_rank' => $newRank,
+                        'action' => 'PRESERVE_HIGHER_STATUS'
+                    ]);
+                }
+                // RULE 4: If import has no value → Don't update database (skip)
+                else if (empty($newValue)) {
+                    Log::info('Skipping report_status update - no import value', [
+                        'property_id' => $existing->id,
+                        'current_db_value' => $currentValue,
+                        'import_value' => $newValue
+                    ]);
+                }
+                continue;
+            }
+
+            // Standard rules for other fields
             // RULE 1: If field in DB is empty → UPDATE with new value
             if (empty($currentValue) && !empty($newValue)) {
                 $updates[$field] = $newValue;
@@ -292,10 +488,29 @@ class EnhancedHB837Import
     }
 
     /**
+     * Check if a field was actually present in the import file
+     */
+    private function wasFieldInImport($field)
+    {
+        return in_array($field, $this->fieldsInImport);
+    }
+
+    /**
      * Create new record
      */
     private function createNewRecord($recordData, $rowIndex)
     {
+        $defaults = config('hb837_field_mapping.import_rules.default_values', []);
+
+        // For new records, apply default status values only if not provided in import
+        if (!isset($recordData['contracting_status']) || empty($recordData['contracting_status'])) {
+            $recordData['contracting_status'] = $defaults['contracting_status'] ?? 'quoted';
+        }
+
+        if (!isset($recordData['report_status']) || empty($recordData['report_status'])) {
+            $recordData['report_status'] = $defaults['report_status'] ?? 'not-started';
+        }
+
         DB::transaction(function() use ($recordData, $rowIndex) {
             $created = HB837::create($recordData);
 
@@ -305,6 +520,7 @@ class EnhancedHB837Import
                 'id' => $created->id,
                 'property_name' => $recordData['property_name'] ?? 'N/A',
                 'address' => $recordData['address'] ?? 'N/A',
+                'contracting_status' => $recordData['contracting_status'],
                 'fields_set' => array_keys($recordData)
             ]);
         });
@@ -398,7 +614,17 @@ class EnhancedHB837Import
     {
         $statusMap = config('hb837_field_mapping.status_maps.report_status', []);
         $lower = strtolower(trim($value));
-        return $statusMap[$lower] ?? $lower;
+        $mapped = $statusMap[$lower] ?? $lower;
+
+        // Debug logging
+        Log::info('Report status normalization', [
+            'original' => $value,
+            'lowercase' => $lower,
+            'mapped_to' => $mapped,
+            'mapping_exists' => isset($statusMap[$lower])
+        ]);
+
+        return $mapped;
     }
 
     private function normalizeContractingStatus($value)
@@ -456,12 +682,40 @@ class EnhancedHB837Import
             if ($consultant) {
                 return $consultant->id;
             }
+
+            // If consultant not found, create a new one
+            Log::info('Creating new consultant during import', [
+                'value' => $value,
+                'action' => 'Creating new consultant from name'
+            ]);
+
+            $nameParts = explode(' ', $searchValue);
+            $firstName = $nameParts[0];
+            $lastName = count($nameParts) > 1 ? end($nameParts) : $firstName;
+
+            // Build a predictable email
+            $email = \Illuminate\Support\Str::slug("{$firstName}.{$lastName}") . '@example.com';
+
+            // Create new consultant
+            $consultant = Consultant::updateOrCreate(
+                ['first_name' => $firstName, 'last_name' => $lastName],
+                ['email' => $email]
+            );
+
+            Log::info('✅ Consultant created successfully during Enhanced Import', [
+                'consultant_id' => $consultant->id,
+                'consultant_name' => "{$consultant->first_name} {$consultant->last_name}",
+                'email' => $consultant->email,
+                'was_created' => $consultant->wasRecentlyCreated
+            ]);
+
+            return $consultant->id;
         }
 
-        // If consultant not found, return null to avoid foreign key constraint violation
+        // If consultant not found and not a string, return null
         Log::warning('Consultant not found during import', [
             'value' => $value,
-            'action' => 'Setting assigned_consultant_id to null to avoid foreign key constraint violation'
+            'action' => 'Setting assigned_consultant_id to null - invalid value type'
         ]);
 
         return null;

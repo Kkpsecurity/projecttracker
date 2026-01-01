@@ -17,24 +17,99 @@
 @stop
 
 @section('content')
+    <!-- Macro Client Section (Top - Gray Background) -->
     <div class="row">
-        <!-- Plot Groups Management -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
+        <div class="col-12">
+            <div class="card" style="background-color: #f8f9fa;">
+                <div class="card-header" style="background-color: #e9ecef; border-bottom: 2px solid #dee2e6;">
                     <h3 class="card-title">
-                        <i class="fas fa-layer-group"></i> Plot Groups
+                        <i class="fas fa-building text-primary"></i> Macro Client Plots
+                    </h3>
+                    <div class="card-tools">
+                        <span class="badge badge-info">Client-Based Plot Management</span>
+                    </div>
+                </div>
+                <div class="card-body" style="background-color: #f8f9fa;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="macro-client-select">Select Macro Client:</label>
+                                <div class="input-group">
+                                    <select id="macro-client-select" class="form-control">
+                                        <option value="">Choose a macro client...</option>
+                                        @foreach($macroClients as $client)
+                                            <option value="{{ $client }}">{{ $client }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-info" type="button" id="load-client-plots">
+                                            <i class="fas fa-search"></i> Load Plots
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="consultant-filter">Consultant Filter:</label>
+                                <select id="consultant-filter" class="form-control">
+                                    <option value="all">All Properties</option>
+                                    <option value="with_consultant">With Consultant Assigned</option>
+                                    <option value="no_consultant">No Consultant Assigned</option>
+                                </select>
+                                <small class="form-text text-muted">Filter properties by consultant assignment status</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="client-plots-info" style="display: none;">
+                        <div class="alert alert-info">
+                            <h5 id="client-name"></h5>
+                            <div class="row">
+                                <div class="col-4">
+                                    <strong>Projects:</strong> <span id="projects-count">0</span>
+                                </div>
+                                <div class="col-4">
+                                    <strong>Plots:</strong> <span id="plots-count">0</span>
+                                </div>
+                                <div class="col-4">
+                                    <strong>Addresses:</strong> <span id="addresses-count">0</span>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-success" id="create-group-from-client">
+                                    <i class="fas fa-plus"></i> Create Group from Client
+                                </button>
+                                <button class="btn btn-sm btn-primary" id="view-client-on-map">
+                                    <i class="fas fa-map"></i> View on Map
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Groups Section (Bottom - White Background) -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card" style="background-color: #ffffff;">
+                <div class="card-header" style="background-color: #ffffff; border-bottom: 2px solid #007bff;">
+                    <h3 class="card-title">
+                        <i class="fas fa-layer-group text-success"></i> Plot Groups Management
                     </h3>
                     <div class="card-tools">
                         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#create-group-modal">
                             <i class="fas fa-plus"></i> Create Group
                         </button>
+                        <span class="badge badge-success ml-2">Independent Groups</span>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="background-color: #ffffff;">
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped">
-                            <thead>
+                            <thead class="thead-light">
                                 <tr>
                                     <th>Name</th>
                                     <th>Plots Count</th>
@@ -87,60 +162,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Macro Client Plots -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-building"></i> Macro Client Plots
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label for="macro-client-select">Select Macro Client:</label>
-                        <div class="input-group">
-                            <select id="macro-client-select" class="form-control">
-                                <option value="">Choose a macro client...</option>
-                                @foreach($macroClients as $client)
-                                    <option value="{{ $client }}">{{ $client }}</option>
-                                @endforeach
-                            </select>
-                            <div class="input-group-append">
-                                <button class="btn btn-info" type="button" id="load-client-plots">
-                                    <i class="fas fa-search"></i> Load Plots
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="client-plots-info" style="display: none;">
-                        <div class="alert alert-info">
-                            <h5 id="client-name"></h5>
-                            <div class="row">
-                                <div class="col-4">
-                                    <strong>Projects:</strong> <span id="projects-count">0</span>
-                                </div>
-                                <div class="col-4">
-                                    <strong>Plots:</strong> <span id="plots-count">0</span>
-                                </div>
-                                <div class="col-4">
-                                    <strong>Addresses:</strong> <span id="addresses-count">0</span>
-                                </div>
-                            </div>
-                            <div class="mt-2">
-                                <button class="btn btn-sm btn-success" id="create-group-from-client">
-                                    <i class="fas fa-plus"></i> Create Group from Client
-                                </button>
-                                <button class="btn btn-sm btn-primary" id="view-client-on-map">
-                                    <i class="fas fa-map"></i> View on Map
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Map Display -->
@@ -158,43 +179,48 @@
                     </div>
                 </div>
                 <div class="card-body p-0">
-                    <div id="map" style="height: 500px;"></div>
+                    <!-- Default "No Map Selected" Design -->
+                    <div id="no-map-selected" class="text-center p-5" style="min-height: 500px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                        <div class="mb-4">
+                            <i class="fas fa-map-marker-alt text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                        </div>
+                        <h4 class="text-muted mb-3">No Client Selected</h4>
+                        <p class="text-muted mb-4 lead">Select a macro client above to view plots on the map</p>
+                        <div class="text-muted">
+                            <i class="fas fa-arrow-up mr-2"></i>
+                            Choose from the <strong>Macro Client</strong> dropdown or select a <strong>Plot Group</strong> to get started
+                        </div>
+                        <div class="mt-4">
+                            <div class="row justify-content-center">
+                                <div class="col-auto">
+                                    <div class="card border-0 shadow-sm" style="background-color: rgba(255,255,255,0.8);">
+                                        <div class="card-body text-center p-3">
+                                            <i class="fas fa-building text-primary mb-2"></i>
+                                            <div><small class="text-muted">Macro Client Plots</small></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="card border-0 shadow-sm" style="background-color: rgba(255,255,255,0.8);">
+                                        <div class="card-body text-center p-3">
+                                            <i class="fas fa-layer-group text-success mb-2"></i>
+                                            <div><small class="text-muted">Plot Groups</small></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actual Google Map (hidden by default) -->
+                    <div id="map" style="height: 500px; display: none;"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Create Group Modal -->
-    <div class="modal fade" id="create-group-modal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Create Plot Group</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <form id="create-group-form">
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="group-name">Group Name *</label>
-                            <input type="text" class="form-control" id="group-name" name="name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="group-description">Description</label>
-                            <textarea class="form-control" id="group-description" name="description" rows="3"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="group-color">Marker Color</label>
-                            <input type="color" class="form-control" id="group-color" name="color" value="#3498db">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create Group</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+   @include('admin.plot-groups.partials.create-group-modal')
 @stop
 
 @section('css')
@@ -254,6 +280,8 @@
             // Load macro client plots
             $('#load-client-plots').click(function() {
                 const macroClient = $('#macro-client-select').val();
+                const consultantFilter = $('#consultant-filter').val();
+                
                 if (!macroClient) {
                     alert('Please select a macro client');
                     return;
@@ -265,7 +293,7 @@
                     return;
                 }
 
-                loadMacroClientPlots(macroClient);
+                loadMacroClientPlots(macroClient, consultantFilter);
             });
 
             // Create group form
@@ -294,16 +322,21 @@
             $('#clear-map').click(function() {
                 clearMarkers();
                 $('#client-plots-info').hide();
+                showNoMapSelected();
             });
         }
 
-        function loadMacroClientPlots(macroClient) {
+        function loadMacroClientPlots(macroClient, consultantFilter = 'all') {
             $.ajax({
                 url: '{{ route("admin.plot-groups.api.macro-client-plots") }}',
-                data: { macro_client: macroClient },
+                data: { 
+                    macro_client: macroClient,
+                    consultant_filter: consultantFilter
+                },
                 success: function(response) {
                     if (response.success) {
                         currentClientPlots = response.plots;
+                        showMap(); // Show the map and hide no-map-selected
                         displayPlotsOnMap(response.plots, response.project_addresses);
                         updateClientInfo(response);
                     } else {
@@ -321,6 +354,7 @@
                 url: `/admin/plot-groups/${groupId}/plots`,
                 success: function(response) {
                     if (response.success) {
+                        showMap(); // Show the map and hide no-map-selected
                         displayGroupPlotsOnMap(response.plots, response.plot_group);
                     } else {
                         alert('Error: ' + response.message);
@@ -436,6 +470,16 @@
         function clearMarkers() {
             markers.forEach(marker => marker.setMap(null));
             markers = [];
+        }
+
+        function showMap() {
+            $('#no-map-selected').hide();
+            $('#map').show();
+        }
+
+        function showNoMapSelected() {
+            $('#map').hide();
+            $('#no-map-selected').show();
         }
 
         function createPlotGroup() {

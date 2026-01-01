@@ -139,6 +139,35 @@ class PlotGroupController extends Controller
     }
 
     /**
+     * Add a single plot to a group
+     */
+    public function addPlot(Request $request, PlotGroup $plotGroup)
+    {
+        $request->validate([
+            'plot_id' => 'required|exists:plots,id',
+        ]);
+
+        // Check if plot is already in the group
+        if ($plotGroup->plots()->where('plot_id', $request->plot_id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Plot is already in this group.',
+            ]);
+        }
+
+        // Add the plot to the group
+        $plotGroup->plots()->attach($request->plot_id, [
+            'sort_order' => $plotGroup->plots()->count() + 1,
+            'notes' => $request->notes ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Plot added to group successfully!',
+        ]);
+    }
+
+    /**
      * Remove plots from a group
      */
     public function removePlots(Request $request, PlotGroup $plotGroup)

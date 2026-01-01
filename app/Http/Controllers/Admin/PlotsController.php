@@ -211,7 +211,17 @@ class PlotsController extends Controller
                 return view('admin.plots.partials.actions', compact('plot'))->render();
             })
             ->addColumn('plot_address', function ($plot) {
-                return $plot->address; // Return the full address object for frontend rendering
+                // Ensure we return the address object with all needed fields
+                if ($plot->address) {
+                    return [
+                        'street_address' => $plot->address->street_address,
+                        'city' => $plot->address->city,
+                        'state' => $plot->address->state,
+                        'zip_code' => $plot->address->zip_code,
+                        'full_address' => $plot->address->full_address
+                    ];
+                }
+                return null;
             })
             ->addColumn('status', function ($plot) {
                 // Add a default status field since DataTables expects it
@@ -222,9 +232,6 @@ class PlotsController extends Controller
                     return $plot->coordinates_latitude . ', ' . $plot->coordinates_longitude;
                 }
                 return 'Not set';
-            })
-            ->editColumn('address', function($plot) {
-                return $plot->address ? $plot->address->full_address : 'Not set';
             })
             ->editColumn('hb837', function($plot) {
                 if ($plot->hb837) {

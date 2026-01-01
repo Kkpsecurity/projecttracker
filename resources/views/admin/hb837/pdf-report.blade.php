@@ -3,613 +3,782 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Property Information Sheet - {{ $hb837->property_name }}</title>
+    <title>HB 837 CPTED Assessment Report - {{ $hb837->property_name }}</title>
     <style>
+        @page {
+            margin: 40px 40px;
+        }
+
         body {
             font-family: "Arial", "Helvetica", sans-serif;
             font-size: 11px;
-            margin: 0;
-            padding: 15px;
-            line-height: 1.3;
+            line-height: 1.25;
             color: #333;
-            background: #fff;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #6f42c1;
-            padding-bottom: 15px;
-            background: linear-gradient(135deg, #f8f9ff 0%, #e9ecff 100%);
-            padding: 20px;
-            border-radius: 8px;
-            margin: -15px -15px 25px -15px;
-        }
-
-        .header h1 {
-            font-size: 22px;
-            color: #6f42c1;
-            margin: 0 0 8px 0;
-            font-weight: bold;
-        }
-
-        .header .subtitle {
-            font-size: 13px;
-            color: #6c757d;
-            font-weight: normal;
+        h1,
+        h2,
+        h3,
+        h4 {
             margin: 0;
-        }
-
-        .property-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 25px;
-            background: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .property-table tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-
-        .property-table tr:nth-child(odd) {
-            background-color: #ffffff;
-        }
-
-        .property-table td {
-            padding: 10px 15px;
-            border-bottom: 1px solid #dee2e6;
-            vertical-align: top;
-        }
-
-        .property-table td:first-child {
-            font-weight: bold;
-            color: #495057;
-            width: 35%;
-            background-color: #f1f3f4;
-            border-right: 1px solid #dee2e6;
-        }
-
-        .property-table td:last-child {
-            color: #212529;
-            word-wrap: break-word;
-        }
-
-        .property-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .consultant-notes-section {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-left: 4px solid #f39c12;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-
-        .consultant-notes-section h4 {
-            color: #856404;
-            margin: 0 0 10px 0;
-            font-size: 13px;
+            padding: 0;
             font-weight: bold;
         }
 
-        .consultant-notes-section p {
-            margin: 0;
-            color: #856404;
-            font-style: italic;
-            line-height: 1.4;
-        }
-
-        .crime-stats-section {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-left: 4px solid #6f42c1;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-
-        .crime-stats-section h4 {
-            color: #6f42c1;
-            margin: 0 0 10px 0;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .crime-stats-meta {
-            font-size: 10px;
-            color: #6c757d;
-            margin: 0 0 10px 0;
-        }
-
-        .crime-stats-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            background: #fff;
-            border: 1px solid #dee2e6;
-        }
-
-        .crime-stats-table th,
-        .crime-stats-table td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #dee2e6;
-            font-size: 10px;
-        }
-
-        .crime-stats-table th {
-            text-align: left;
-            background: #f1f3f4;
-            color: #495057;
-            font-weight: bold;
-        }
-
-        .crime-stats-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .findings-section {
-            background: #fff;
-            border: 1px solid #dee2e6;
-            border-left: 4px solid #6f42c1;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-
-        .findings-section h4 {
-            color: #6f42c1;
-            margin: 0 0 10px 0;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .findings-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            background: #fff;
-            border: 1px solid #dee2e6;
-        }
-
-        .findings-table th,
-        .findings-table td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #dee2e6;
-            font-size: 10px;
-            vertical-align: top;
-        }
-
-        .findings-table th {
-            text-align: left;
-            background: #f1f3f4;
-            color: #495057;
-            font-weight: bold;
-        }
-
-        .findings-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .status-highlight {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .status-not-started {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .status-in-progress {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .status-in-review {
-            background-color: #ffc107;
-            color: #212529;
-        }
-
-        .status-completed {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .status-quoted {
-            background-color: #17a2b8;
-            color: white;
-        }
-
-        .status-executed {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .status-closed {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .crime-risk-low {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .crime-risk-moderate {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .crime-risk-elevated {
-            background-color: #ffeaa7;
-            color: #856404;
-        }
-
-        .crime-risk-high {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .crime-risk-severe {
-            background-color: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .map-wrapper {
-            margin-top: 25px;
+        .cover {
             text-align: center;
-            border-top: 1px solid #dee2e6;
-            padding-top: 20px;
+            margin-top: 140px;
         }
 
-        .map-wrapper h3 {
-            color: #6f42c1;
-            margin-bottom: 15px;
+        .cover .line-1 {
             font-size: 16px;
-            font-weight: bold;
-        }
-
-        .img-fluid {
-            max-width: 100%;
-            height: auto;
-            border: 2px solid #bdc3c7;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            display: block;
-            margin: 0 auto;
-        }
-
-        .map-fallback {
-            border: 2px dashed #ccc;
-            padding: 20px;
-            text-align: center;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            margin: 10px 0;
-        }
-
-        .map-fallback p {
-            margin: 0;
-            font-size: 14px;
-            color: #666;
-            line-height: 1.4;
-        }
-
-        .map-fallback .address-info {
-            font-weight: bold;
             margin-bottom: 10px;
         }
 
-        .map-fallback .fallback-note {
-            margin-top: 10px;
+        .cover .line-2 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .cover .line-3 {
+            font-size: 16px;
+            margin-bottom: 14px;
+        }
+
+        .cover .report-title {
+            font-size: 18px;
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 13px;
+            margin: 14px 0 6px 0;
+        }
+
+        .subsection-title {
             font-size: 12px;
-            color: #999;
-            font-style: italic;
+            margin: 10px 0 6px 0;
         }
 
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 9px;
+        .small {
+            font-size: 10px;
             color: #6c757d;
-            border-top: 1px solid #dee2e6;
-            padding-top: 15px;
-            background: #f8f9fa;
-            margin-left: -15px;
-            margin-right: -15px;
-            margin-bottom: -15px;
-            padding-left: 15px;
-            padding-right: 15px;
-            padding-bottom: 15px;
-        }
-
-        .property-id {
-            background: #6f42c1;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 3px;
-            font-size: 9px;
-            display: inline-block;
-            margin-top: 5px;
-            font-weight: bold;
-        }
-
-        .container {
-            max-width: 100%;
-            margin: 0;
-        }
-
-        /* Helper function to format values */
-        .value-currency {
-            color: #28a745;
-            font-weight: bold;
-        }
-
-        .value-date {
-            color: #007bff;
-        }
-
-        .value-email {
-            color: #6f42c1;
-            text-decoration: underline;
         }
 
         .page-break {
             page-break-before: always;
         }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 6px 0 10px 0;
+        }
+
+        .table th,
+        .table td {
+            border: 1px solid #dee2e6;
+            padding: 6px 8px;
+            vertical-align: top;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        .label {
+            width: 35%;
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .note-box {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            margin: 6px 0 10px 0;
+            page-break-inside: avoid;
+        }
+
+        .img-placeholder {
+            border: 1px solid #dee2e6;
+            padding: 18px;
+            text-align: center;
+            margin: 6px 0 10px 0;
+            page-break-inside: avoid;
+        }
+
+        .img-placeholder .ph-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .avoid-break {
+            page-break-inside: avoid;
+        }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>Property Information Sheet</h1>
+    @php
+        $fullAddress = trim(implode(', ', array_filter([$hb837->address, $hb837->city, $hb837->state . ' ' . $hb837->zip]))) ?: 'N/A';
+        $consultantName = $hb837->consultant ? trim($hb837->consultant->first_name . ' ' . $hb837->consultant->last_name) : 'N/A';
+        $siteAssessmentDate = $hb837->scheduled_date_of_inspection?->format('j F Y') ?? 'N/A';
+        $reportDate = isset($generated_at) ? (string) $generated_at : now()->format('j F Y');
 
-            <p class="address-info">
+        $crimeStats = $hb837->crimeStats;
+        $offenses = $crimeStats ? (data_get($crimeStats->stats, 'tables.offenses', []) ?: []) : [];
+        $crimeRisk = $crimeStats?->crime_risk ?? data_get($crimeStats?->stats, 'summary.crime_risk') ?? $hb837->securitygauge_crime_risk;
+        $periodStart = $crimeStats?->period_start?->format('M j, Y') ?? data_get($crimeStats?->stats, 'report.period.start');
+        $periodEnd = $crimeStats?->period_end?->format('M j, Y') ?? data_get($crimeStats?->stats, 'report.period.end');
 
-                {{ $hb837->address }}
-                @if ($hb837->city)
-                    , {{ $hb837->city }}
-                @endif
-                @if ($hb837->state)
-                    , {{ $hb837->state }}
-                @endif
-                @if ($hb837->zip)
-                    {{ $hb837->zip }}
-                @endif
-            </p>
-        </div>
+        $findings = $hb837->findings ? $hb837->findings->sortBy('created_at')->values() : collect();
 
-        <!-- Property Data -->
-        <table class="property-table">
+        $cbRankForSeverity = function (?string $severity): string {
+            $severity = strtolower(trim((string) $severity));
+            return match ($severity) {
+                'critical', 'severe', 'high' => 'CB1',
+                'medium', 'moderate' => 'CB2',
+                'low' => 'CB3',
+                default => 'CB2',
+            };
+        };
+
+        $matchesKeywords = function ($finding, array $keywords): bool {
+            $haystack = strtolower(trim(
+                implode(' ', array_filter([
+                    $finding->category ?? '',
+                    $finding->location_context ?? '',
+                    $finding->description ?? '',
+                    $finding->recommendation ?? '',
+                ]))
+            ));
+
+            foreach ($keywords as $k) {
+                if ($k !== '' && str_contains($haystack, strtolower($k))) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        $bucketFindings = function ($findings, array $keywords) use ($matchesKeywords) {
+            return $findings->filter(fn ($f) => $matchesKeywords($f, $keywords))->values();
+        };
+
+        $statuteConditions = [
+            [
+                'key' => 'cctv_system',
+                'label' => 'CCTV System',
+                'statute' => 'Fla. Stat. § 768.0706(2)(a)(1)',
+                'text' => 'A security camera system at points of entry and exit which records, and maintains as retrievable for at least 30 days, video footage to assist in offender identification and apprehension.',
+            ],
+            [
+                'key' => 'parking_lot_illumination',
+                'label' => 'Parking Lot Illumination',
+                'statute' => 'Fla. Stat. § 768.0706(2)(a)(2)',
+                'text' => 'A lighted parking lot illuminated at an intensity of at least an average of 1.8 foot-candles per square foot at 18 inches above the surface from dusk until dawn or controlled by photocell or any similar electronic device that provides light from dusk until dawn.',
+            ],
+            [
+                'key' => 'other_lighting',
+                'label' => 'Other Lighting',
+                'statute' => 'Fla. Stat. § 768.0706(2)(a)(3)',
+                'text' => 'Lighting in walkways, laundry rooms, common areas, and porches. Such lighting must be illuminated from dusk until dawn or controlled by photocell or any similar electronic device that provides light from dusk until dawn.',
+            ],
+            [
+                'key' => 'deadbolt_locks',
+                'label' => 'Deadbolt Locks',
+                'statute' => 'Fla. Stat. § 768.0706(2)(a)(4)',
+                'text' => 'At least a 1-inch deadbolt in each dwelling unit door.',
+            ],
+            [
+                'key' => 'locking_devices',
+                'label' => 'Locking Devices',
+                'statute' => 'Fla. Stat. § 768.0706(2)(a)(5)',
+                'text' => 'A locking device on each window, each exterior sliding door, and any other doors not used for community purposes.',
+            ],
+            [
+                'key' => 'pool_access',
+                'label' => 'Pool Access',
+                'statute' => 'Fla. Stat. § 768.0706(2)(a)(6)',
+                'text' => 'Locked gates with key or fob access along pool fence areas.',
+            ],
+            [
+                'key' => 'peepholes',
+                'label' => 'Peepholes/Door Viewers',
+                'statute' => 'Fla. Stat. § 768.0706(2)(a)(7)',
+                'text' => 'A peephole or door viewer on each dwelling unit door that does not include a window or that does not have a window next to the door.',
+            ],
+        ];
+    @endphp
+
+    <!-- Cover page -->
+    <div class="cover">
+        <div class="line-1">Fla. Stat. § 768.0706 (HB 837) Compliance &amp;</div>
+        <div class="line-2">Crime Prevention Through Environmental Design (CPTED)</div>
+        <div class="report-title">Assessment Report</div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Property Information -->
+    <h2 class="section-title">Property Information</h2>
+    <table class="table avoid-break">
+        <tbody>
+            <tr>
+                <td class="label">Property Name:</td>
+                <td>{{ $hb837->property_name ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td class="label">Owner:</td>
+                <td>{{ $hb837->owner_name ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td class="label">Address:</td>
+                <td>{{ $fullAddress }}</td>
+            </tr>
+            <tr>
+                <td class="label">No of Units:</td>
+                <td>{{ $hb837->units ? number_format($hb837->units) : 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td class="label">Est. No. of Residents:</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td class="label">Demographics:</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td class="label">Police Jurisdiction:</td>
+                <td>{{ $hb837->county ?: 'N/A' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Assessment Details -->
+    <h2 class="section-title">Assessment Details</h2>
+    <table class="table avoid-break">
+        <tbody>
+            <tr>
+                <td class="label">Florida CPTED Practitioner(s):</td>
+                <td>{{ $consultantName }}</td>
+            </tr>
+            <tr>
+                <td class="label">Property Manager:</td>
+                <td>{{ $hb837->property_manager_name ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td class="label">Date of Site Assessment:</td>
+                <td>{{ $siteAssessmentDate }}</td>
+            </tr>
+            <tr>
+                <td class="label">Date of Report:</td>
+                <td>{{ $reportDate }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- 1. Crime and Victimization Assessment -->
+    <h2 class="section-title">1. Crime and Victimization Assessment</h2>
+
+    <h3 class="subsection-title">1.1 Crime Statistics</h3>
+    <div class="small">
+        @if ($crimeRisk)
+            Current Crime Risk: <strong>{{ strtoupper((string) $crimeRisk) }}</strong>
+        @else
+            Current Crime Risk: <strong>N/A</strong>
+        @endif
+        @if ($periodStart || $periodEnd)
+            <br>Report Period: {{ $periodStart ?: 'N/A' }}@if ($periodEnd)&nbsp;&ndash;&nbsp;{{ $periodEnd }}@endif
+        @endif
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="width: 22%;">Offense</th>
+                <th style="width: 14%;">Property &amp; Neighborhood</th>
+                <th style="width: 14%;">State</th>
+                <th style="width: 14%;">National</th>
+                <th style="width: 18%;">Comparison to State</th>
+                <th style="width: 18%;">SecurityGauge®</th>
+            </tr>
+        </thead>
+        <tbody>
             @php
-                // Helper function to format status badges
-                function getStatusBadge($status, $type = 'status')
-                {
-                    if (!$status) {
-                        return 'N/A';
+                $templateOffenses = ['Homicide', 'Rape', 'Aggravated Assault', 'Burglary', 'Vehicle Theft'];
+                $offenseByLabel = [];
+                foreach ($offenses as $row) {
+                    $label = (string) data_get($row, 'label', '');
+                    if ($label !== '') {
+                        $offenseByLabel[strtolower($label)] = $row;
                     }
-
-                    $status = strtolower(str_replace(['-', '_', ' '], '-', $status));
-                    $class = $type . '-' . $status;
-                    $display = ucfirst(str_replace('-', ' ', $status));
-
-                    return '<span class="status-highlight ' . $class . '">' . $display . '</span>';
                 }
 
-                // Helper function to format crime risk
-                function getCrimeRiskBadge($risk)
-                {
-                    if (!$risk) {
-                        return 'N/A';
+                $fmt = function ($value): string {
+                    if ($value === null || $value === '') {
+                        return '';
                     }
-
-                    $risk = strtolower($risk);
-                    $class = 'crime-risk-' . $risk;
-                    $display = ucfirst($risk);
-
-                    return '<span class="status-highlight ' . $class . '">' . $display . '</span>';
-                }
-
-                $propertyData = [
-                    'Property Name' => $hb837->property_name ?? 'N/A',
-                    'Type' => ucfirst($hb837->property_type ?? 'N/A'),
-                    'No. Of Units' => $hb837->units ? number_format($hb837->units) : 'N/A',
-                    'SecurityGauge Crime Risk' => getCrimeRiskBadge($hb837->crimeStats?->crime_risk ?? $hb837->securitygauge_crime_risk),
-                    'Address' =>
-                        trim(
-                            implode(
-                                ', ',
-                                array_filter([$hb837->address, $hb837->city, $hb837->state . ' ' . $hb837->zip]),
-                            ),
-                        ) ?:
-                        'N/A',
-                    'Phone Number' => $hb837->phone ?? 'N/A',
-                    'Owner' => $hb837->owner_name ?? 'N/A',
-                    'Management Company' => $hb837->management_company ?? 'N/A',
-                    'Property Manager' => $hb837->property_manager_name ?? 'N/A',
-                    'Property Manager Email' => $hb837->property_manager_email
-                        ? '<span class="value-email">' . $hb837->property_manager_email . '</span>'
-                        : 'N/A',
-                    'Regional Manager' => $hb837->regional_manager_name ?? 'N/A',
-                    'Regional Mgr Email' => $hb837->regional_manager_email
-                        ? '<span class="value-email">' . $hb837->regional_manager_email . '</span>'
-                        : 'N/A',
-                    'Assigned Consultant' => $hb837->consultant
-                        ? $hb837->consultant->first_name . ' ' . $hb837->consultant->last_name
-                        : 'N/A',
-                    'Scheduled Inspection' => $hb837->scheduled_date_of_inspection
-                        ? '<span class="value-date">' .
-                            $hb837->scheduled_date_of_inspection->format('F j, Y') .
-                            '</span>'
-                        : 'N/A',
-                    'Macro Client' => $hb837->macro_client ?? 'N/A',
-                ];
+                    if (is_numeric($value)) {
+                        return number_format((float) $value, 2);
+                    }
+                    return (string) $value;
+                };
             @endphp
 
-            @foreach ($propertyData as $label => $value)
+            @foreach ($templateOffenses as $label)
+                @php
+                    $row = $offenseByLabel[strtolower($label)] ?? null;
+                    $propRate = $row ? data_get($row, 'rate_per_1000') : null;
+                    $stateRate = $row ? data_get($row, 'state_rate_per_1000') : null;
+                    $nationalRate = $row ? data_get($row, 'national_rate_per_1000') : null;
+                    $compare = $row ? data_get($row, 'comparison_to_state') : null;
+                    $sg = $row ? data_get($row, 'securitygauge_score') : null;
+                @endphp
                 <tr>
-                    <td>{{ $label }}:</td>
-                    <td>{!! $value !!}</td>
+                    <td>{{ $label }}</td>
+                    <td>{{ $fmt($propRate) }}</td>
+                    <td>{{ $fmt($stateRate) }}</td>
+                    <td>{{ $fmt($nationalRate) }}</td>
+                    <td>{{ $compare }}</td>
+                    <td>{{ $sg }}</td>
                 </tr>
             @endforeach
+        </tbody>
+    </table>
+
+    @php
+        $trends = is_array(data_get($crimeStats?->stats, 'tables.crime_risk_trends'))
+            ? data_get($crimeStats?->stats, 'tables.crime_risk_trends')
+            : [];
+    @endphp
+
+    <div class="avoid-break">
+        <div class="subsection-title" style="margin-top: 10px;">Crime Risk Trends</div>
+        <div class="small" style="margin-bottom: 6px;">Trends at this property as compared to the nation from 5 years ago to present.</div>
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td style="width: 30%;"><strong>Total Crime</strong></td>
+                    <td>{{ data_get($trends, 'total_crime') }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Violent Crime</strong></td>
+                    <td>{{ data_get($trends, 'violent_crime') }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Property Crime</strong></td>
+                    <td>{{ data_get($trends, 'property_crime') }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="subsection-title">1.2 Geospatial Crime Analysis</h3>
+    <div class="avoid-break">
+        <div style="font-weight:bold; margin: 6px 0;">Violent Crime Risk</div>
+        <div class="img-placeholder">
+            <div class="ph-title">[IMAGE PLACEHOLDER – SecurityGauge Violent Endangerment Risk Map]</div>
+            <div class="small">(Use SecurityGauge map image when available.)</div>
+        </div>
+
+        <div style="font-weight:bold; margin: 10px 0 6px 0;">Burglary Risk</div>
+        <div class="img-placeholder">
+            <div class="ph-title">[IMAGE PLACEHOLDER – SecurityGauge Burglary Risk Map]</div>
+            <div class="small">(Use SecurityGauge map image when available.)</div>
+        </div>
+    </div>
+
+    <div class="note-box">
+        <div style="font-weight:bold; margin-bottom: 6px;">NOTES:</div>
+        @if ($hb837->consultant_notes)
+            <div>{{ $hb837->consultant_notes }}</div>
+        @else
+            <div class="small">Leave blank if no unique sources of risk are observed.</div>
+        @endif
+    </div>
+
+    <h3 class="subsection-title">1.3 Recent Incidents</h3>
+    <div class="small" style="margin-bottom: 6px;">Following is a summary of recent incidents of crime as reported to the Florida CPTED Practitioner.</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 22%;">Date</th>
+                    <th>Summary of Incident</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $recentIncidents = $hb837->recentIncidents()->orderBy('sort_order')->orderBy('id')->get();
+                @endphp
+
+                @if($recentIncidents->count())
+                    @foreach($recentIncidents as $incident)
+                        <tr>
+                            <td>{{ $incident->incident_date ?: 'N/A' }}</td>
+                            <td>{{ $incident->summary }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td></td>
+                        <td class="small">No incidents provided.</td>
+                    </tr>
+                @endif
+            </tbody>
         </table>
 
-        <!-- Consultant Notes Section (if present) -->
-        @if ($hb837->consultant_notes)
-            <div class="consultant-notes-section">
-                <h4>Consultant Notes</h4>
-                <p>{{ $hb837->consultant_notes }}</p>
-            </div>
-        @endif
+    <div class="page-break"></div>
 
-        @if ($hb837->findings && $hb837->findings->count())
-            <div class="findings-section">
-                <h4>Findings / Recommendations</h4>
+    <!-- 2. Specific Property Conditions -->
+    <h2 class="section-title">2. Specific Property Conditions as defined in Fla. Stat. § 768.0706(2)(a)</h2>
+    <div class="small" style="margin-bottom: 8px;">
+        The following section describes the consultant’s observations regarding property conditions specified in Fla. Stat. § 768.0706(2)(a).
+    </div>
 
-                <table class="findings-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 18%;">Category</th>
-                            <th style="width: 12%;">Severity</th>
-                            <th style="width: 20%;">Location</th>
-                            <th style="width: 25%;">Finding</th>
-                            <th style="width: 25%;">Recommendation</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($hb837->findings->sortBy('created_at') as $finding)
-                            <tr>
-                                <td>
-                                    {{ $finding->category ?: 'N/A' }}
-                                    @if ($finding->status)
-                                        <br><span style="color:#6c757d;">Status: {{ $finding->status }}</span>
-                                    @endif
-                                    @if ($finding->plot_id)
-                                        <br><span style="color:#6c757d;">Plot: #{{ $finding->plot_id }}</span>
-                                    @endif
-                                </td>
-                                <td>{{ $finding->severity ?: 'N/A' }}</td>
-                                <td>{{ $finding->location_context ?: 'N/A' }}</td>
-                                <td>{{ $finding->description ?: 'N/A' }}</td>
-                                <td>{{ $finding->recommendation ?: 'N/A' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-
-        @if ($hb837->crimeStats)
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="width: 28%;">Condition</th>
+                <th style="width: 12%;">Status</th>
+                <th>Observations</th>
+            </tr>
+        </thead>
+        <tbody>
             @php
-                $crimeStats = $hb837->crimeStats;
-                $offenses = data_get($crimeStats->stats, 'tables.offenses', []);
-                $periodStart = $crimeStats->period_start?->format('M j, Y') ?? data_get($crimeStats->stats, 'report.period.start');
-                $periodEnd = $crimeStats->period_end?->format('M j, Y') ?? data_get($crimeStats->stats, 'report.period.end');
-                $reviewedLabel = $crimeStats->is_reviewed ? 'Reviewed' : 'Pending Review';
-                $reviewedAt = $crimeStats->reviewed_at?->format('M j, Y g:i A');
-                $reviewedBy = $crimeStats->reviewer?->name;
+                $statuteByKey = $hb837->statuteConditions()->get()->keyBy('condition_key');
+                $statusLabel = function (?string $status): string {
+                    $status = strtolower(trim((string) $status));
+                    return match ($status) {
+                        'compliant' => '☑ Compliant',
+                        'non_compliant' => '☒ Non-compliant',
+                        'unknown' => '☐ Unknown',
+                        default => '',
+                    };
+                };
             @endphp
 
-            <div class="crime-stats-section">
-                <h4>Crime Statistics</h4>
+            @foreach ($statuteConditions as $c)
+                @php
+                    $key = $c['key'] ?? null;
+                    $curated = $key ? $statuteByKey->get($key) : null;
+                @endphp
+                <tr>
+                    <td>
+                        <div style="font-weight:bold;">{{ $c['label'] }}</div>
+                        <div class="small">{{ $c['statute'] }}</div>
+                        <div class="small">{{ $c['text'] }}</div>
+                    </td>
+                    <td>{{ $statusLabel($curated?->status) }}</td>
+                    <td>{{ $curated?->observations }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-                <p class="crime-stats-meta">
-                    Status: <strong>{{ $reviewedLabel }}</strong>
-                    @if ($reviewedAt)
-                        &nbsp;|&nbsp; {{ $reviewedAt }}
-                    @endif
-                    @if ($reviewedBy)
-                        &nbsp;|&nbsp; {{ $reviewedBy }}
-                    @endif
-                </p>
+    <div class="page-break"></div>
 
-                <p style="margin: 0; font-size: 11px;">
-                    Crime Risk: {!! getCrimeRiskBadge($crimeStats->crime_risk ?? data_get($crimeStats->stats, 'summary.crime_risk')) !!}
-                    @if ($periodStart || $periodEnd)
-                        <br>
-                        Report Period:
-                        {{ $periodStart ?: 'N/A' }}
-                        @if ($periodEnd)
-                            &ndash; {{ $periodEnd }}
+    <!-- 3. CPTED Conditions -->
+    <h2 class="section-title">3. Crime Prevention Through Environmental Design (CPTED) Conditions</h2>
+    <div class="small" style="margin-bottom: 8px;">The following section describes the consultant’s observations regarding Crime Prevention Through Environmental Design (CPTED).</div>
+
+    <h3 class="subsection-title">3.1 Natural Surveillance</h3>
+    <div class="note-box">
+        @if ($findings->count())
+            <div class="small">Observations summarized from findings (where applicable):</div>
+            <div>{{ $findings->pluck('description')->filter()->take(3)->implode(' ' ) }}</div>
+        @else
+            <div>The consultant had no noteworthy observations regarding natural surveillance.</div>
+        @endif
+    </div>
+
+    <h3 class="subsection-title">3.2 Natural Access Control</h3>
+    <div class="note-box">
+        <div>The consultant had no noteworthy observations regarding natural access control.</div>
+    </div>
+
+    <h3 class="subsection-title">3.3 Territorial Reinforcement</h3>
+    <div class="note-box">
+        <div>The consultant had no noteworthy observations regarding territorial reinforcement.</div>
+    </div>
+
+    <h3 class="subsection-title">3.4 Maintenance</h3>
+    <div class="note-box">
+        <div>The consultant had no noteworthy observations regarding maintenance.</div>
+    </div>
+
+    <h3 class="subsection-title">3.5 Additional CPTED Issues</h3>
+    <div class="note-box">
+        <div>The consultant had no noteworthy observations regarding additional CPTED issues.</div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- 4. Risk Management Considerations -->
+    <h2 class="section-title">4. Risk Management Considerations</h2>
+    <div class="small" style="margin-bottom: 8px;">
+        Following is a description of proposed measures to reduce conditions contributing to criminal confidence and capability, and/or achieve compliance with conditions defined in Fla. Stat. § 768.0706(2)(a).
+    </div>
+
+    <table class="table avoid-break">
+        <thead>
+            <tr>
+                <th style="width: 10%;">CB Rank</th>
+                <th>Definition</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>CB1</strong></td>
+                <td>Necessary for statutory compliance or likely significant benefit with minimal cost.</td>
+            </tr>
+            <tr>
+                <td><strong>CB2</strong></td>
+                <td>Likely significant benefit; may require budget planning as part of a long-term strategy.</td>
+            </tr>
+            <tr>
+                <td><strong>CB3</strong></td>
+                <td>Lesser benefit and/or high cost requiring long-term budget planning.</td>
+            </tr>
+            <tr>
+                <td><strong>CB4</strong></td>
+                <td>Impractical or restricted by ordinance; stated for comprehensiveness.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    @php
+        $curatedMeasures = $hb837->riskMeasures ?? collect();
+        $hasCuratedMeasures = $curatedMeasures && $curatedMeasures->count();
+
+        $renderCuratedMeasures = function ($section) use ($curatedMeasures) {
+            $bucket = $curatedMeasures
+                ->where('section', (string) $section)
+                ->sortBy([
+                    ['sort_order', 'asc'],
+                    ['measure_no', 'asc'],
+                    ['id', 'asc'],
+                ])
+                ->values();
+
+            if (!$bucket->count()) {
+                echo '<div class="small" style="margin: 4px 0 10px 0;">No measures provided.</div>';
+                return;
+            }
+
+            echo '<table class="table">';
+            echo '<thead><tr><th style="width: 8%;">No.</th><th>Risk Reduction Measure</th><th style="width: 12%;">CB Rank</th></tr></thead>';
+            echo '<tbody>';
+
+            $i = 1;
+            foreach ($bucket as $m) {
+                $no = $m->measure_no ? (string) $m->measure_no : (string) $i;
+                $measure = trim((string) ($m->measure ?? ''));
+                $rank = trim((string) ($m->cb_rank ?? ''));
+                echo '<tr>';
+                echo '<td>' . e($no) . '</td>';
+                echo '<td>' . e($measure) . '</td>';
+                echo '<td>' . e($rank) . '</td>';
+                echo '</tr>';
+                $i++;
+            }
+
+            echo '</tbody></table>';
+        };
+
+        if (!$hasCuratedMeasures) {
+            $bucket41 = $bucketFindings($findings, ['cctv', 'camera', 'illumination', 'lighting', 'deadbolt', 'lock', 'window', 'sliding', 'pool', 'gate', 'peephole', 'door viewer']);
+            $bucket43 = $bucketFindings($findings, ['parking', 'lot', 'grounds', 'landscap', 'perimeter', 'sidewalk', 'dumpster', 'trash']);
+            $bucket44 = $bucketFindings($findings, ['building', 'unit', 'stair', 'corridor', 'hall', 'breezeway']);
+            $bucket45 = $bucketFindings($findings, ['office', 'laundry', 'clubhouse', 'community', 'mail', 'leasing']);
+            $bucket46 = $bucketFindings($findings, ['policy', 'procedure', 'management', 'training', 'engagement', 'program']);
+            $usedIds = collect([$bucket41, $bucket43, $bucket44, $bucket45, $bucket46])->flatten()->pluck('id')->unique()->filter();
+            $bucket42 = $findings->filter(fn ($f) => !$usedIds->contains($f->id))->values();
+        }
+
+        $renderFindingMeasures = function ($bucket) use ($cbRankForSeverity) {
+            if (!$bucket || !$bucket->count()) {
+                echo '<div class="small" style="margin: 4px 0 10px 0;">No measures provided.</div>';
+                return;
+            }
+
+            echo '<table class="table">';
+            echo '<thead><tr><th style="width: 8%;">No.</th><th>Risk Reduction Measure</th><th style="width: 12%;">CB Rank</th></tr></thead>';
+            echo '<tbody>';
+
+            $i = 1;
+            foreach ($bucket as $f) {
+                $measure = trim((string) ($f->recommendation ?: $f->description ?: ''));
+                $rank = $cbRankForSeverity($f->severity);
+                echo '<tr>';
+                echo '<td>' . $i . '</td>';
+                echo '<td>' . e($measure) . '</td>';
+                echo '<td>' . e($rank) . '</td>';
+                echo '</tr>';
+                $i++;
+            }
+
+            echo '</tbody></table>';
+        };
+    @endphp
+
+    <h3 class="subsection-title">4.1 Specific Property Conditions as defined in Fla. Stat. § 768.0706(2)(a)</h3>
+    @if ($hasCuratedMeasures)
+        {!! $renderCuratedMeasures('4.1') !!}
+    @else
+        {!! $renderFindingMeasures($bucket41) !!}
+    @endif
+
+    <h3 class="subsection-title">4.2 Security Infrastructure</h3>
+    @if ($hasCuratedMeasures)
+        {!! $renderCuratedMeasures('4.2') !!}
+    @else
+        {!! $renderFindingMeasures($bucket42) !!}
+    @endif
+
+    <h3 class="subsection-title">4.3 Outdoor Grounds</h3>
+    @if ($hasCuratedMeasures)
+        {!! $renderCuratedMeasures('4.3') !!}
+    @else
+        {!! $renderFindingMeasures($bucket43) !!}
+    @endif
+
+    <h3 class="subsection-title">4.4 Residential Buildings &amp; Units</h3>
+    @if ($hasCuratedMeasures)
+        {!! $renderCuratedMeasures('4.4') !!}
+    @else
+        {!! $renderFindingMeasures($bucket44) !!}
+    @endif
+
+    <h3 class="subsection-title">4.5 Community Buildings and Main Office</h3>
+    @if ($hasCuratedMeasures)
+        {!! $renderCuratedMeasures('4.5') !!}
+    @else
+        {!! $renderFindingMeasures($bucket45) !!}
+    @endif
+
+    <h3 class="subsection-title">4.6 Management Practices &amp; Community Engagement</h3>
+    @if ($hasCuratedMeasures)
+        {!! $renderCuratedMeasures('4.6') !!}
+    @else
+        {!! $renderFindingMeasures($bucket46) !!}
+    @endif
+
+    @php
+        $filesByPosition = ($hb837->relationLoaded('files') ? $hb837->files : $hb837->files()->get())
+            ->whereNotNull('file_position')
+            ->keyBy('file_position');
+
+        $appendixMap = $filesByPosition->get('appendix_a_map');
+        $appendixPhoto1 = $filesByPosition->get('appendix_a_photo_1');
+        $appendixPhoto2 = $filesByPosition->get('appendix_a_photo_2');
+        $appendixPhoto3 = $filesByPosition->get('appendix_a_photo_3');
+
+        $fileImgSrc = function ($file) {
+            if (!$file || empty($file->file_path)) {
+                return null;
+            }
+
+            $relative = ltrim((string) $file->file_path, '/');
+
+            // Prefer the real storage path (works even if public/storage symlink is missing).
+            $fsPath = storage_path('app/public/' . $relative);
+            if (!is_file($fsPath)) {
+                $fsPath = public_path('storage/' . $relative);
+            }
+
+            if (!is_file($fsPath)) {
+                return null;
+            }
+
+            // DomPDF on Windows is more reliable with a file:// URI and forward slashes.
+            $src = str_replace('\\', '/', $fsPath);
+            if (preg_match('/^[A-Za-z]:\//', $src)) {
+                $src = 'file:///' . $src;
+            }
+
+            return $src;
+        };
+    @endphp
+
+    @if ($appendixMap || $appendixPhoto1 || $appendixPhoto2 || $appendixPhoto3)
+        <div class="page-break"></div>
+        <h2 class="section-title">Appendix A. Photos</h2>
+
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="width: 34%; vertical-align: top; padding-right: 10px;">
+                    <div class="small" style="line-height: 1.35;">
+                        <div style="font-weight: bold; margin-bottom: 6px;">Map Notes</div>
+                        @if ($appendixMap && $appendixMap->description)
+                            {!! nl2br(e($appendixMap->description)) !!}
+                        @else
+                            <span class="small">(Optional) Add notes/labels in the file description for the map upload.</span>
                         @endif
+                    </div>
+                </td>
+                <td style="width: 66%; vertical-align: top;">
+                    @php $mapSrc = $fileImgSrc($appendixMap); @endphp
+                    @if ($mapSrc)
+                        <img src="{{ $mapSrc }}" alt="Appendix map" style="width: 100%; height: auto; border: 1px solid #999;">
+                    @else
+                        <div class="img-placeholder" style="height: 320px;">
+                            <div class="ph-title">[MAP IMAGE – upload with position Appendix A Map]</div>
+                            <div class="small">Position: appendix_a_map</div>
+                        </div>
                     @endif
-                </p>
+                </td>
+            </tr>
+        </table>
 
-                @if (is_array($offenses) && count($offenses))
-                    <table class="crime-stats-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 55%;">Offense</th>
-                                <th style="width: 15%;">Count</th>
-                                <th style="width: 30%;">Rate / 1,000</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($offenses as $row)
-                                <tr>
-                                    <td>{{ data_get($row, 'label', 'N/A') }}</td>
-                                    <td>{{ data_get($row, 'count') !== null ? number_format((int) data_get($row, 'count')) : 'N/A' }}</td>
-                                    <td>{{ data_get($row, 'rate_per_1000') !== null ? number_format((float) data_get($row, 'rate_per_1000'), 2) : 'N/A' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 14px;">
+            <tr>
+                @foreach ([$appendixPhoto1, $appendixPhoto2, $appendixPhoto3] as $i => $photo)
+                    <td style="width: 33.33%; vertical-align: top; padding-right: {{ $i < 2 ? '10px' : '0' }};">
+                        @php $photoSrc = $fileImgSrc($photo); @endphp
+                        @if ($photoSrc)
+                            <img src="{{ $photoSrc }}" alt="Appendix photo {{ $i + 1 }}" style="width: 100%; height: 130px; object-fit: cover; border: 1px solid #999;">
+                        @else
+                            <div class="img-placeholder" style="height: 130px;">
+                                <div class="ph-title">[PHOTO {{ $i + 1 }} – upload with position]</div>
+                                <div class="small">Position: appendix_a_photo_{{ $i + 1 }}</div>
+                            </div>
+                        @endif
+
+                        @if ($photo && $photo->description)
+                            <div class="small" style="margin-top: 6px;">{!! nl2br(e($photo->description)) !!}</div>
+                        @endif
+                    </td>
+                @endforeach
+            </tr>
+        </table>
+    @endif
+
+    @if ($show_map)
+        <div class="page-break"></div>
+        <h2 class="section-title">Property Location</h2>
+
+        @if ($show_map && $map_url)
+            <div class="img-placeholder">
+                <div class="ph-title">Map (Property Location)</div>
+                <img src="{{ $map_url }}" alt="Map showing location of {{ $hb837->address }}" style="max-width: 100%; height: auto;">
+                <div class="small" style="margin-top: 6px;">Map view of property location</div>
+            </div>
+        @else
+            <div class="note-box">
+                <div style="font-weight:bold;">Property Address:</div>
+                <div>{{ $fullAddress }}</div>
+                @if ($map_fallback_reason)
+                    <div class="small" style="margin-top: 6px;">Reason: {{ $map_fallback_reason }}</div>
                 @endif
             </div>
         @endif
-
-        <div class="page-break"></div>
-        
-        <!-- Google Map Section -->
-        <div class="map-wrapper">
-            <h3>Property Location</h3>
-            
-            @if($show_map && $map_url)
-                <!-- Display Google Maps Static Image -->
-                <img src="{{ $map_url }}" 
-                     alt="Map showing location of {{ $hb837->address }}" 
-                     class="img-fluid"
-                     style="max-width: 100%; height: auto;">
-                <p style="font-size: 10px; color: #666; margin-top: 10px; text-align: center;">
-                    <em>Map view of property location</em>
-                </p>
-            @else
-                <!-- Fallback when map is not available -->
-                <div class="map-fallback">
-                    <p class="address-info">
-                        Property Address:<br>
-                        @if($hb837->address)
-                            {{ $hb837->address }}
-                            @if($hb837->city), {{ $hb837->city }}@endif
-                            @if($hb837->state), {{ $hb837->state }}@endif
-                            @if($hb837->zip) {{ $hb837->zip }}@endif
-                        @else
-                            <em>No address specified</em>
-                        @endif
-                    </p>
-                    <p class="fallback-note">
-                        @if($map_fallback_reason)
-                            Reason: {{ $map_fallback_reason }}.<br>
-                        @endif
-                        For detailed location mapping, please use your preferred mapping service with the address above.
-                    </p>
-                </div>
-            @endif
-        </div>
-
-    </div>
+    @endif
 </body>
 
 </html>

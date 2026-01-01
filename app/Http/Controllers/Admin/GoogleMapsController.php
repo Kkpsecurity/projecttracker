@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Plot;
 use App\Models\PlotAddress;
+use App\Models\PlotGroup;
 use App\Models\HB837;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class GoogleMapsController extends Controller
@@ -30,6 +32,12 @@ class GoogleMapsController extends Controller
                             ->sort()
                             ->values();
 
+        // Get active plot groups for dropdown
+        $plotGroups = PlotGroup::where('is_active', true)
+            ->withCount('plots')
+            ->orderBy('name')
+            ->get();
+
         // Get statistics
         $stats = [
             'total_plots' => Plot::count(),
@@ -38,9 +46,10 @@ class GoogleMapsController extends Controller
                                  ->count(),
             'total_projects' => HB837::count(),
             'total_addresses' => PlotAddress::count(),
+            'total_plot_groups' => PlotGroup::where('is_active', true)->count(),
         ];
 
-        return view('admin.maps.index', compact('plots', 'stats', 'macroClients'));
+        return view('admin.maps.index', compact('plots', 'stats', 'macroClients', 'plotGroups'));
     }
 
     /**
@@ -110,6 +119,8 @@ class GoogleMapsController extends Controller
             'description' => 'nullable|string',
         ]);
 
+
+        dd($request->all());
         $plot = Plot::create($request->all());
 
         // Create address if provided
@@ -277,11 +288,12 @@ class GoogleMapsController extends Controller
             // Create the address
             $addressParts = $this->parseAddress($request->address);
             $plot->address()->create([
-                'address_line_1' => $addressParts['street'] ?? $request->address,
+                'street_address' => $addressParts['street'] ?? $request->address,
                 'city' => $addressParts['city'] ?? '',
                 'state' => $addressParts['state'] ?? '',
                 'zip_code' => $addressParts['zip'] ?? '',
-                'country' => $addressParts['country'] ?? 'USA',
+                'country' => $addressParts['country'] ?? 'US',
+                'plot_id' => $plot->id,
             ]);
 
             return response()->json([
@@ -351,6 +363,137 @@ class GoogleMapsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading macro client plots: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get plots for a specific plot group
+     */
+    public function getPlotGroupPlots(Request $request)
+    {
+        try {
+            $request->validate([
+                'plot_group_id' => 'required|exists:plot_groups,id',
+            ]);
+
+            $plotGroup = PlotGroup::with(['plots.address', 'plots.hb837'])
+                ->findOrFail($request->plot_group_id);
+
+            // Get plots that belong to this group and have coordinates
+            $plots = $plotGroup->plots()
+                ->whereNotNull('coordinates_latitude')
+                ->whereNotNull('coordinates_longitude')
+                ->with(['address', 'hb837'])
+                ->get();
+
+            // Format plots for map display
+            $formattedPlots = $plots->map(function ($plot) {
+                return [
+                    'id' => $plot->id,
+                    'plot_name' => $plot->plot_name,
+                    'coordinates_latitude' => $plot->coordinates_latitude,
+                    'coordinates_longitude' => $plot->coordinates_longitude,
+                    'plot_address' => $plot->address,
+                    'hb837' => $plot->hb837,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'plot_group' => [
+                    'id' => $plotGroup->id,
+                    'name' => $plotGroup->name,
+                    'description' => $plotGroup->description,
+                    'color' => $plotGroup->color,
+                ],
+                'plots' => $formattedPlots,
+                'stats' => [
+                    'total_plots' => $plotGroup->plots()->count(),
+                    'mapped_plots' => $plots->count(),
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading plot group: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Create a new plot and add it to a plot group
+     */
+    public function createPlotInGroup(Request $request)
+    {
+        try {
+            $request->validate([
+                'plot_group_id' => 'required|exists:plot_groups,id',
+                'address' => 'required|string',
+                'latitude' => 'required|numeric|between:-90,90',
+                'longitude' => 'required|numeric|between:-180,180',
+                'plot_name' => 'nullable|string|max:255',
+            ]);
+
+            DB::beginTransaction();
+
+            // Create the plot first
+            $plot = Plot::create([
+                'plot_name' => $request->plot_name ?: 'Plot at ' . $request->address,
+                'coordinates_latitude' => $request->latitude,
+                'coordinates_longitude' => $request->longitude,
+            ]);
+
+            // Create the plot address and associate it with the plot
+            $addressData = $this->parseAddress($request->address);
+            $plotAddress = PlotAddress::create([
+                'street_address' => $addressData['street'] ?? $request->address,
+                'city' => $addressData['city'] ?? null,
+                'state' => $addressData['state'] ?? null,
+                'zip_code' => $addressData['zip'] ?? null,
+                'country' => $addressData['country'] ?? 'US',
+                'plot_id' => $plot->id,
+            ]);
+
+            // Add plot to the group
+            $plotGroup = PlotGroup::findOrFail($request->plot_group_id);
+            $nextSortOrder = $plotGroup->plots()->max('plot_group_plots.sort_order') + 1;
+
+            $plotGroup->plots()->attach($plot->id, [
+                'sort_order' => $nextSortOrder,
+                'notes' => 'Added via maps interface',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::commit();
+
+            // Load the created plot with relationships
+            $plot->load(['address', 'hb837']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Plot created and added to group successfully',
+                'plot' => [
+                    'id' => $plot->id,
+                    'plot_name' => $plot->plot_name,
+                    'coordinates_latitude' => $plot->coordinates_latitude,
+                    'coordinates_longitude' => $plot->coordinates_longitude,
+                    'plot_address' => $plot->address,
+                    'hb837' => $plot->hb837,
+                ],
+                'plot_group' => [
+                    'id' => $plotGroup->id,
+                    'name' => $plotGroup->name,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating plot: ' . $e->getMessage(),
             ], 500);
         }
     }

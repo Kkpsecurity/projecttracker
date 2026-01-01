@@ -48,8 +48,7 @@ class HB837Factory extends Factory
             'regional_manager_email' => $this->faker->optional(0.5)->email,
             'macro_client' => $this->faker->optional(0.4)->company,
             'macro_contact' => $this->faker->optional(0.4)->name,
-            'macro_email' => $this->faker->optional(0.4)->email,
-            'assigned_consultant' => null, // Legacy field, use relationship instead
+            'macro_email' => $this->faker->optional(0.4)->email
         ];
     }
 

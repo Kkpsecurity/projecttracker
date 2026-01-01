@@ -9,8 +9,8 @@
             <a href="{{ route('admin.plots.show', $plot) }}" class="btn btn-info">
                 <i class="fas fa-eye"></i> View Plot
             </a>
-            <a href="{{ route('admin.plots.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Plots
+            <a href="{{ route('admin.plot-groups-management.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Group Plots
             </a>
         </div>
     </div>
@@ -240,7 +240,7 @@
                         <a href="{{ route('admin.plots.show', $plot) }}" class="btn btn-info btn-block">
                             <i class="fas fa-eye"></i> View Plot
                         </a>
-                        <a href="{{ route('admin.plots.index') }}" class="btn btn-secondary btn-block">
+                        <a href="{{ route('admin.plot-groups-management.index') }}" class="btn btn-secondary btn-block">
                             <i class="fas fa-times"></i> Cancel
                         </a>
                     </div>

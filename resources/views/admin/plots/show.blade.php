@@ -9,8 +9,8 @@
             <a href="{{ route('admin.plots.edit', $plot) }}" class="btn btn-warning">
                 <i class="fas fa-edit"></i> Edit Plot
             </a>
-            <a href="{{ route('admin.plots.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Plots
+            <a href="{{ route('admin.plot-groups-management.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Group Plots
             </a>
             @if($plot->coordinates_latitude && $plot->coordinates_longitude)
                 <a href="{{ route('admin.maps.index') }}?plot={{ $plot->id }}" class="btn btn-success">

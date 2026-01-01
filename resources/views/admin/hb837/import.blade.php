@@ -5,7 +5,7 @@
 @section('content_header')
     <div class="row">
         <div class="col-sm-6">
-            <h1>Import HB837 Data</h1>
+            <h1 class="text-shadow-md">Import HB837 Data</h1>
         </div>
         <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
@@ -24,7 +24,7 @@
             <!-- Import Instructions Card -->
             <div class="card card-info">
                 <div class="card-header">
-                    <h3 class="card-title">
+                    <h3 class="card-title text-shadow-sm">
                         <i class="fas fa-info-circle"></i>
                         Import Instructions
                     </h3>
@@ -37,13 +37,13 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h5><i class="fas fa-download"></i> Supported File Formats</h5>
+                            <h5 class="text-shadow-sm"><i class="fas fa-download"></i> Supported File Formats</h5>
                             <ul class="list-unstyled">
                                 <li><i class="fas fa-file-excel text-success"></i> Excel files (.xlsx, .xls)</li>
                                 <li><i class="fas fa-file-csv text-info"></i> CSV files (.csv)</li>
                             </ul>
 
-                            <h5><i class="fas fa-chart-line"></i> Three-Phase Import Workflow</h5>
+                            <h5 class="text-shadow-sm"><i class="fas fa-chart-line"></i> Three-Phase Import Workflow</h5>
                             <ul class="list-unstyled">
                                 <li><i class="fas fa-plus-circle text-primary"></i> <strong>Initial Phase:</strong> Add new records from fresh data</li>
                                 <li><i class="fas fa-sync-alt text-warning"></i> <strong>Update Phase:</strong> Update existing records with new data</li>
@@ -585,7 +585,7 @@
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="previewModalLabel">Data Preview</h5>
+                <h5 class="modal-title text-shadow-sm" id="previewModalLabel">Data Preview</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -610,7 +610,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="progressModalLabel">Import Progress</h5>
+                <h5 class="modal-title text-shadow-sm" id="progressModalLabel">Import Progress</h5>
             </div>
             <div class="modal-body">
                 <div class="progress mb-3">

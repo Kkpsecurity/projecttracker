@@ -2,11 +2,7 @@
 
 return [
     'field_mapping' => array (
-  'test_field' => 
-  array (
-    0 => 'Test Column',
-    1 => 'Alt Test',
-  ),
+
     'address' =>
       array(
         0 => 'Address',
@@ -16,23 +12,22 @@ return [
       array(
         0 => 'Agreement Submitted',
       ),
-    'assigned_consultant' =>
+
+    'billing_req_submitted' =>
       array(
-        0 => 'Assigned Consultant',
+        0 => 'Billing Req Submitted',
+        1 => 'Billing Request Submitted',
+        2 => 'Billing Submitted',
+      ),
+    'city' =>
+      array(
+        0 => 'City',
       ),
     'assigned_consultant_id' =>
       array(
         0 => 'Assigned Consultant ID',
         1 => 'Consultant ID',
-      ),
-    'billing_req_sent' =>
-      array(
-        0 => 'Billing Req Sent',
-        1 => 'Billing Request Sent',
-      ),
-    'city' =>
-      array(
-        0 => 'City',
+        2 => 'Assigned Consultant', // Map "Assigned Consultant" to the ID field
       ),
     'consultant_name' =>
       array(
@@ -94,10 +89,7 @@ return [
       array(
         0 => 'Owner Name',
       ),
-    'pm_email' =>
-      array(
-        0 => 'PM Email',
-      ),
+
     'phone' =>
       array(
         0 => 'Phone',
@@ -108,17 +100,21 @@ return [
         0 => 'Project Net Profit',
         1 => 'Net Profit',
       ),
-    'property_manager_pm' =>
-      array(
-        0 => 'Property Manager (PM)',
-      ),
+
     'property_manager_email' =>
       array(
         0 => 'Property Manager Email',
+        1 => 'PM Email',
+        2 => 'Prop Manager Email',
+        3 => 'Property Email',
       ),
     'property_manager_name' =>
       array(
         0 => 'Property Manager Name',
+        1 => 'Property Manager (PM)',
+        2 => 'Property Manager',
+        3 => 'PM',
+        4 => 'Prop Manager',
       ),
     'property_name' =>
       array(
@@ -139,25 +135,28 @@ return [
       array(
         0 => 'Quoted Rate',
       ),
-    'rm_email' =>
-      array(
-        0 => 'RM Email',
-      ),
-    'regional_manager_rm' =>
-      array(
-        0 => 'Regional Manager (RM)',
-      ),
+
     'regional_manager_email' =>
       array(
         0 => 'Regional Manager Email',
+        1 => 'RM Email',
+        2 => 'Regional Email',
       ),
     'regional_manager_name' =>
       array(
         0 => 'Regional Manager Name',
+        1 => 'Regional Manager',
+        2 => 'Regional Manager (RM)',
+        3 => 'RM Name',
+        4 => 'Regional',
       ),
     'report_status' =>
       array(
         0 => 'Report Status',
+        1 => 'Status',
+        2 => 'Progress',
+        3 => 'Report Progress',
+        4 => 'Project Status',
       ),
     'report_submitted' =>
       array(
@@ -207,7 +206,7 @@ return [
   array (
     'report_status' => 'not-started',
     'contracting_status' => 'quoted',
-    'user_id' => 1,
+        'user_id' => 20,
   ),
   'update_rules' => 
   array (
@@ -234,7 +233,7 @@ return [
     'allowed_values' => 
     array (
       0 => 'not-started',
-      1 => 'in-progress',
+            1 => 'underway',
       2 => 'in-review',
       3 => 'completed',
     ),
@@ -301,24 +300,20 @@ return [
         8 => 'consultant_name',
         9 => 'owner',
         10 => 'owner_name',
-        11 => 'property_manager_pm',
-        12 => 'property_manager_name',
-        13 => 'regional_manager_rm',
-        14 => 'regional_manager_name',
-        15 => 'management_company',
-        16 => 'macro_client',
-        17 => 'macro_client_contact',
-        18 => 'macro_contact',
-        19 => 'securitygauge_crime_risk',
+        11 => 'property_manager_name',
+        12 => 'regional_manager_name',
+        13 => 'management_company',
+        14 => 'macro_client',
+        15 => 'macro_client_contact',
+        16 => 'macro_contact',
+        17 => 'securitygauge_crime_risk',
       ),
     'email_fields' =>
       array(
-        0 => 'pm_email',
-        1 => 'property_manager_email',
-        2 => 'rm_email',
-        3 => 'regional_manager_email',
-        4 => 'macro_client_email',
-        5 => 'macro_email',
+        0 => 'property_manager_email',
+        1 => 'regional_manager_email',
+        2 => 'macro_client_email',
+        3 => 'macro_email',
       ),
     'note_fields' =>
       array(
@@ -328,17 +323,23 @@ return [
   ),
 ),
 
-    'status_maps' => array (
-  'report_status' => 
-  array (
+  'status_maps' => array(
+    'report_status' =>
+      array(
     'not started' => 'not-started',
     'not-started' => 'not-started',
-    'in progress' => 'in-progress',
-    'in-progress' => 'in-progress',
+        'in progress' => 'underway',
+        'in-progress' => 'underway',
+        'underway' => 'underway',
+        'ongoing' => 'underway',
+        'active' => 'underway',
     'in review' => 'in-review',
     'in-review' => 'in-review',
+        'review' => 'in-review',
     'completed' => 'completed',
     'complete' => 'completed',
+        'done' => 'completed',
+        'finished' => 'completed',
   ),
   'contracting_status' => 
   array (

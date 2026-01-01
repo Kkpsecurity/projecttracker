@@ -1,0 +1,47 @@
+{
+    "1": {
+        "property_manager_name": null,
+        "property_manager_email": null,
+        "regional_manager_name": null,
+        "regional_manager_email": null,
+        "phone": null,
+        "consultant_notes": null,
+        "scheduled_date_of_inspection": null
+    },
+    "3": {
+        "property_manager_name": "Takeisha Edwards",
+        "property_manager_email": "edwardste@richmanmgt.com",
+        "regional_manager_name": "Heather de Jesus",
+        "regional_manager_email": "dejesush@richmanmgt.com",
+        "phone": "5618480484",
+        "consultant_notes": null,
+        "scheduled_date_of_inspection": "2024-05-06T00:00:00.000000Z"
+    },
+    "4": {
+        "property_manager_name": "Shanteria English",
+        "property_manager_email": "englishs@richmanmgt.com",
+        "regional_manager_name": "Ann Marie Razza",
+        "regional_manager_email": "razzaa@richmanmgt.com",
+        "phone": "8139721577",
+        "consultant_notes": null,
+        "scheduled_date_of_inspection": "2024-02-29T00:00:00.000000Z"
+    },
+    "5": {
+        "property_manager_name": "Cassie Polk",
+        "property_manager_email": "WilliamsCD@HighmarkRes.com",
+        "regional_manager_name": "Amanda Flood",
+        "regional_manager_email": "AFlood@HighmarkRes.com",
+        "phone": "813-620-3766",
+        "consultant_notes": "In addition to the community manager and regional manager, CC' the following folks on all scheduling communications: DGoralczyk@HighmarkRes.com; Rob.Hoffmann@lockton.com; mmurray@lockton.com; KJackson@HighmarkRes.com; LODell@HighmarkRes.com",
+        "scheduled_date_of_inspection": "2025-06-24T00:00:00.000000Z"
+    },
+    "6": {
+        "property_manager_name": "Cassie Polk",
+        "property_manager_email": "WilliamsCD@HighmarkRes.com",
+        "regional_manager_name": "Amanda Flood",
+        "regional_manager_email": "AFlood@HighmarkRes.com",
+        "phone": "813-620-3766",
+        "consultant_notes": "In addition to the community manager and regional manager, CC' the following folks on all scheduling communications: DGoralczyk@HighmarkRes.com; Rob.Hoffmann@lockton.com; mmurray@lockton.com; KJackson@HighmarkRes.com; LODell@HighmarkRes.com",
+        "scheduled_date_of_inspection": "2025-06-24T00:00:00.000000Z"
+    }
+}

@@ -23,6 +23,16 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboard');
     })->name('dashboard');
 
+    // Test routes for UI development
+    Route::get('/test/text-shadow', function () {
+        return view('test.text-shadow-test');
+    })->name('test.text-shadow');
+
+    // Phase 1.5 Dark Mode Testing Route
+    Route::get('/test/text-shadow-dark', function () {
+        return view('test.text-shadow-dark-test');
+    })->name('test.text-shadow-dark');
+
     // Legacy HB837 routes (redirected to admin)
     Route::redirect('/hb837', '/admin/hb837');
 
@@ -102,28 +112,3 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
     // Route::get('dashboard/stats', [DashboardController::class, 'getStats'])->name('api.dashboard.stats');
 });
 
-// Admin Center Routes - Loaded here to avoid conflicts
-// require __DIR__ . '/admin.php';
-
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    // Note: Main admin dashboard is handled in routes/admin.php
-
-    // NOTE: User Management routes are now handled in routes/admin.php to avoid conflicts
-    // NOTE: HB837 routes are now handled in routes/admin.php to avoid conflicts
-
-    // System Settings
-    Route::prefix('settings')->name('settings.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('index');
-        Route::put('/', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('update');
-        Route::post('/reset', [\App\Http\Controllers\Admin\SettingsController::class, 'reset'])->name('reset');
-        Route::get('/toggle-maintenance', [\App\Http\Controllers\Admin\SettingsController::class, 'toggleMaintenance'])->name('toggle-maintenance');
-    });
-
-    // Activity Logs
-    Route::prefix('logs')->name('logs.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\LogsController::class, 'index'])->name('index');
-        Route::get('/data', [\App\Http\Controllers\Admin\LogsController::class, 'getData'])->name('data');
-        Route::post('/clear-old', [\App\Http\Controllers\Admin\LogsController::class, 'clearOldLogs'])->name('clear-old');
-        Route::get('/export', [\App\Http\Controllers\Admin\LogsController::class, 'export'])->name('export');
-    });
-});

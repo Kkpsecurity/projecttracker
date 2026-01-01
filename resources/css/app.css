@@ -1,11 +1,127 @@
-@import 'tailwindcss';
+/* Custom Application Styles - Bootstrap/AdminLTE Integration */
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+/* Text Drop Shadow Utilities - Task 18 Enhancement (Bootstrap Compatible) */
+.text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+.text-shadow-md {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode text shadows (AdminLTE dark mode support) */
+.dark-mode .text-shadow-sm,
+.sidebar-dark .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .text-shadow-md,
+.sidebar-dark .text-shadow-md {
+    text-shadow: 0 2px 4px rgba(255, 255, 255, 0.15);
+}
+
+/* Status Color Utilities - Task 18 Enhancement */
+.overdue-text {
+    color: #dc3545 !important; /* Bootstrap text-danger */
+}
+
+.overdue-bg {
+    background-color: #f8d7da !important; /* Light red background */
+    color: #721c24 !important; /* Dark red text */
+}
+
+.overdue-badge {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+/* 30-Day Overdue Specific Styles */
+.thirty-day-overdue {
+    color: #721c24 !important; /* Dark red text */
+    font-weight: 600 !important;
+}
+
+.thirty-day-overdue-bg {
+    background-color: #f8d7da !important; /* Light red background */
+    border-left: 4px solid #dc3545 !important; /* Red left border for emphasis */
+}
+
+.thirty-day-overdue-row:hover {
+    background-color: #f5c6cb !important; /* Slightly darker red on hover */
+}
+
+.thirty-day-overdue-badge {
+    background-color: #721c24 !important; /* Darker red for 30+ days */
+    color: white !important;
+    font-weight: bold !important;
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+}
+
+/* Status badge variants */
+.status-badge-overdue {
+    background-color: #ffc107 !important; /* Warning yellow for regular overdue */
+    color: #212529 !important;
+}
+
+.status-badge-critical {
+    background-color: #dc3545 !important; /* Danger red for 30+ days */
+    color: white !important;
+    animation: pulse-danger 2s infinite;
+}
+
+@keyframes pulse-danger {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* SecurityGauge Crime Risk Level Styles */
+.risk-low {
+    background-color: #28a745 !important; /* Success green */
+    color: white !important;
+    font-weight: 500 !important;
+}
+
+.risk-moderate {
+    background-color: #ffc107 !important; /* Warning yellow */
+    color: #212529 !important; /* Dark text for better contrast */
+    font-weight: 500 !important;
+}
+
+.risk-elevated {
+    background-color: #fd7e14 !important; /* Orange */
+    color: white !important;
+    font-weight: 500 !important;
+}
+
+.risk-high {
+    background-color: #dc3545 !important; /* Danger red */
+    color: white !important;
+    font-weight: 500 !important;
+}
+
+.risk-severe {
+    background-color: #6f42c1 !important; /* Purple for severe */
+    color: white !important;
+    font-weight: 600 !important;
+    animation: pulse-severe 3s infinite;
+}
+
+@keyframes pulse-severe {
+    0% { opacity: 1; }
+    50% { opacity: 0.8; }
+    100% { opacity: 1; }
+}
+
+/* Ensure risk badges have consistent sizing */
+.badge.risk-low, 
+.badge.risk-moderate, 
+.badge.risk-elevated, 
+.badge.risk-high, 
+.badge.risk-severe {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    padding: 0.4rem 0.8rem !important;
+    border-radius: 0.375rem !important;
 }

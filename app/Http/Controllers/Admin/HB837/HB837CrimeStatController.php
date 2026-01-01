@@ -31,6 +31,15 @@ class HB837CrimeStatController extends Controller
             'offenses.*.category' => 'nullable|string|max:64',
             'offenses.*.count' => 'nullable|integer|min:0',
             'offenses.*.rate_per_1000' => 'nullable|numeric|min:0',
+            'offenses.*.state_rate_per_1000' => 'nullable|numeric|min:0',
+            'offenses.*.national_rate_per_1000' => 'nullable|numeric|min:0',
+            'offenses.*.comparison_to_state' => 'nullable|string|max:32',
+            'offenses.*.securitygauge_score' => 'nullable|integer|min:1|max:5',
+
+            'crime_risk_trends' => 'nullable|array',
+            'crime_risk_trends.total_crime' => 'nullable|string|max:255',
+            'crime_risk_trends.violent_crime' => 'nullable|string|max:255',
+            'crime_risk_trends.property_crime' => 'nullable|string|max:255',
         ]);
 
         $crimeStat = HB837CrimeStat::query()->firstOrNew(['hb837_id' => $hb837->id]);
@@ -52,6 +61,10 @@ class HB837CrimeStatController extends Controller
 
         if (array_key_exists('offenses', $validated)) {
             Arr::set($stats, 'tables.offenses', $validated['offenses'] ?? []);
+        }
+
+        if (array_key_exists('crime_risk_trends', $validated)) {
+            Arr::set($stats, 'tables.crime_risk_trends', $validated['crime_risk_trends'] ?? []);
         }
 
         // Validate/normalize final payload

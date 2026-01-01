@@ -26,6 +26,33 @@ class HB837FileService
 
             $fileCategory = $this->normalizeFileCategory($request->input('file_category'));
 
+            $allowedPositions = (array) Config::get('hb837.file_positions', []);
+            $filePosition = trim((string) ($request->input('file_position') ?? ''));
+            if ($filePosition === '') {
+                $filePosition = null;
+            }
+            if ($fileCategory === 'appendix' && empty($filePosition)) {
+                throw new \InvalidArgumentException('File position is required for Appendix uploads.');
+            }
+            if (!empty($filePosition) && !empty($allowedPositions) && !in_array($filePosition, $allowedPositions, true)) {
+                throw new \InvalidArgumentException('Invalid file position.');
+            }
+
+            // If a position is specified, treat it as a single-slot upload and replace any existing file in that slot.
+            if ($filePosition) {
+                $existing = HB837File::query()
+                    ->where('hb837_id', $hb837->id)
+                    ->where('file_position', $filePosition)
+                    ->first();
+
+                if ($existing) {
+                    if (Storage::disk('public')->exists($existing->file_path)) {
+                        Storage::disk('public')->delete($existing->file_path);
+                    }
+                    $existing->delete();
+                }
+            }
+
             $hb837File = HB837File::create([
                 'hb837_id' => $hb837->id,
                 'filename' => $filename,
@@ -34,6 +61,7 @@ class HB837FileService
                 'file_size' => $file->getSize(),
                 'mime_type' => $file->getClientMimeType(),
                 'file_category' => $fileCategory,
+                'file_position' => $filePosition,
                 'description' => $request->description,
                 'uploaded_by' => Auth::id()
             ]);
@@ -103,12 +131,16 @@ class HB837FileService
     public function validateUpload(Request $request): void
     {
         $allowedCategories = (array) Config::get('hb837.file_categories', []);
+        $allowedPositions = (array) Config::get('hb837.file_positions', []);
 
         $request->validate([
             'file' => 'required|file|max:10240', // 10MB max
             'file_category' => empty($allowedCategories)
                 ? 'nullable|string|max:50'
                 : 'nullable|string|in:' . implode(',', $allowedCategories),
+            'file_position' => empty($allowedPositions)
+                ? 'nullable|string|max:50'
+                : 'nullable|string|in:' . implode(',', $allowedPositions) . '|required_if:file_category,appendix',
             'description' => 'nullable|string|max:255'
         ]);
     }

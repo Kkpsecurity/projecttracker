@@ -5,7 +5,7 @@
 @section('content_header')
     <div class="row">
         <div class="col-sm-6">
-            <h1>HB837 Record Details</h1>
+            <h1 class="text-shadow-md">HB837 Record Details</h1>
         </div>
         <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
@@ -23,7 +23,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">{{ $hb837->property_name }}</h3>
+                    <h3 class="card-title text-shadow-sm">{{ $hb837->property_name }}</h3>
                     <div class="card-tools">
                         <a href="{{ route('admin.hb837.edit', $hb837->id) }}" class="btn btn-primary">
                             <i class="fas fa-edit"></i> Edit
@@ -36,7 +36,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h5>Property Information</h5>
+                            <h5 class="text-shadow-sm">Property Information</h5>
                             <table class="table table-sm">
                                 <tr>
                                     <th>Property Name:</th>
@@ -73,7 +73,7 @@
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h5>Project Status</h5>
+                            <h5 class="text-shadow-sm">Project Status</h5>
                             <table class="table table-sm">
                                 <tr>
                                     <th>Report Status:</th>
@@ -128,7 +128,7 @@
                     @if($hb837->notes)
                     <div class="row mt-3">
                         <div class="col-12">
-                            <h5>Notes</h5>
+                            <h5 class="text-shadow-sm">Notes</h5>
                             <div class="card">
                                 <div class="card-body">
                                     {{ $hb837->notes }}

@@ -153,7 +153,7 @@ class HB837ImportFieldConfigSeeder extends Seeder
 
             case 'report_status':
                 $properties['type'] = 'enum';
-                $properties['enum_values'] = ['not-started', 'in-progress', 'in-review', 'completed'];
+                $properties['enum_values'] = ['not-started', 'underway', 'in-review', 'completed'];
                 $properties['transformation_type'] = 'status_normalize';
                 $properties['default_value'] = 'not-started';
                 break;
