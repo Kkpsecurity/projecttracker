@@ -604,6 +604,14 @@ class HB837Controller extends Controller
             return $reportService->generateCrimeReportPdf($hb837);
         }
 
+        if ($mode === 'crime_records') {
+            return $reportService->generateCrimeRecordsPdf($hb837);
+        }
+
+        if ($mode === 'appendix_t2') {
+            return $reportService->generateAppendixT2PreviewPdf($hb837);
+        }
+
         return $reportService->generatePdfReport($hb837);
     }
 
@@ -1125,7 +1133,7 @@ class HB837Controller extends Controller
             // MIME types vary by browser; enforce by extension.
             $fileRules[] = 'mimes:pdf';
         }
-        if ($requestedCategory === 'appendix') {
+        if ($requestedCategory === 'appendix' || $requestedCategory === 'photo') {
             $fileRules[] = 'image';
         }
 
@@ -1136,7 +1144,7 @@ class HB837Controller extends Controller
                 : 'nullable|string|in:' . implode(',', $allowedCategories),
             'file_position' => empty($allowedPositions)
                 ? 'nullable|string|max:50'
-                : 'nullable|string|in:' . implode(',', $allowedPositions) . '|required_if:file_category,appendix',
+                : 'nullable|string|in:' . implode(',', $allowedPositions) . '|required_if:file_category,appendix|required_if:file_category,photo|required_if:file_category,page_3',
             'description' => 'nullable|string|max:2000'
         ]);
 

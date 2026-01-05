@@ -339,6 +339,8 @@ return [
         'report_example',
         'generated_report',
         'photo',
+        // Slot-based image uploads for the Page 3 (T2) layout
+        'page_3',
         'map_screenshot',
         'other',
 
@@ -358,6 +360,31 @@ return [
         'appendix_a_photo_1',
         'appendix_a_photo_2',
         'appendix_a_photo_3',
+
+        // Waverly-style Photo Page 2 (continued)
+        'appendix_b_photo_1',
+        'appendix_b_photo_2',
+        'appendix_b_photo_3',
+        'appendix_b_photo_4',
+        'appendix_b_photo_5',
+        'appendix_b_photo_6',
+        'appendix_b_photo_7',
+        'appendix_b_photo_8',
+        'appendix_b_photo_9',
+        'appendix_b_photo_10',
+        'appendix_b_photo_11',
+        'appendix_b_photo_12',
+        'appendix_b_photo_13',
+
+        // Page 3 (T2) 8-slot layout (kept separate from Appendix B photo slots)
+        'page_3_slot_1',
+        'page_3_slot_2',
+        'page_3_slot_3',
+        'page_3_slot_4',
+        'page_3_slot_5',
+        'page_3_slot_6',
+        'page_3_slot_7',
+        'page_3_slot_8',
     ],
 
     // Findings (structured note issues)

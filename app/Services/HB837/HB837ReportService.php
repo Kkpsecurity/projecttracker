@@ -333,6 +333,36 @@ class HB837ReportService
     }
 
     /**
+     * Appendix-only preview (T2 layout, single page).
+     *
+     * Uses Appendix B photo slots 1-8 for an 8-slot page layout.
+     */
+    public function generateAppendixT2PreviewPdf(HB837 $hb837)
+    {
+        $hb837->load(['files']);
+
+        $data = [
+            'hb837' => $hb837,
+            'generated_at' => now()->format('F j, Y \a\t g:i A'),
+            'generated_by' => Auth::user()->name ?? 'System',
+        ];
+
+        $pdf = Pdf::loadView('admin.hb837.pdf-appendix-t2-preview', $data);
+        $pdf->setPaper('letter', 'portrait');
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
+            'isRemoteEnabled' => true,
+            'defaultFont' => 'Arial',
+        ]);
+
+        $suffix = 'ID' . $hb837->id . '_' . date('Y-m-d');
+        $filename = 'HB837_AppendixT2_Preview_' . $this->createCleanFilename($hb837->property_name, $suffix);
+
+        return $pdf->stream($filename);
+    }
+
+    /**
      * Crime Report PDF (Appendix page) generation that persists to a stable file,
      * then serves that file inline.
      */
@@ -345,8 +375,48 @@ class HB837ReportService
 
         return response()->file($absolutePath, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . addslashes($downloadFilename) . '"',
+            'Content-Disposition' => 'inline; filename="' . addslashes($downloadFilename) . '",',
+
+            // Ensure the browser/PDF viewer does not reuse a cached prior version.
+            // This endpoint regenerates on-demand, so caching causes confusion.
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
+    }
+
+    /**
+     * Crime Records PDF (crime stats + recent incidents).
+     *
+     * This is a simple record/export view and does not persist a stored file.
+     */
+    public function generateCrimeRecordsPdf(HB837 $hb837)
+    {
+        $hb837->load([
+            'crimeStats',
+            'crimeStats.reviewer',
+            'recentIncidents',
+        ]);
+
+        $data = [
+            'hb837' => $hb837,
+            'generated_at' => now()->format('F j, Y \a\t g:i A'),
+            'generated_by' => Auth::user()->name ?? 'System',
+        ];
+
+        $pdf = Pdf::loadView('admin.hb837.pdf-crime-records', $data);
+        $pdf->setPaper('letter', 'portrait');
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
+            'isRemoteEnabled' => true,
+            'defaultFont' => 'Arial',
+        ]);
+
+        $suffix = 'ID' . $hb837->id . '_' . date('Y-m-d');
+        $filename = 'HB837_CrimeRecords_' . $this->createCleanFilename($hb837->property_name, $suffix);
+
+        return $pdf->stream($filename);
     }
 
     /**

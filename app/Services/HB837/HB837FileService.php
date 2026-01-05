@@ -31,8 +31,8 @@ class HB837FileService
             if ($filePosition === '') {
                 $filePosition = null;
             }
-            if ($fileCategory === 'appendix' && empty($filePosition)) {
-                throw new \InvalidArgumentException('File position is required for Appendix uploads.');
+            if (in_array($fileCategory, ['appendix', 'photo', 'page_3'], true) && empty($filePosition)) {
+                throw new \InvalidArgumentException('File position is required for slot-based image uploads.');
             }
             if (!empty($filePosition) && !empty($allowedPositions) && !in_array($filePosition, $allowedPositions, true)) {
                 throw new \InvalidArgumentException('Invalid file position.');
@@ -140,7 +140,7 @@ class HB837FileService
                 : 'nullable|string|in:' . implode(',', $allowedCategories),
             'file_position' => empty($allowedPositions)
                 ? 'nullable|string|max:50'
-                : 'nullable|string|in:' . implode(',', $allowedPositions) . '|required_if:file_category,appendix',
+                : 'nullable|string|in:' . implode(',', $allowedPositions) . '|required_if:file_category,appendix|required_if:file_category,photo|required_if:file_category,page_3',
             'description' => 'nullable|string|max:255'
         ]);
     }

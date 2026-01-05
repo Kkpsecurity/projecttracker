@@ -7,7 +7,7 @@
                 <h5 class="card-title">Crime Report Files</h5>
                 <div class="card-tools">
                     <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#uploadModal">
-                        <i class="fas fa-upload"></i> Upload (Crime PDF / Appendix Image)
+                        <i class="fas fa-upload"></i> Upload (Crime PDF / Slot Image)
                     </button>
                 </div>
             </div>
@@ -59,19 +59,22 @@
 
         <div class="card mt-3">
             <div class="card-header">
-                <h5 class="card-title">Appendix Slot Images</h5>
+                <h5 class="card-title">Slot Images</h5>
             </div>
             <div class="card-body">
                 @php
-                    $appendixFiles = ($hb837->files ?? collect())->where('file_category', 'appendix');
+                    $slotFiles = ($hb837->files ?? collect())
+                        ->whereIn('file_category', ['appendix', 'photo', 'page_3'])
+                        ->whereNotNull('file_position');
                 @endphp
 
-                @if($appendixFiles->count() > 0)
+                @if($slotFiles->count() > 0)
                     <div class="table-responsive">
-                        <table class="table table-striped">
+                        <table class="table table-striped" id="hb837-slot-images-table">
                             <thead>
                                 <tr>
                                     <th>File Name</th>
+                                    <th>Page</th>
                                     <th>Position</th>
                                     <th>Size</th>
                                     <th>Uploaded</th>
@@ -79,9 +82,16 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($appendixFiles as $file)
+                                @foreach($slotFiles as $file)
+                                    @php
+                                        $categoryLabels = [
+                                            'map_screenshot' => 'Site Map / Diagram (Screenshot)',
+                                            'page_3' => 'Page 3 (8 Slots)',
+                                        ];
+                                    @endphp
                                     <tr>
                                         <td>{{ $file->original_filename }}</td>
+                                        <td>{{ $categoryLabels[$file->file_category] ?? ucwords(str_replace(['_', '-'], ' ', $file->file_category ?? '')) }}</td>
                                         <td>{{ $file->file_position ? ucwords(str_replace(['_', '-'], ' ', $file->file_position)) : '—' }}</td>
                                         <td>{{ $file->file_size_human }}</td>
                                         <td>{{ $file->created_at->format('M j, Y') }}</td>
@@ -100,7 +110,7 @@
                     </div>
                 @else
                     <div class="text-center py-3">
-                        <p class="text-muted mb-0">No appendix slot images uploaded yet.</p>
+                        <p class="text-muted mb-0">No slot images uploaded yet.</p>
                     </div>
                 @endif
             </div>

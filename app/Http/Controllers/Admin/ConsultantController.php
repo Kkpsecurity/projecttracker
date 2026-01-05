@@ -7,6 +7,8 @@ use App\Models\ConsultantFile;
 use App\Models\HB837;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Yajra\DataTables\Facades\DataTables;
@@ -119,7 +121,7 @@ class ConsultantController extends Controller
      */
     public function show(Consultant $consultant, $tab = 'information')
     {
-        $tab = in_array($tab, ['information', 'active-assignments', 'completed-assignments', 'files']) ? $tab : 'information';
+        $tab = in_array($tab, ['information', 'active-assignments', 'completed-assignments', 'financials', 'files']) ? $tab : 'information';
 
         $consultant->load('files');
 
@@ -134,12 +136,119 @@ class ConsultantController extends Controller
             ->with(['consultant'])
             ->get();
 
+        $allAssignments = $activeAssignments->concat($completedAssignments);
+
+        $sumMoney = function ($items, string $field): float {
+            return (float) $items->sum(function ($x) use ($field) {
+                $value = data_get($x, $field);
+                return $value === null ? 0.0 : (float) $value;
+            });
+        };
+
+        $activeGross = $sumMoney($activeAssignments, 'quoted_price');
+        $activeExpenses = $sumMoney($activeAssignments, 'sub_fees_estimated_expenses');
+        $activeNet = $activeGross - $activeExpenses;
+
+        $completedGross = $sumMoney($completedAssignments, 'quoted_price');
+        $completedExpenses = $sumMoney($completedAssignments, 'sub_fees_estimated_expenses');
+        $completedNet = $completedGross - $completedExpenses;
+
+        $allGross = $activeGross + $completedGross;
+        $allExpenses = $activeExpenses + $completedExpenses;
+        $allNet = $allGross - $allExpenses;
+
+        $completionDaysValues = $completedAssignments
+            ->filter(fn($hb) => $hb->scheduled_date_of_inspection && $hb->report_submitted)
+            ->map(fn($hb) => (int) $hb->scheduled_date_of_inspection->diffInDays($hb->report_submitted));
+
+        $completedAvgCompletionDays = $completionDaysValues->count() ? (float) $completionDaysValues->avg() : null;
+
+        $financialSummary = [
+            'active' => [
+                'count' => $activeAssignments->count(),
+                'gross' => $activeGross,
+                'expenses' => $activeExpenses,
+                'net' => $activeNet,
+            ],
+            'completed' => [
+                'count' => $completedAssignments->count(),
+                'gross' => $completedGross,
+                'expenses' => $completedExpenses,
+                'net' => $completedNet,
+                'avg_completion_days' => $completedAvgCompletionDays,
+                'avg_completion_days_count' => $completionDaysValues->count(),
+            ],
+            'all' => [
+                'count' => $allAssignments->count(),
+                'gross' => $allGross,
+                'expenses' => $allExpenses,
+                'net' => $allNet,
+            ],
+        ];
+
         return view('admin.consultants.show', compact(
             'consultant',
             'tab',
             'activeAssignments',
-            'completedAssignments'
+            'completedAssignments',
+            'allAssignments',
+            'financialSummary'
         ));
+    }
+
+    /**
+     * Per-consultant Activity Report PDF.
+     *
+     * This is a simple baseline PDF; more data can be added later.
+     */
+    public function activityReportPdf(Consultant $consultant)
+    {
+        $consultant->load('files');
+
+        $baseQuery = HB837::query()
+            ->where('assigned_consultant_id', $consultant->id)
+            ->withCount([
+                'files',
+                'plots',
+                'findings',
+                'riskMeasures',
+                'recentIncidents',
+            ])
+            ->with([
+                'crimeStats',
+                'crimeStats.reviewer',
+                'recentIncidents' => function ($q) {
+                    $q->orderBy('sort_order')->orderBy('id');
+                },
+            ])
+            ->orderByDesc('updated_at');
+
+        $activeAssignments = (clone $baseQuery)
+            ->whereNotIn('report_status', ['completed'])
+            ->get();
+
+        $completedAssignments = (clone $baseQuery)
+            ->where('report_status', 'completed')
+            ->get();
+
+        $generatedAt = now();
+        $generatedBy = Auth::user()->name ?? 'System';
+
+        $pdf = Pdf::loadView('admin.consultants.pdf-activity-report', compact(
+            'consultant',
+            'generatedAt',
+            'generatedBy',
+            'activeAssignments',
+            'completedAssignments'
+        ))->setPaper('letter', 'portrait');
+
+        $filename = sprintf(
+            'consultant_activity_report_%s_%s.pdf',
+            $consultant->id,
+            $generatedAt->format('Ymd_His')
+        );
+
+        return $pdf->stream($filename);
     }
 
     /**

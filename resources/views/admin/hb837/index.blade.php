@@ -40,6 +40,9 @@
                     <a href="{{ route('admin.hb837.smart-import.show') }}" class="btn btn-primary mr-2">
                         <i class="fas fa-magic"></i> Smart Import
                     </a>
+                    <a href="{{ route('admin.hb837.reports.consultant-revenue-summary') }}" class="btn btn-secondary mr-2">
+                        <i class="fas fa-chart-line"></i> Consultant Revenue Summary
+                    </a>
                     <a href="#" id="export-data-btn" class="btn btn-info mr-2" onclick="exportCurrentTab()">
                         <i class="fas fa-file-download"></i> Export Data
                     </a>

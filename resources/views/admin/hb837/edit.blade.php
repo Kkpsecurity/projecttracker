@@ -1,5 +1,7 @@
 @extends('adminlte::page')
 
+@section('plugins.Datatables', true)
+
 @section('title', 'Edit HB837 Record - ProjectTracker Fresh')
 
 @section('content_header')
@@ -51,6 +53,9 @@
                             </a>
                             <a href="{{ route('admin.hb837.pdf-report', ['hb837' => $hb837->id, 'mode' => 'appendix']) }}" class="btn btn-warning" target="_blank" title="Generate Crime Report PDF (Appendix page)">
                                 <i class="fas fa-file-alt"></i> Crime Report PDF
+                            </a>
+                            <a href="{{ route('admin.hb837.pdf-report', ['hb837' => $hb837->id, 'mode' => 'crime_records']) }}" class="btn btn-secondary" target="_blank" title="Generate Crime Report Records PDF">
+                                <i class="fas fa-file-medical"></i> Crime Records PDF
                             </a>
                             <a href="{{ route('admin.hb837.show', $hb837->id) }}" class="btn btn-info">
                                 <i class="fas fa-eye"></i> View
@@ -228,6 +233,35 @@
 
             var $ = window.jQuery;
 
+            function initSlotImagesTable() {
+                if (!$.fn || !$.fn.DataTable) {
+                    return;
+                }
+
+                var $table = $('#hb837-slot-images-table');
+                if ($table.length === 0) {
+                    return;
+                }
+
+                // Avoid double-init when switching tabs.
+                if ($.fn.DataTable.isDataTable($table)) {
+                    return;
+                }
+
+                $table.DataTable({
+                    paging: true,
+                    pageLength: 10,
+                    lengthChange: false,
+                    searching: false,
+                    info: true,
+                    ordering: true,
+                    autoWidth: false,
+                    // Show only table + info + pagination (no search box).
+                    dom: "<'row'<'col-12'tr>>" + "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                    order: [[4, 'desc']],
+                });
+            }
+
             $(function() {
             const storageKey = 'hb837_edit_active_tab_{{ $hb837->id }}';
 
@@ -271,6 +305,10 @@
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
                 const target = $(e.target).attr("href");
                 const tabName = target.substring(1); // Remove the # symbol
+
+                if (tabName === 'files') {
+                    initSlotImagesTable();
+                }
 
                 // Save to localStorage
                 localStorage.setItem(storageKey, tabName);

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\HB837\HB837RiskMeasureController;
 use App\Http\Controllers\Admin\HB837\HB837RecentIncidentController;
 use App\Http\Controllers\Admin\HB837\HB837StatuteConditionController;
 use App\Http\Controllers\Admin\HB837\InspectionCalendarController;
+use App\Http\Controllers\Admin\HB837\HB837ConsultantRevenueSummaryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,6 +66,13 @@ Route::prefix('hb837')->name('hb837.')->group(function () {
     // File Management (non-parameterized routes)
     Route::get('/files/{file}/download', [HB837Controller::class, 'downloadFile'])->name('files.download');
     Route::delete('/files/{file}', [HB837Controller::class, 'deleteFile'])->name('files.delete');
+
+    // Reports (MUST be before tab and parameterized routes)
+    Route::get('/reports/consultant-revenue-summary', [HB837ConsultantRevenueSummaryController::class, 'index'])
+        ->name('reports.consultant-revenue-summary');
+    Route::get('/reports/consultant-revenue-summary/export/{format}', [HB837ConsultantRevenueSummaryController::class, 'export'])
+        ->where('format', 'xlsx|csv')
+        ->name('reports.consultant-revenue-summary.export');
 
     // Tab-specific routes (MUST be after all specific routes)
     Route::get('/{tab}', [HB837Controller::class, 'index'])
