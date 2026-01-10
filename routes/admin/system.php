@@ -45,4 +45,33 @@ Route::prefix('maintenance')->name('maintenance.')->group(function () {
 });
 
 // API Management
+Route::prefix('api')->name('api.')->group(function () {
+    Route::get('/', function () {
+        return view('admin.api.index', [
+            'title' => 'API Management',
+            'message' => 'API key management and integration settings will be implemented here.'
+        ]);
+    })->name('index');
 
+    // Future API management routes
+    Route::get('/keys', function () {
+        return view('admin.api.keys', [
+            'title' => 'API Keys',
+            'message' => 'Manage API keys and access tokens.'
+        ]);
+    })->name('keys');
+
+    Route::get('/endpoints', function () {
+        return view('admin.api.endpoints', [
+            'title' => 'API Endpoints',
+            'message' => 'View and configure API endpoints.'
+        ]);
+    })->name('endpoints');
+
+    Route::get('/documentation', function () {
+        return view('admin.api.documentation', [
+            'title' => 'API Documentation',
+            'message' => 'API documentation and usage guides.'
+        ]);
+    })->name('documentation');
+});

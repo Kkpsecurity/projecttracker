@@ -25,9 +25,6 @@
                 <div class="card-header">
                     <h3 class="card-title">{{ $consultant->full_name }} - Consultant Record</h3>
                     <div class="card-tools">
-                        <a href="{{ route('admin.consultants.activity-report-pdf', $consultant->id) }}" class="btn btn-danger" target="_blank" title="Generate Consultant Activity Report PDF">
-                            <i class="fas fa-file-pdf"></i> Activity Report PDF
-                        </a>
                         <a href="{{ route('admin.consultants.edit', $consultant->id) }}" class="btn btn-primary">
                             <i class="fas fa-edit"></i> Edit
                         </a>
@@ -58,13 +55,6 @@
                                id="completed-assignments-tab" data-toggle="tab" href="#completed-assignments" role="tab"
                                aria-controls="completed-assignments" aria-selected="{{ $tab === 'completed-assignments' ? 'true' : 'false' }}">
                                 <i class="fas fa-check-circle"></i> Completed Assignments <span class="badge badge-success">{{ $completedAssignments->count() }}</span>
-                            </a>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link {{ $tab === 'financials' ? 'active' : '' }}"
-                               id="financials-tab" data-toggle="tab" href="#financials" role="tab"
-                               aria-controls="financials" aria-selected="{{ $tab === 'financials' ? 'true' : 'false' }}">
-                                <i class="fas fa-dollar-sign"></i> Financials
                             </a>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -272,143 +262,6 @@
                                         <i class="fas fa-info-circle"></i> This consultant has no completed assignments yet.
                                     </div>
                                 @endif
-                            </div>
-                        </div>
-
-                        <!-- Financials Tab -->
-                        <div class="tab-pane fade {{ $tab === 'financials' ? 'show active' : '' }}"
-                             id="financials" role="tabpanel" aria-labelledby="financials-tab">
-                            <div class="mt-3">
-                                <div class="card card-outline card-secondary">
-                                    <div class="card-header">
-                                        <h5 class="mb-0"><i class="fas fa-chart-line"></i> Financial Summary</h5>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <div class="table-responsive">
-                                            <table class="table table-striped mb-0">
-                                                <thead class="bg-light">
-                                                    <tr>
-                                                        <th>Scope</th>
-                                                        <th class="text-right">Projects</th>
-                                                        <th class="text-right">Gross Revenue</th>
-                                                        <th class="text-right">Estimated Expenses</th>
-                                                        <th class="text-right">Net Revenue</th>
-                                                        <th class="text-right">Avg Completion (Days)</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td><strong>Active</strong></td>
-                                                        <td class="text-right">{{ number_format($financialSummary['active']['count'] ?? 0) }}</td>
-                                                        <td class="text-right">${{ number_format((float) ($financialSummary['active']['gross'] ?? 0), 2) }}</td>
-                                                        <td class="text-right">${{ number_format((float) ($financialSummary['active']['expenses'] ?? 0), 2) }}</td>
-                                                        <td class="text-right">${{ number_format((float) ($financialSummary['active']['net'] ?? 0), 2) }}</td>
-                                                        <td class="text-right text-muted">—</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><strong>Completed</strong></td>
-                                                        <td class="text-right">{{ number_format($financialSummary['completed']['count'] ?? 0) }}</td>
-                                                        <td class="text-right">${{ number_format((float) ($financialSummary['completed']['gross'] ?? 0), 2) }}</td>
-                                                        <td class="text-right">${{ number_format((float) ($financialSummary['completed']['expenses'] ?? 0), 2) }}</td>
-                                                        <td class="text-right">${{ number_format((float) ($financialSummary['completed']['net'] ?? 0), 2) }}</td>
-                                                        <td class="text-right">
-                                                            @php($avg = $financialSummary['completed']['avg_completion_days'] ?? null)
-                                                            {{ $avg === null ? '—' : number_format((float) $avg, 1) }}
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><strong>All Projects</strong></td>
-                                                        <td class="text-right">{{ number_format($financialSummary['all']['count'] ?? 0) }}</td>
-                                                        <td class="text-right">${{ number_format((float) ($financialSummary['all']['gross'] ?? 0), 2) }}</td>
-                                                        <td class="text-right">${{ number_format((float) ($financialSummary['all']['expenses'] ?? 0), 2) }}</td>
-                                                        <td class="text-right">${{ number_format((float) ($financialSummary['all']['net'] ?? 0), 2) }}</td>
-                                                        <td class="text-right text-muted">—</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                    <div class="card-footer text-muted">
-                                        Avg completion uses completed projects with both Inspection Date and Report Delivered.
-                                        Count used: {{ number_format((int) ($financialSummary['completed']['avg_completion_days_count'] ?? 0)) }}
-                                    </div>
-                                </div>
-
-                                <div class="card card-outline card-secondary">
-                                    <div class="card-header">
-                                        <h5 class="mb-0"><i class="fas fa-list"></i> Project Financial Details</h5>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        @if(($allAssignments->count() ?? 0) > 0)
-                                            <div class="table-responsive">
-                                                <table class="table table-striped table-hover mb-0">
-                                                    <thead class="bg-light">
-                                                        <tr>
-                                                            <th style="width: 70px;">ID</th>
-                                                            <th>Property</th>
-                                                            <th style="width: 130px;">Status</th>
-                                                            <th class="text-right" style="width: 140px;">Quoted Price</th>
-                                                            <th class="text-right" style="width: 160px;">Est. Expenses</th>
-                                                            <th class="text-right" style="width: 140px;">Net</th>
-                                                            <th style="width: 150px;">Inspection</th>
-                                                            <th style="width: 150px;">Report Delivered</th>
-                                                            <th style="width: 70px;">View</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        @foreach ($allAssignments as $assignment)
-                                                            <?php
-                                                                $quoted = $assignment->quoted_price === null ? null : (float) $assignment->quoted_price;
-                                                                $expenses = $assignment->sub_fees_estimated_expenses === null ? null : (float) $assignment->sub_fees_estimated_expenses;
-                                                                $net = ($quoted ?? 0.0) - ($expenses ?? 0.0);
-                                                            ?>
-                                                            <tr>
-                                                                <td>{{ $assignment->id }}</td>
-                                                                <td>{{ $assignment->property_name ?: 'N/A' }}</td>
-                                                                <td>
-                                                                    @if($assignment->report_status === 'completed')
-                                                                        <span class="badge badge-success">Completed</span>
-                                                                    @else
-                                                                        <span class="badge badge-secondary">{{ ucfirst($assignment->report_status ?? 'N/A') }}</span>
-                                                                    @endif
-                                                                </td>
-                                                                <td class="text-right">{{ $quoted === null ? '—' : ('$' . number_format($quoted, 2)) }}</td>
-                                                                <td class="text-right">{{ $expenses === null ? '—' : ('$' . number_format($expenses, 2)) }}</td>
-                                                                <td class="text-right">${{ number_format($net, 2) }}</td>
-                                                                <td>
-                                                                    @if($assignment->scheduled_date_of_inspection)
-                                                                        {{ $assignment->scheduled_date_of_inspection->format('M d, Y') }}
-                                                                    @else
-                                                                        <span class="text-muted">—</span>
-                                                                    @endif
-                                                                </td>
-                                                                <td>
-                                                                    @if($assignment->report_submitted)
-                                                                        {{ $assignment->report_submitted->format('M d, Y') }}
-                                                                    @else
-                                                                        <span class="text-muted">—</span>
-                                                                    @endif
-                                                                </td>
-                                                                <td>
-                                                                    <a href="{{ route('admin.hb837.show', $assignment->id) }}"
-                                                                       class="btn btn-sm btn-primary" title="View Property">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </a>
-                                                                </td>
-                                                            </tr>
-                                                        @endforeach
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        @else
-                                            <div class="p-3">
-                                                <div class="alert alert-info mb-0">
-                                                    <i class="fas fa-info-circle"></i> No projects found for this consultant.
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
                             </div>
                         </div>
 

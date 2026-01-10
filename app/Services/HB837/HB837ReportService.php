@@ -3,191 +3,11 @@
 namespace App\Services\HB837;
 
 use App\Models\HB837;
-use App\Models\HB837File;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class HB837ReportService
 {
-    /**
-     * Generate the Crime Report (Appendix page) PDF bytes and suggested filename.
-     *
-     * Note: this uses the Appendix preview template, but is intended to be persisted
-     * as a stable per-project file (one project, one file).
-     */
-    public function generateCrimeReportPdfBytes(HB837 $hb837): array
-    {
-        $hb837->load(['files']);
-
-        $data = [
-            'hb837' => $hb837,
-            'generated_at' => now()->format('F j, Y \a\t g:i A'),
-            'generated_by' => Auth::user()->name ?? 'System',
-        ];
-
-        $pdf = Pdf::loadView('admin.hb837.pdf-appendix-preview', $data);
-        $pdf->setPaper('letter', 'portrait');
-        $pdf->setOptions([
-            'isHtml5ParserEnabled' => true,
-            'isPhpEnabled' => true,
-            'isRemoteEnabled' => true,
-            'defaultFont' => 'Arial',
-        ]);
-
-        $suffix = 'ID' . $hb837->id . '_' . date('Y-m-d');
-        $downloadFilename = 'HB837_CrimeReport_' . $this->createCleanFilename($hb837->property_name, $suffix);
-
-        return [
-            'pdf' => $pdf,
-            'bytes' => $pdf->output(),
-            'download_filename' => $downloadFilename,
-        ];
-    }
-
-    /**
-     * Persist the Crime Report PDF as a single stable file (one project, one file).
-     * Each generation overwrites the same stored path.
-     */
-    public function generateAndPersistCrimeReportPdf(HB837 $hb837, ?array $generated = null): array
-    {
-        $generated = $generated ?? $this->generateCrimeReportPdfBytes($hb837);
-
-        $storedFilename = 'generated_crime_report.pdf';
-        $storedPath = 'hb837/' . $hb837->id . '/' . $storedFilename;
-        $bytes = $generated['bytes'];
-
-        Storage::disk('public')->put($storedPath, $bytes);
-
-        $existing = HB837File::query()
-            ->where('hb837_id', $hb837->id)
-            ->where('file_category', 'generated_crime_report')
-            ->first();
-
-        if ($existing && $existing->file_path !== $storedPath) {
-            if (Storage::disk('public')->exists($existing->file_path)) {
-                Storage::disk('public')->delete($existing->file_path);
-            }
-        }
-
-        $hb837File = HB837File::updateOrCreate(
-            [
-                'hb837_id' => $hb837->id,
-                'file_category' => 'generated_crime_report',
-            ],
-            [
-                'uploaded_by' => Auth::id(),
-                'filename' => $storedFilename,
-                'original_filename' => $generated['download_filename'],
-                'file_path' => $storedPath,
-                'mime_type' => 'application/pdf',
-                'file_size' => strlen($bytes),
-                'description' => 'Generated Crime Report PDF (latest).',
-            ]
-        );
-
-        return [
-            'hb837_file' => $hb837File,
-            'stored_path' => $storedPath,
-            'download_filename' => $generated['download_filename'],
-        ];
-    }
-
-    /**
-     * Generate the per-HB837 PDF bytes and the suggested download filename.
-     */
-    public function generateProjectPdfBytes(HB837 $hb837): array
-    {
-        $hb837->load([
-            'consultant',
-            'user',
-            'files',
-            'crimeStats',
-            'crimeStats.reviewer',
-            'findings',
-            'findings.creator',
-            'findings.plot',
-            'riskMeasures',
-            'riskMeasures.creator',
-        ]);
-
-        $mapData = $this->prepareMapData($hb837);
-
-        $data = [
-            'hb837' => $hb837,
-            'generated_at' => now()->format('F j, Y \a\t g:i A'),
-            'generated_by' => Auth::user()->name ?? 'System',
-            'map_url' => $mapData['url'],
-            'show_map' => $mapData['show'],
-            'map_fallback_reason' => $mapData['fallback_reason'],
-        ];
-
-        $pdf = Pdf::loadView('admin.hb837.pdf-report', $data);
-        $pdf->setPaper('letter', 'portrait');
-        $pdf->setOptions([
-            'isHtml5ParserEnabled' => true,
-            'isPhpEnabled' => true,
-            'isRemoteEnabled' => true,
-            'defaultFont' => 'Arial',
-        ]);
-
-        $suffix = 'ID' . $hb837->id . '_' . date('Y-m-d');
-        $downloadFilename = 'HB837_' . $this->createCleanFilename($hb837->property_name, $suffix);
-
-        return [
-            'pdf' => $pdf,
-            'bytes' => $pdf->output(),
-            'download_filename' => $downloadFilename,
-        ];
-    }
-
-    /**
-     * Persist the latest per-HB837 report as a single file (one project, one file).
-     */
-    public function generateAndPersistProjectPdf(HB837 $hb837, ?array $generated = null): array
-    {
-        $generated = $generated ?? $this->generateProjectPdfBytes($hb837);
-
-        $storedFilename = 'generated_report.pdf';
-        $storedPath = 'hb837/' . $hb837->id . '/' . $storedFilename;
-        $bytes = $generated['bytes'];
-
-        Storage::disk('public')->put($storedPath, $bytes);
-
-        $existing = HB837File::query()
-            ->where('hb837_id', $hb837->id)
-            ->where('file_category', 'generated_report')
-            ->first();
-
-        if ($existing && $existing->file_path !== $storedPath) {
-            if (Storage::disk('public')->exists($existing->file_path)) {
-                Storage::disk('public')->delete($existing->file_path);
-            }
-        }
-
-        $hb837File = HB837File::updateOrCreate(
-            [
-                'hb837_id' => $hb837->id,
-                'file_category' => 'generated_report',
-            ],
-            [
-                'uploaded_by' => Auth::id(),
-                'filename' => $storedFilename,
-                'original_filename' => $generated['download_filename'],
-                'file_path' => $storedPath,
-                'mime_type' => 'application/pdf',
-                'file_size' => strlen($bytes),
-                'description' => 'Generated HB837 report (latest).',
-            ]
-        );
-
-        return [
-            'hb837_file' => $hb837File,
-            'stored_path' => $storedPath,
-            'download_filename' => $generated['download_filename'],
-        ];
-    }
-
     /**
      * Generate P    /**
      * Apply search filters to query
@@ -205,7 +25,7 @@ class HB837ReportService
     /**
      * Export data based on request parameters
      */
-    public function export(\Illuminate\Http\Request $request): \Symfony\Component\HttpFoundation\Response
+    public function export(\Illuminate\Http\Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         $format = $request->input('format', 'excel');
         $tab = $request->input('tab', 'all');
@@ -283,7 +103,7 @@ class HB837ReportService
     /**
      * Export data to PDF format
      */
-    private function exportToPdf($data): \Symfony\Component\HttpFoundation\Response
+    private function exportToPdf($data): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.hb837.exports.pdf', compact('data'));
         $filename = 'hb837_export_' . now()->format('Y-m-d_His') . '.pdf';
@@ -296,127 +116,37 @@ class HB837ReportService
      */
     public function generatePdfReport(HB837 $hb837)
     {
-        $generated = $this->generateProjectPdfBytes($hb837);
-        $this->generateAndPersistProjectPdf($hb837, $generated);
+        $hb837->load(['consultant', 'user', 'files']);
 
-        return $generated['pdf']->download($generated['download_filename']);
-    }
+        // Prepare Google Maps data
+        $mapData = $this->prepareMapData($hb837);
 
-    /**
-     * Appendix-only preview (single page).
-     *
-     * Intended for layout/slot verification and does NOT persist the generated report.
-     */
-    public function generateAppendixPreviewPdf(HB837 $hb837)
-    {
-        $hb837->load(['files']);
-
+        // Prepare data for PDF
         $data = [
             'hb837' => $hb837,
             'generated_at' => now()->format('F j, Y \a\t g:i A'),
             'generated_by' => Auth::user()->name ?? 'System',
+            'map_url' => $mapData['url'],
+            'show_map' => $mapData['show'],
+            'map_fallback_reason' => $mapData['fallback_reason']
         ];
 
-        $pdf = Pdf::loadView('admin.hb837.pdf-appendix-preview', $data);
+        // Generate PDF using the view
+        $pdf = Pdf::loadView('admin.hb837.pdf-report', $data);
+
+        // Set PDF options
         $pdf->setPaper('letter', 'portrait');
         $pdf->setOptions([
             'isHtml5ParserEnabled' => true,
             'isPhpEnabled' => true,
-            'isRemoteEnabled' => true,
-            'defaultFont' => 'Arial',
+            'defaultFont' => 'Arial'
         ]);
 
+        // Generate filename with property name
         $suffix = 'ID' . $hb837->id . '_' . date('Y-m-d');
-        $filename = 'HB837_AppendixA_Preview_' . $this->createCleanFilename($hb837->property_name, $suffix);
+        $filename = 'HB837_' . $this->createCleanFilename($hb837->property_name, $suffix);
 
-        return $pdf->stream($filename);
-    }
-
-    /**
-     * Appendix-only preview (T2 layout, single page).
-     *
-     * Uses Appendix B photo slots 1-8 for an 8-slot page layout.
-     */
-    public function generateAppendixT2PreviewPdf(HB837 $hb837)
-    {
-        $hb837->load(['files']);
-
-        $data = [
-            'hb837' => $hb837,
-            'generated_at' => now()->format('F j, Y \a\t g:i A'),
-            'generated_by' => Auth::user()->name ?? 'System',
-        ];
-
-        $pdf = Pdf::loadView('admin.hb837.pdf-appendix-t2-preview', $data);
-        $pdf->setPaper('letter', 'portrait');
-        $pdf->setOptions([
-            'isHtml5ParserEnabled' => true,
-            'isPhpEnabled' => true,
-            'isRemoteEnabled' => true,
-            'defaultFont' => 'Arial',
-        ]);
-
-        $suffix = 'ID' . $hb837->id . '_' . date('Y-m-d');
-        $filename = 'HB837_AppendixT2_Preview_' . $this->createCleanFilename($hb837->property_name, $suffix);
-
-        return $pdf->stream($filename);
-    }
-
-    /**
-     * Crime Report PDF (Appendix page) generation that persists to a stable file,
-     * then serves that file inline.
-     */
-    public function generateCrimeReportPdf(HB837 $hb837)
-    {
-        $persisted = $this->generateAndPersistCrimeReportPdf($hb837);
-
-        $absolutePath = Storage::disk('public')->path($persisted['stored_path']);
-        $downloadFilename = $persisted['download_filename'];
-
-        return response()->file($absolutePath, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . addslashes($downloadFilename) . '",',
-
-            // Ensure the browser/PDF viewer does not reuse a cached prior version.
-            // This endpoint regenerates on-demand, so caching causes confusion.
-            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-        ]);
-    }
-
-    /**
-     * Crime Records PDF (crime stats + recent incidents).
-     *
-     * This is a simple record/export view and does not persist a stored file.
-     */
-    public function generateCrimeRecordsPdf(HB837 $hb837)
-    {
-        $hb837->load([
-            'crimeStats',
-            'crimeStats.reviewer',
-            'recentIncidents',
-        ]);
-
-        $data = [
-            'hb837' => $hb837,
-            'generated_at' => now()->format('F j, Y \a\t g:i A'),
-            'generated_by' => Auth::user()->name ?? 'System',
-        ];
-
-        $pdf = Pdf::loadView('admin.hb837.pdf-crime-records', $data);
-        $pdf->setPaper('letter', 'portrait');
-        $pdf->setOptions([
-            'isHtml5ParserEnabled' => true,
-            'isPhpEnabled' => true,
-            'isRemoteEnabled' => true,
-            'defaultFont' => 'Arial',
-        ]);
-
-        $suffix = 'ID' . $hb837->id . '_' . date('Y-m-d');
-        $filename = 'HB837_CrimeRecords_' . $this->createCleanFilename($hb837->property_name, $suffix);
-
-        return $pdf->stream($filename);
+        return $pdf->download($filename);
     }
 
     /**

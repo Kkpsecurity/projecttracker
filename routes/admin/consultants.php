@@ -23,9 +23,6 @@ Route::prefix('consultants')->name('consultants.')->group(function () {
     Route::get('/files/{file}/download', [ConsultantController::class, 'downloadFile'])->name('files.download');
     Route::delete('/files/{file}', [ConsultantController::class, 'deleteFile'])->name('files.delete');
 
-    // Consultant Reports (must be before /{consultant})
-    Route::get('/{consultant}/activity-report-pdf', [ConsultantController::class, 'activityReportPdf'])->name('activity-report-pdf');
-
     // Parameterized routes (must come LAST)
     Route::get('/{consultant}', [ConsultantController::class, 'show'])->name('show');
     Route::get('/{consultant}/edit', [ConsultantController::class, 'edit'])->name('edit');
@@ -34,5 +31,4 @@ Route::prefix('consultants')->name('consultants.')->group(function () {
 
     // File Management (parameterized routes for specific consultant records)
     Route::post('/{consultant}/files', [ConsultantController::class, 'uploadFile'])->name('files.upload');
-
 });

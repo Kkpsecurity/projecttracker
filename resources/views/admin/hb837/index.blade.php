@@ -2,21 +2,17 @@
 
 @section('plugins.Datatables', true)
 
-@php
-    $pageTitle = $pageTitle ?? 'HB837 Management';
-@endphp
-
-@section('title', $pageTitle . ' - KKP Security Project Tracker')
+@section('title', 'HB837 Management - KKP Security Project Tracker')
 
 @section('content_header')
     <div class="row">
         <div class="col-sm-6">
-            <h1 class="text-shadow-md"><i class="fas fa-shield-alt"></i> {{ $pageTitle }}</h1>
+            <h1 class="text-shadow-md"><i class="fas fa-shield-alt"></i> HB837 Management</h1>
         </div>
         <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
                 <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">{{ $pageTitle }}</li>
+                <li class="breadcrumb-item active">HB837 Management</li>
             </ol>
         </div>
     </div>
@@ -39,9 +35,6 @@
                     </a>
                     <a href="{{ route('admin.hb837.smart-import.show') }}" class="btn btn-primary mr-2">
                         <i class="fas fa-magic"></i> Smart Import
-                    </a>
-                    <a href="{{ route('admin.hb837.reports.consultant-revenue-summary') }}" class="btn btn-secondary mr-2">
-                        <i class="fas fa-chart-line"></i> Consultant Revenue Summary
                     </a>
                     <a href="#" id="export-data-btn" class="btn btn-info mr-2" onclick="exportCurrentTab()">
                         <i class="fas fa-file-download"></i> Export Data

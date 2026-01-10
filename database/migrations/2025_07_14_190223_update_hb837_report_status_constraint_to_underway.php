@@ -12,15 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Back-compat: keep the newer 'underway' status, but also allow legacy 'in-progress'
-        // since the codebase and test fixtures still use 'in-progress' in many places.
+        // First, update any existing 'in-progress' values to 'underway'
         DB::statement("UPDATE hb837 SET report_status = 'underway' WHERE report_status = 'in-progress'");
         
         // Drop the old constraint
         DB::statement('ALTER TABLE hb837 DROP CONSTRAINT IF EXISTS hb837_report_status_check');
-
-        // Allow BOTH 'underway' and 'in-progress' to prevent inserts from failing.
-        DB::statement("ALTER TABLE hb837 ADD CONSTRAINT hb837_report_status_check CHECK (report_status IN ('not-started', 'underway', 'in-progress', 'in-review', 'completed'))");
+        
+        // Add the new constraint with 'underway' instead of 'in-progress'
+        DB::statement("ALTER TABLE hb837 ADD CONSTRAINT hb837_report_status_check CHECK (report_status IN ('not-started', 'underway', 'in-review', 'completed'))");
     }
 
     /**

@@ -3,7 +3,6 @@
 namespace App\Services\HB837;
 
 use Illuminate\Http\Request;
-use App\Services\HB837\HB837CrimeStatSchema;
 
 class HB837ValidationService
 {
@@ -180,15 +179,5 @@ class HB837ValidationService
     {
         $allowedTabs = $this->getAllowedTabs();
         return in_array(strtolower($tab), $allowedTabs) ? strtolower($tab) : 'active';
-    }
-
-    /**
-     * Validate a crime stats JSON payload (Phase 3).
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    public function validateCrimeStatsPayload(array $stats, array $context = []): array
-    {
-        return HB837CrimeStatSchema::validateV1($stats, $context);
     }
 }

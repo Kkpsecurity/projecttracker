@@ -122,6 +122,6 @@ class HB837Service
      */
     public function getAvailableConsultants(): Collection
     {
-        return Consultant::active()->get();
+        return Consultant::where('status', 'active')->get();
     }
 }

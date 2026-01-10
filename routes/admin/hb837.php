@@ -2,14 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\HB837\HB837Controller;
-use App\Http\Controllers\Admin\HB837\ComplianceController;
-use App\Http\Controllers\Admin\HB837\HB837FindingController;
-use App\Http\Controllers\Admin\HB837\HB837CrimeStatController;
-use App\Http\Controllers\Admin\HB837\HB837RiskMeasureController;
-use App\Http\Controllers\Admin\HB837\HB837RecentIncidentController;
-use App\Http\Controllers\Admin\HB837\HB837StatuteConditionController;
 use App\Http\Controllers\Admin\HB837\InspectionCalendarController;
-use App\Http\Controllers\Admin\HB837\HB837ConsultantRevenueSummaryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,8 +17,6 @@ use App\Http\Controllers\Admin\HB837\HB837ConsultantRevenueSummaryController;
 Route::prefix('hb837')->name('hb837.')->group(function () {
     // Basic CRUD Routes (non-parameterized routes first)
     Route::get('/', [HB837Controller::class, 'index'])->name('index');
-    // Dedicated compliance entrypoint (separate name to avoid route-name collisions across apps).
-    Route::get('/complience', [ComplianceController::class, 'index'])->name('complience.index');
     Route::get('/create', [HB837Controller::class, 'create'])->name('create');
     Route::post('/', [HB837Controller::class, 'store'])->name('store');
 
@@ -67,13 +58,6 @@ Route::prefix('hb837')->name('hb837.')->group(function () {
     Route::get('/files/{file}/download', [HB837Controller::class, 'downloadFile'])->name('files.download');
     Route::delete('/files/{file}', [HB837Controller::class, 'deleteFile'])->name('files.delete');
 
-    // Reports (MUST be before tab and parameterized routes)
-    Route::get('/reports/consultant-revenue-summary', [HB837ConsultantRevenueSummaryController::class, 'index'])
-        ->name('reports.consultant-revenue-summary');
-    Route::get('/reports/consultant-revenue-summary/export/{format}', [HB837ConsultantRevenueSummaryController::class, 'export'])
-        ->where('format', 'xlsx|csv')
-        ->name('reports.consultant-revenue-summary.export');
-
     // Tab-specific routes (MUST be after all specific routes)
     Route::get('/{tab}', [HB837Controller::class, 'index'])
         ->where('tab', 'all|active|quoted|completed|closed')
@@ -93,29 +77,4 @@ Route::prefix('hb837')->name('hb837.')->group(function () {
     // File Management (parameterized routes for specific HB837 records)
     Route::get('/{hb837}/files', [HB837Controller::class, 'files'])->name('files');
     Route::post('/{hb837}/files', [HB837Controller::class, 'uploadFile'])->name('files.upload');
-
-    // Findings (Phase 2)
-    Route::get('/{hb837}/findings', [HB837FindingController::class, 'index'])->name('findings.index');
-    Route::post('/{hb837}/findings', [HB837FindingController::class, 'store'])->name('findings.store');
-    Route::put('/{hb837}/findings/{finding}', [HB837FindingController::class, 'update'])->name('findings.update');
-    Route::delete('/{hb837}/findings/{finding}', [HB837FindingController::class, 'destroy'])->name('findings.destroy');
-
-    // Risk Measures (Phase 6 / Option B)
-    Route::get('/{hb837}/risk-measures', [HB837RiskMeasureController::class, 'index'])->name('risk-measures.index');
-    Route::post('/{hb837}/risk-measures', [HB837RiskMeasureController::class, 'store'])->name('risk-measures.store');
-    Route::put('/{hb837}/risk-measures/{measure}', [HB837RiskMeasureController::class, 'update'])->name('risk-measures.update');
-    Route::delete('/{hb837}/risk-measures/{measure}', [HB837RiskMeasureController::class, 'destroy'])->name('risk-measures.destroy');
-
-    // Recent Incidents (Phase 6)
-    Route::get('/{hb837}/recent-incidents', [HB837RecentIncidentController::class, 'index'])->name('recent-incidents.index');
-    Route::post('/{hb837}/recent-incidents', [HB837RecentIncidentController::class, 'store'])->name('recent-incidents.store');
-    Route::put('/{hb837}/recent-incidents/{incident}', [HB837RecentIncidentController::class, 'update'])->name('recent-incidents.update');
-    Route::delete('/{hb837}/recent-incidents/{incident}', [HB837RecentIncidentController::class, 'destroy'])->name('recent-incidents.destroy');
-
-    // Statute Conditions (Phase 6)
-    Route::get('/{hb837}/statute-conditions', [HB837StatuteConditionController::class, 'index'])->name('statute-conditions.index');
-    Route::post('/{hb837}/statute-conditions', [HB837StatuteConditionController::class, 'upsertMany'])->name('statute-conditions.upsert');
-
-    // Crime Stats (Phase 3)
-    Route::post('/{hb837}/crime-stats', [HB837CrimeStatController::class, 'update'])->name('crime-stats.update');
 });

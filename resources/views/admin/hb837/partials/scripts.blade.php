@@ -1,19 +1,6 @@
 {{-- HB837 Edit Form JavaScript --}}
 <script>
-(function initHb837ScriptsPartial(attempt) {
-    attempt = attempt || 0;
-
-    // Some layouts load jQuery after inline scripts; avoid "$ is not defined".
-    if (!window.jQuery) {
-        if (attempt < 100) {
-            return window.setTimeout(function() { initHb837ScriptsPartial(attempt + 1); }, 50);
-        }
-        return;
-    }
-
-    var $ = window.jQuery;
-
-    $(document).ready(function() {
+$(document).ready(function() {
     const storageKey = 'hb837_edit_active_tab_{{ $hb837->id }}';
 
     // Auto-calculate project net profit
@@ -233,9 +220,8 @@
     });
 
     // Mark form as submitting to avoid clearing localStorage
-        $('#hb837-edit-form').on('submit', function() {
-            $(this).data('submitting', true);
-        });
+    $('#hb837-edit-form').on('submit', function() {
+        $(this).data('submitting', true);
     });
-})(0);
+});
 </script>
