@@ -360,4 +360,66 @@ class ConsultantController extends Controller
         return redirect()->back()
             ->with('success', 'File deleted successfully');
     }
+
+    /**
+     * Display consultant financial summary report
+     */
+    public function financialReport(Request $request)
+    {
+        if ($request->ajax()) {
+            $consultants = Consultant::query()
+                ->withCount([
+                    'hb837Projects as total_projects',
+                    'hb837Projects as active_projects' => function ($query) {
+                        $query->whereNotIn('report_status', ['completed']);
+                    },
+                    'hb837Projects as completed_projects' => function ($query) {
+                        $query->where('report_status', 'completed');
+                    }
+                ])
+                ->with(['hb837Projects' => function ($query) {
+                    $query->select('id', 'assigned_consultant_id', 'report_status', 'quoted_price', 'created_at', 'updated_at');
+                }]);
+
+            return DataTables::of($consultants)
+                ->addColumn('name', function ($consultant) {
+                    return $consultant->first_name . ' ' . $consultant->last_name;
+                })
+                ->addColumn('company', function ($consultant) {
+                    return $consultant->dba_company_name ?: 'N/A';
+                })
+                ->addColumn('total_projects', function ($consultant) {
+                    return $consultant->total_projects;
+                })
+                ->addColumn('active_projects', function ($consultant) {
+                    return $consultant->active_projects;
+                })
+                ->addColumn('completed_projects', function ($consultant) {
+                    return $consultant->completed_projects;
+                })
+                ->addColumn('completion_rate', function ($consultant) {
+                    if ($consultant->total_projects == 0) {
+                        return '0%';
+                    }
+                    $rate = ($consultant->completed_projects / $consultant->total_projects) * 100;
+                    return number_format($rate, 1) . '%';
+                })
+                ->addColumn('total_financial_value', function ($consultant) {
+                    $totalValue = $consultant->hb837Projects->sum(function ($project) {
+                        return floatval($project->quoted_price ?? 0);
+                    });
+                    
+                    return '$' . number_format($totalValue, 2);
+                })
+                ->addColumn('actions', function ($consultant) {
+                    return '<a href="' . route('admin.consultants.show', $consultant) . '" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>';
+                })
+                ->rawColumns(['actions'])
+                ->make(true);
+        }
+
+        return view('admin.consultants.report');
+    }
 }

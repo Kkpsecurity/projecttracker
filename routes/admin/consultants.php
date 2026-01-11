@@ -19,6 +19,9 @@ Route::prefix('consultants')->name('consultants.')->group(function () {
     Route::get('/create', [ConsultantController::class, 'create'])->name('create');
     Route::post('/', [ConsultantController::class, 'store'])->name('store');
 
+    // Financial Report Route (must be before parameterized routes)
+    Route::get('/report', [ConsultantController::class, 'financialReport'])->name('report');
+
     // File Management (non-parameterized routes)
     Route::get('/files/{file}/download', [ConsultantController::class, 'downloadFile'])->name('files.download');
     Route::delete('/files/{file}', [ConsultantController::class, 'deleteFile'])->name('files.delete');

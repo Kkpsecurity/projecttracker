@@ -411,6 +411,12 @@ return [
             'active' => ['admin/consultants*'],
         ],
         [
+            'text' => 'Consultant Report',
+            'icon' => 'fas fa-file-invoice-dollar',
+            'route' => 'admin.consultants.report',
+            'active' => ['admin/consultants/report*'],
+        ],
+        [
             'text' => 'HB 837 Compliance',
             'route' => 'admin.hb837.complience.index',
             'icon' => 'fas fa-clipboard-check',

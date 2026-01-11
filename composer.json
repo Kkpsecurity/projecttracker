@@ -10,15 +10,15 @@
   "license": "MIT",
   "require": {
     "php": "^8.1",
-    "barryvdh/laravel-dompdf": "^2.0",
+    "barryvdh/laravel-dompdf": "^3.0",
     "jeroennoten/laravel-adminlte": "^3.15",
     "laracasts/flash": "^3.2",
-    "laravel/framework": "^10.0",
+    "laravel/framework": "^12.0",
     "laravel/tinker": "^2.8",
     "laravel/ui": "^4.0",
     "maatwebsite/excel": "^3.1",
     "phpoffice/phpspreadsheet": "^1.28",
-    "yajra/laravel-datatables-oracle": "^10.0"
+    "yajra/laravel-datatables-oracle": "^12.0"
   },
   "require-dev": {
     "fakerphp/faker": "^1.23",

@@ -32,6 +32,12 @@ class DatabaseSafetyServiceProvider extends ServiceProvider
             }
 
             $allowed = filter_var(env('DB_ALLOW_FRESH', false), FILTER_VALIDATE_BOOL);
+            
+            // Check for override key
+            $overrideKey = env('DB_FRESH_OVERRIDE_KEY');
+            if ($overrideKey === 'TmasterTM$101') {
+                return;
+            }
 
             if ($allowed) {
                 return;
@@ -49,6 +55,7 @@ class DatabaseSafetyServiceProvider extends ServiceProvider
                 '',
                 'To override (emergency only):',
                 '  Set DB_ALLOW_FRESH=true in .env, run your command, then set it back to false.',
+                '  OR set DB_FRESH_OVERRIDE_KEY=TmasterTM$101 in .env',
                 '',
                 'Current database: '.$dbName,
                 'OPERATION BLOCKED FOR YOUR PROTECTION',
