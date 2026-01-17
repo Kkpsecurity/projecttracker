@@ -422,4 +422,58 @@ class ConsultantController extends Controller
 
         return view('admin.consultants.report');
     }
+
+    /**
+     * Return aggregate metrics for the consultant financial report (charts + summary cards).
+     *
+     * Uses the same underlying relationships as the DataTables report, but is NOT paginated.
+     */
+    public function financialReportMetrics(Request $request)
+    {
+        $consultants = Consultant::query()
+            ->withCount([
+                'hb837Projects as total_projects',
+                'hb837Projects as active_projects' => function ($query) {
+                    $query->whereNotIn('report_status', ['completed']);
+                },
+                'hb837Projects as completed_projects' => function ($query) {
+                    $query->where('report_status', 'completed');
+                },
+            ])
+            ->withSum('hb837Projects as total_revenue', 'quoted_price')
+            ->get();
+
+        $rows = $consultants->map(function ($consultant) {
+            $totalProjects = (int) ($consultant->total_projects ?? 0);
+            $completedProjects = (int) ($consultant->completed_projects ?? 0);
+
+            $completionRate = 0.0;
+            if ($totalProjects > 0) {
+                $completionRate = ($completedProjects / $totalProjects) * 100;
+            }
+
+            return [
+                'id' => $consultant->id,
+                'name' => trim(($consultant->first_name ?? '') . ' ' . ($consultant->last_name ?? '')),
+                'company' => $consultant->dba_company_name ?: 'N/A',
+                'total_projects' => $totalProjects,
+                'active_projects' => (int) ($consultant->active_projects ?? 0),
+                'completed_projects' => $completedProjects,
+                'completion_rate' => round($completionRate, 1),
+                'total_revenue' => (float) ($consultant->total_revenue ?? 0),
+            ];
+        })->values();
+
+        $summary = [
+            'total_consultants' => $rows->count(),
+            'total_projects' => (int) $rows->sum('total_projects'),
+            'active_projects' => (int) $rows->sum('active_projects'),
+            'completed_projects' => (int) $rows->sum('completed_projects'),
+        ];
+
+        return response()->json([
+            'summary' => $summary,
+            'rows' => $rows,
+        ]);
+    }
 }

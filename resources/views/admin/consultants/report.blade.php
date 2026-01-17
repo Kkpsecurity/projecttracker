@@ -237,7 +237,127 @@
                         exportOptions: {
                             columns: [0, 1, 2, 3, 4, 5, 6]
                         },
-                        orientation: 'landscape'
+                        orientation: 'landscape',
+                        customize: function (doc) {
+                            // Reduce wrapping-induced row growth (and resulting blank space) by
+                            // giving the Company column more room and tightening typography.
+                            doc.pageMargins = [20, 20, 20, 20];
+                            doc.defaultStyle.fontSize = 7;
+                            doc.styles.tableHeader.fontSize = 8;
+
+                            // Find the exported table node in the document.
+                            let tableNode = null;
+                            let tableIndex = -1;
+                            for (let i = 0; i < doc.content.length; i++) {
+                                if (doc.content[i].table) {
+                                    tableNode = doc.content[i];
+                                    tableIndex = i;
+                                    break;
+                                }
+                            }
+                            if (!tableNode) return;
+
+                            // Make Company column flex to take remaining width.
+                            // Columns: Consultant, Company, Total, Active, Completed, Rate, Value
+                            tableNode.table.widths = ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto'];
+
+                            // Truncate long company names so they don't wrap into tall rows.
+                            const maxCompanyChars = 40;
+                            const truncate = function (value, maxChars) {
+                                if (!value) return '';
+                                const s = String(value);
+                                if (s.length <= maxChars) return s;
+                                return s.slice(0, Math.max(0, maxChars - 1)) + '…';
+                            };
+
+                            const body = tableNode.table.body || [];
+                            for (let r = 1; r < body.length; r++) {
+                                const cell = body[r][1]; // Company column
+
+                                if (typeof cell === 'string') {
+                                    body[r][1] = truncate(cell, maxCompanyChars);
+                                    continue;
+                                }
+
+                                if (cell && typeof cell === 'object') {
+                                    const current = (cell.text ?? '');
+                                    cell.text = truncate(current, maxCompanyChars);
+                                    cell.noWrap = true;
+                                }
+                            }
+
+                            // --- Grand Totals (based on exported rows) ---
+                            const getCellText = function (cell) {
+                                if (cell === null || cell === undefined) return '';
+                                if (typeof cell === 'string' || typeof cell === 'number') return String(cell);
+                                if (typeof cell === 'object' && cell.text !== undefined) return String(cell.text);
+                                return '';
+                            };
+
+                            const toInt = function (value) {
+                                const n = parseInt(String(value).replace(/[^0-9-]/g, ''), 10);
+                                return Number.isFinite(n) ? n : 0;
+                            };
+
+                            const toMoney = function (value) {
+                                const n = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
+                                return Number.isFinite(n) ? n : 0;
+                            };
+
+                            let totalConsultants = 0;
+                            let totalProjects = 0;
+                            let activeProjects = 0;
+                            let completedProjects = 0;
+                            let totalRevenue = 0;
+
+                            // Columns: 0 Consultant, 1 Company, 2 Total, 3 Active, 4 Completed, 5 Rate, 6 Value
+                            for (let r = 1; r < body.length; r++) {
+                                totalConsultants++;
+                                totalProjects += toInt(getCellText(body[r][2]));
+                                activeProjects += toInt(getCellText(body[r][3]));
+                                completedProjects += toInt(getCellText(body[r][4]));
+                                totalRevenue += toMoney(getCellText(body[r][6]));
+                            }
+
+                            const overallCompletionRate = totalProjects > 0
+                                ? Math.round(((completedProjects / totalProjects) * 100) * 10) / 10
+                                : 0;
+
+                            const formatMoney = function (amount) {
+                                const n = Number.isFinite(amount) ? amount : 0;
+                                return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            };
+
+                            // Insert the totals section after the main table.
+                            if (tableIndex >= 0) {
+                                doc.content.splice(tableIndex + 1, 0,
+                                    { text: 'Grand Totals', bold: true, margin: [0, 10, 0, 4] },
+                                    {
+                                        table: {
+                                            widths: ['*', 'auto'],
+                                            body: [
+                                                [{ text: 'Total Consultants', bold: true }, String(totalConsultants)],
+                                                [{ text: 'Total Projects', bold: true }, String(totalProjects)],
+                                                [{ text: 'Active Projects', bold: true }, String(activeProjects)],
+                                                [{ text: 'Completed Projects', bold: true }, String(completedProjects)],
+                                                [{ text: 'Overall Completion Rate', bold: true }, String(overallCompletionRate) + '%'],
+                                                [{ text: 'Total Financial Value', bold: true }, formatMoney(totalRevenue)],
+                                            ]
+                                        },
+                                        layout: 'lightHorizontalLines',
+                                        margin: [0, 0, 0, 0]
+                                    }
+                                );
+                            }
+
+                            // Tighten cell padding so multi-line cells waste less vertical space.
+                            tableNode.layout = {
+                                paddingLeft: function () { return 4; },
+                                paddingRight: function () { return 4; },
+                                paddingTop: function () { return 2; },
+                                paddingBottom: function () { return 2; }
+                            };
+                        }
                     },
                     {
                         extend: 'print',
@@ -249,33 +369,34 @@
                     }
                 ],
                 drawCallback: function(settings) {
-                    updateSummaryStats(settings.json);
-                    updateCharts(settings.json);
+                    // Charts + summary cards are loaded via the metrics endpoint.
+                    // Keeping this empty avoids incorrect per-page totals when using serverSide paging.
                 }
             });
 
-            function updateSummaryStats(data) {
-                if (!data || !data.data) return;
+            function refreshMetrics() {
+                $.ajax({
+                    url: '{{ route('admin.consultants.report.metrics') }}',
+                    method: 'GET',
+                    dataType: 'json',
+                }).done(function(payload) {
+                    if (!payload || !payload.rows) return;
 
-                let totalConsultants = data.recordsTotal || 0;
-                let totalProjects = 0;
-                let activeProjects = 0;
-                let completedProjects = 0;
-
-                data.data.forEach(function(row) {
-                    totalProjects += parseInt(row.total_projects) || 0;
-                    activeProjects += parseInt(row.active_projects) || 0;
-                    completedProjects += parseInt(row.completed_projects) || 0;
+                    updateSummaryStatsFromMetrics(payload.summary);
+                    updateChartsFromMetrics(payload.rows);
                 });
-
-                $('#total-consultants').text(totalConsultants);
-                $('#total-projects').text(totalProjects);
-                $('#active-projects').text(activeProjects);
-                $('#completed-projects').text(completedProjects);
             }
 
-            function updateCharts(data) {
-                if (!data || !data.data) return;
+            function updateSummaryStatsFromMetrics(summary) {
+                if (!summary) return;
+                $('#total-consultants').text(summary.total_consultants ?? 0);
+                $('#total-projects').text(summary.total_projects ?? 0);
+                $('#active-projects').text(summary.active_projects ?? 0);
+                $('#completed-projects').text(summary.completed_projects ?? 0);
+            }
+
+            function updateChartsFromMetrics(rows) {
+                if (!rows || !rows.length) return;
 
                 // Destroy existing charts
                 if (topConsultantsChart) topConsultantsChart.destroy();
@@ -284,9 +405,9 @@
                 if (completionRateChart) completionRateChart.destroy();
 
                 // Sort by total projects and get top 10
-                let sortedByProjects = [...data.data].sort((a, b) => 
-                    parseInt(b.total_projects) - parseInt(a.total_projects)
-                ).slice(0, 10);
+                let sortedByProjects = [...rows]
+                    .sort((a, b) => (b.total_projects || 0) - (a.total_projects || 0))
+                    .slice(0, 10);
 
                 // Top Consultants by Projects Chart
                 const ctxProjects = document.getElementById('topConsultantsChart').getContext('2d');
@@ -296,7 +417,7 @@
                         labels: sortedByProjects.map(row => row.name),
                         datasets: [{
                             label: 'Total Projects',
-                            data: sortedByProjects.map(row => parseInt(row.total_projects)),
+                            data: sortedByProjects.map(row => row.total_projects || 0),
                             backgroundColor: 'rgba(54, 162, 235, 0.8)',
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1
@@ -317,9 +438,9 @@
                 // Project Status Distribution Chart
                 let totalActive = 0;
                 let totalCompleted = 0;
-                data.data.forEach(row => {
-                    totalActive += parseInt(row.active_projects) || 0;
-                    totalCompleted += parseInt(row.completed_projects) || 0;
+                rows.forEach(row => {
+                    totalActive += row.active_projects || 0;
+                    totalCompleted += row.completed_projects || 0;
                 });
 
                 const ctxStatus = document.getElementById('projectStatusChart').getContext('2d');
@@ -350,10 +471,9 @@
                 });
 
                 // Sort by financial value and get top 10
-                let sortedByRevenue = [...data.data].map(row => ({
-                    ...row,
-                    revenue: parseFloat(row.total_financial_value.replace(/[$,]/g, ''))
-                })).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+                let sortedByRevenue = [...rows]
+                    .sort((a, b) => (b.total_revenue || 0) - (a.total_revenue || 0))
+                    .slice(0, 10);
 
                 // Revenue Chart
                 const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
@@ -363,7 +483,7 @@
                         labels: sortedByRevenue.map(row => row.name),
                         datasets: [{
                             label: 'Total Revenue ($)',
-                            data: sortedByRevenue.map(row => row.revenue),
+                            data: sortedByRevenue.map(row => row.total_revenue || 0),
                             backgroundColor: 'rgba(75, 192, 192, 0.8)',
                             borderColor: 'rgba(75, 192, 192, 1)',
                             borderWidth: 1
@@ -376,7 +496,7 @@
                             legend: { display: false }
                         },
                         scales: {
-                            y: { 
+                            y: {
                                 beginAtZero: true,
                                 ticks: {
                                     callback: function(value) {
@@ -388,14 +508,10 @@
                     }
                 });
 
-                // Completion Rate Chart (Top 10)
-                let sortedByCompletion = [...data.data]
-                    .filter(row => parseInt(row.total_projects) > 0)
-                    .map(row => ({
-                        ...row,
-                        rate: parseFloat(row.completion_rate.replace('%', ''))
-                    }))
-                    .sort((a, b) => b.rate - a.rate)
+                // Completion Rate Chart (Top 10) - exclude consultants with 0 total projects
+                let sortedByCompletion = [...rows]
+                    .filter(row => (row.total_projects || 0) > 0)
+                    .sort((a, b) => (b.completion_rate || 0) - (a.completion_rate || 0))
                     .slice(0, 10);
 
                 const ctxCompletion = document.getElementById('completionRateChart').getContext('2d');
@@ -405,7 +521,7 @@
                         labels: sortedByCompletion.map(row => row.name),
                         datasets: [{
                             label: 'Completion Rate (%)',
-                            data: sortedByCompletion.map(row => row.rate),
+                            data: sortedByCompletion.map(row => row.completion_rate || 0),
                             backgroundColor: 'rgba(153, 102, 255, 0.8)',
                             borderColor: 'rgba(153, 102, 255, 1)',
                             borderWidth: 1
@@ -418,7 +534,7 @@
                             legend: { display: false }
                         },
                         scales: {
-                            y: { 
+                            y: {
                                 beginAtZero: true,
                                 max: 100,
                                 ticks: {
@@ -431,6 +547,9 @@
                     }
                 });
             }
+
+            // Initial load (charts + summary are based on full dataset)
+            refreshMetrics();
         });
     </script>
 @stop

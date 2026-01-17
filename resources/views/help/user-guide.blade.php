@@ -35,6 +35,9 @@
                         <a href="#consultants" class="nav-link">
                             <i class="fas fa-user-tie"></i> Consultant Records
                         </a>
+                        <a href="#consultant-reports" class="nav-link">
+                            <i class="fas fa-file-invoice-dollar"></i> Consultant Reports
+                        </a>
                         <a href="#maps" class="nav-link">
                             <i class="fas fa-map"></i> Maps & Plots
                         </a>
@@ -145,6 +148,48 @@
                         <li><strong>Performance Reviews:</strong> Track consultant performance</li>
                         <li><strong>Contact Management:</strong> Maintain up-to-date contact information</li>
                     </ul>
+                </div>
+            </div>
+
+            <!-- Consultant Reports Section -->
+            <div id="consultant-reports" class="card card-info">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-file-invoice-dollar"></i> Consultant Reports</h3>
+                </div>
+                <div class="card-body">
+                    <p>The Consultant Financial Report summarizes project workload, completion rates, and financial value by consultant.</p>
+
+                    <h5>Where to Find It:</h5>
+                    <ul>
+                        <li><strong>Admin</strong> → <strong>Consultants</strong> → <strong>Financial Report</strong></li>
+                    </ul>
+
+                    <h5>What You’ll See:</h5>
+                    <ul>
+                        <li><strong>Charts:</strong> Top consultants by projects, status distribution, top by revenue, and completion rate</li>
+                        <li><strong>Summary Table:</strong> Per-consultant totals, active/completed counts, completion rate, and total financial value</li>
+                        <li><strong>Summary Cards:</strong> Overall counts for consultants and projects</li>
+                    </ul>
+
+                    <h5>How Metrics Are Calculated:</h5>
+                    <ul>
+                        <li><strong>Total Projects:</strong> Number of HB837 projects assigned to the consultant</li>
+                        <li><strong>Completed Projects:</strong> Projects with status <strong>completed</strong></li>
+                        <li><strong>Active Projects:</strong> Projects that are <em>not</em> <strong>completed</strong></li>
+                        <li><strong>Completion Rate:</strong> Completed ÷ Total (0% when Total is 0)</li>
+                        <li><strong>Total Financial Value:</strong> Sum of each project’s quoted price</li>
+                    </ul>
+
+                    <h5>Export Options:</h5>
+                    <ul>
+                        <li><strong>Excel:</strong> Downloads the table in spreadsheet format</li>
+                        <li><strong>PDF:</strong> Exports the table with a <strong>Grand Totals</strong> section at the bottom</li>
+                        <li><strong>Print:</strong> Printer-friendly view of the table</li>
+                    </ul>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>Note:</strong> In PDF exports, very long company names may be shortened to keep the report layout clean.
+                    </div>
                 </div>
             </div>
 
