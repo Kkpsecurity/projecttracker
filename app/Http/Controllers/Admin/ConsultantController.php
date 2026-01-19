@@ -367,49 +367,90 @@ class ConsultantController extends Controller
     public function financialReport(Request $request)
     {
         if ($request->ajax()) {
+            // Get ALL consultants (no filters) to ensure everyone shows up
             $consultants = Consultant::query()
+                ->select('id', 'first_name', 'last_name', 'dba_company_name')
                 ->withCount([
-                    'hb837Projects as total_projects',
-                    'hb837Projects as active_projects' => function ($query) {
-                        $query->whereNotIn('report_status', ['completed']);
-                    },
                     'hb837Projects as completed_projects' => function ($query) {
                         $query->where('report_status', 'completed');
                     }
                 ])
                 ->with(['hb837Projects' => function ($query) {
-                    $query->select('id', 'assigned_consultant_id', 'report_status', 'quoted_price', 'created_at', 'updated_at');
-                }]);
+                    $query->where('report_status', 'completed')
+                        ->select('id', 'assigned_consultant_id', 'report_status', 'quoted_price', 'sub_fees_estimated_expenses', 'scheduled_date_of_inspection', 'report_submitted');
+                }])
+                ->orderBy('last_name')
+                ->orderBy('first_name');
 
             return DataTables::of($consultants)
                 ->addColumn('name', function ($consultant) {
-                    return $consultant->first_name . ' ' . $consultant->last_name;
+                    $firstName = trim($consultant->first_name ?? '');
+                    $lastName = trim($consultant->last_name ?? '');
+                    $fullName = trim($firstName . ' ' . $lastName);
+                    return $fullName ?: 'Unnamed Consultant';
                 })
                 ->addColumn('company', function ($consultant) {
                     return $consultant->dba_company_name ?: 'N/A';
                 })
-                ->addColumn('total_projects', function ($consultant) {
-                    return $consultant->total_projects;
-                })
-                ->addColumn('active_projects', function ($consultant) {
-                    return $consultant->active_projects;
-                })
                 ->addColumn('completed_projects', function ($consultant) {
                     return $consultant->completed_projects;
                 })
-                ->addColumn('completion_rate', function ($consultant) {
-                    if ($consultant->total_projects == 0) {
-                        return '0%';
-                    }
-                    $rate = ($consultant->completed_projects / $consultant->total_projects) * 100;
-                    return number_format($rate, 1) . '%';
-                })
-                ->addColumn('total_financial_value', function ($consultant) {
-                    $totalValue = $consultant->hb837Projects->sum(function ($project) {
+                ->addColumn('gross_revenue', function ($consultant) {
+                    $grossRevenue = $consultant->hb837Projects->sum(function ($project) {
                         return floatval($project->quoted_price ?? 0);
                     });
+                    return '$' . number_format($grossRevenue, 2);
+                })
+                ->addColumn('estimated_expenses', function ($consultant) {
+                    $expenses = $consultant->hb837Projects->sum(function ($project) {
+                        return floatval($project->sub_fees_estimated_expenses ?? 0);
+                    });
+                    return '$' . number_format($expenses, 2);
+                })
+                ->addColumn('net_revenue', function ($consultant) {
+                    $grossRevenue = $consultant->hb837Projects->sum(function ($project) {
+                        return floatval($project->quoted_price ?? 0);
+                    });
+                    $expenses = $consultant->hb837Projects->sum(function ($project) {
+                        return floatval($project->sub_fees_estimated_expenses ?? 0);
+                    });
+                    $netRevenue = $grossRevenue - $expenses;
+                    return '$' . number_format($netRevenue, 2);
+                })
+                ->addColumn('avg_completion_time', function ($consultant) {
+                    $today = now();
+                    $earliestValid = now()->subYears(10);
                     
-                    return '$' . number_format($totalValue, 2);
+                    $validProjects = $consultant->hb837Projects->filter(function ($project) use ($today, $earliestValid) {
+                        if (!$project->scheduled_date_of_inspection || !$project->report_submitted) {
+                            return false;
+                        }
+                        
+                        $schedDate = $project->scheduled_date_of_inspection;
+                        $reportDate = $project->report_submitted;
+                        
+                        // Filter out bad dates
+                        if ($schedDate->year < 1980 || $reportDate->year < 1980) return false; // Epoch/corrupted
+                        if ($schedDate->isFuture() || $reportDate->isFuture()) return false; // Future dates
+                        if ($schedDate->lt($earliestValid)) return false; // Too old
+                        if ($reportDate->lt($schedDate)) return false; // Backwards
+                        
+                        $daysDiff = $schedDate->diffInDays($reportDate);
+                        if ($daysDiff > 365) return false; // Excessive duration
+                        
+                        return true;
+                    });
+                    
+                    if ($validProjects->isEmpty()) {
+                        return '—';
+                    }
+                    
+                    $totalDays = $validProjects->sum(function ($project) {
+                        return $project->scheduled_date_of_inspection->diffInDays($project->report_submitted);
+                    });
+                    
+                    $avgDays = $totalDays / $validProjects->count();
+                    return number_format($avgDays, 1);
                 })
                 ->addColumn('actions', function ($consultant) {
                     return '<a href="' . route('admin.consultants.show', $consultant) . '" class="btn btn-sm btn-primary">
@@ -430,50 +471,236 @@ class ConsultantController extends Controller
      */
     public function financialReportMetrics(Request $request)
     {
+        // Get ALL consultants to ensure everyone shows up
         $consultants = Consultant::query()
+            ->select('id', 'first_name', 'last_name', 'dba_company_name')
             ->withCount([
-                'hb837Projects as total_projects',
-                'hb837Projects as active_projects' => function ($query) {
-                    $query->whereNotIn('report_status', ['completed']);
-                },
                 'hb837Projects as completed_projects' => function ($query) {
                     $query->where('report_status', 'completed');
                 },
             ])
-            ->withSum('hb837Projects as total_revenue', 'quoted_price')
+            ->with(['hb837Projects' => function ($query) {
+                $query->where('report_status', 'completed')
+                    ->select('id', 'assigned_consultant_id', 'quoted_price', 'sub_fees_estimated_expenses', 'scheduled_date_of_inspection', 'report_submitted');
+            }])
+            ->orderBy('last_name')
+            ->orderBy('first_name')
             ->get();
 
         $rows = $consultants->map(function ($consultant) {
-            $totalProjects = (int) ($consultant->total_projects ?? 0);
             $completedProjects = (int) ($consultant->completed_projects ?? 0);
-
-            $completionRate = 0.0;
-            if ($totalProjects > 0) {
-                $completionRate = ($completedProjects / $totalProjects) * 100;
+            
+            $grossRevenue = $consultant->hb837Projects->sum(function ($project) {
+                return floatval($project->quoted_price ?? 0);
+            });
+            
+            $estimatedExpenses = $consultant->hb837Projects->sum(function ($project) {
+                return floatval($project->sub_fees_estimated_expenses ?? 0);
+            });
+            
+            $netRevenue = $grossRevenue - $estimatedExpenses;
+            
+            $today = now();
+            $earliestValid = now()->subYears(10);
+            
+            $validProjects = $consultant->hb837Projects->filter(function ($project) use ($today, $earliestValid) {
+                if (!$project->scheduled_date_of_inspection || !$project->report_submitted) {
+                    return false;
+                }
+                
+                $schedDate = $project->scheduled_date_of_inspection;
+                $reportDate = $project->report_submitted;
+                
+                // Filter out bad dates
+                if ($schedDate->year < 1980 || $reportDate->year < 1980) return false;
+                if ($schedDate->isFuture() || $reportDate->isFuture()) return false;
+                if ($schedDate->lt($earliestValid)) return false;
+                if ($reportDate->lt($schedDate)) return false;
+                
+                $daysDiff = $schedDate->diffInDays($reportDate);
+                if ($daysDiff > 365) return false;
+                
+                return true;
+            });
+            
+            $avgCompletionDays = null;
+            if ($validProjects->count() > 0) {
+                $totalDays = $validProjects->sum(function ($project) {
+                    return $project->scheduled_date_of_inspection->diffInDays($project->report_submitted);
+                });
+                $avgCompletionDays = $totalDays / $validProjects->count();
             }
+
+            $firstName = trim($consultant->first_name ?? '');
+            $lastName = trim($consultant->last_name ?? '');
+            $fullName = trim($firstName . ' ' . $lastName);
 
             return [
                 'id' => $consultant->id,
-                'name' => trim(($consultant->first_name ?? '') . ' ' . ($consultant->last_name ?? '')),
+                'name' => $fullName ?: 'Unnamed Consultant',
                 'company' => $consultant->dba_company_name ?: 'N/A',
-                'total_projects' => $totalProjects,
-                'active_projects' => (int) ($consultant->active_projects ?? 0),
                 'completed_projects' => $completedProjects,
-                'completion_rate' => round($completionRate, 1),
-                'total_revenue' => (float) ($consultant->total_revenue ?? 0),
+                'gross_revenue' => $grossRevenue,
+                'estimated_expenses' => $estimatedExpenses,
+                'net_revenue' => $netRevenue,
+                'avg_completion_days' => $avgCompletionDays,
             ];
         })->values();
 
         $summary = [
             'total_consultants' => $rows->count(),
-            'total_projects' => (int) $rows->sum('total_projects'),
-            'active_projects' => (int) $rows->sum('active_projects'),
             'completed_projects' => (int) $rows->sum('completed_projects'),
+            'gross_revenue' => $rows->sum('gross_revenue'),
+            'estimated_expenses' => $rows->sum('estimated_expenses'),
+            'net_revenue' => $rows->sum('net_revenue'),
         ];
 
         return response()->json([
             'summary' => $summary,
             'rows' => $rows,
         ]);
+    }
+
+    /**
+     * Identify HB837 projects with suspicious date ranges for data quality review
+     */
+    public function dateAnomalies()
+    {
+        $today = now();
+        $earliestReasonableDate = now()->subYears(10); // Projects older than 10 years are suspicious
+        
+        $suspiciousProjects = HB837::query()
+            ->where('report_status', 'completed')
+            ->whereNotNull('scheduled_date_of_inspection')
+            ->whereNotNull('report_submitted')
+            ->with('consultant:id,first_name,last_name')
+            ->get()
+            ->map(function ($project) use ($today, $earliestReasonableDate) {
+                $schedDate = $project->scheduled_date_of_inspection;
+                $reportDate = $project->report_submitted;
+                
+                $daysDiff = $schedDate->diffInDays($reportDate, false);
+                $absDays = abs($daysDiff);
+                
+                // Detect specific issues
+                $issues = [];
+                
+                // Check for 1970 dates (Unix epoch default/conversion error)
+                if ($schedDate->year == 1970) {
+                    $issues[] = '1970 Epoch (Scheduled)';
+                }
+                if ($reportDate->year == 1970) {
+                    $issues[] = '1970 Epoch (Report)';
+                }
+                
+                // Check for dates before 1980 (likely data corruption)
+                if ($schedDate->year < 1980 && $schedDate->year != 1970) {
+                    $issues[] = 'Pre-1980 Date (Scheduled)';
+                }
+                if ($reportDate->year < 1980 && $reportDate->year != 1970) {
+                    $issues[] = 'Pre-1980 Date (Report)';
+                }
+                
+                // Check for future dates
+                if ($schedDate->isFuture()) {
+                    $issues[] = 'Future Date (Scheduled)';
+                }
+                if ($reportDate->isFuture()) {
+                    $issues[] = 'Future Date (Report)';
+                }
+                
+                // Check for very old dates (before reasonable project start)
+                if ($schedDate->lt($earliestReasonableDate)) {
+                    $issues[] = 'Too Old (>10 years)';
+                }
+                
+                // Check for backwards dates
+                if ($daysDiff < 0) {
+                    $issues[] = 'Backwards (Report before Inspection)';
+                }
+                
+                // Check for excessive duration
+                if ($absDays > 365) {
+                    $issues[] = 'Excessive Duration (>1 year)';
+                }
+                
+                $isSuspicious = !empty($issues);
+                
+                return [
+                    'id' => $project->id,
+                    'property_name' => $project->property_name,
+                    'consultant' => $project->consultant ? $project->consultant->first_name . ' ' . $project->consultant->last_name : 'N/A',
+                    'scheduled_date' => $schedDate->format('Y-m-d'),
+                    'scheduled_year' => $schedDate->year,
+                    'report_submitted' => $reportDate->format('Y-m-d'),
+                    'report_year' => $reportDate->year,
+                    'days_difference' => $daysDiff,
+                    'abs_days' => $absDays,
+                    'is_backwards' => $daysDiff < 0,
+                    'is_1970' => $schedDate->year == 1970 || $reportDate->year == 1970,
+                    'is_future' => $schedDate->isFuture() || $reportDate->isFuture(),
+                    'is_too_old' => $schedDate->lt($earliestReasonableDate),
+                    'issues' => $issues,
+                    'is_suspicious' => $isSuspicious,
+                    'severity' => $this->calculateSeverity($issues),
+                ];
+            })
+            ->filter(function ($item) {
+                return $item['is_suspicious'];
+            })
+            ->sortByDesc('severity')
+            ->sortByDesc('abs_days')
+            ->values();
+
+        return view('admin.consultants.date-anomalies', [
+            'anomalies' => $suspiciousProjects,
+            'total_suspicious' => $suspiciousProjects->count(),
+            'by_issue_type' => $this->groupByIssueType($suspiciousProjects),
+        ]);
+    }
+    
+    /**
+     * Calculate severity score for sorting (higher = worse)
+     */
+    private function calculateSeverity($issues)
+    {
+        $score = 0;
+        foreach ($issues as $issue) {
+            if (str_contains($issue, '1970 Epoch')) $score += 100;
+            if (str_contains($issue, 'Pre-1980')) $score += 90;
+            if (str_contains($issue, 'Future Date')) $score += 80;
+            if (str_contains($issue, 'Too Old')) $score += 70;
+            if (str_contains($issue, 'Backwards')) $score += 60;
+            if (str_contains($issue, 'Excessive Duration')) $score += 50;
+        }
+        return $score;
+    }
+    
+    /**
+     * Group anomalies by issue type for summary
+     */
+    private function groupByIssueType($anomalies)
+    {
+        $grouped = [
+            'epoch_1970' => 0,
+            'pre_1980' => 0,
+            'future_dates' => 0,
+            'too_old' => 0,
+            'backwards' => 0,
+            'excessive_duration' => 0,
+        ];
+        
+        foreach ($anomalies as $anomaly) {
+            foreach ($anomaly['issues'] as $issue) {
+                if (str_contains($issue, '1970 Epoch')) $grouped['epoch_1970']++;
+                if (str_contains($issue, 'Pre-1980')) $grouped['pre_1980']++;
+                if (str_contains($issue, 'Future Date')) $grouped['future_dates']++;
+                if (str_contains($issue, 'Too Old')) $grouped['too_old']++;
+                if (str_contains($issue, 'Backwards')) $grouped['backwards']++;
+                if (str_contains($issue, 'Excessive Duration')) $grouped['excessive_duration']++;
+            }
+        }
+        
+        return $grouped;
     }
 }

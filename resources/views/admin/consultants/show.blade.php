@@ -377,14 +377,77 @@
                                                                 <td class="text-right">${{ number_format($net, 2) }}</td>
                                                                 <td>
                                                                     @if($assignment->scheduled_date_of_inspection)
-                                                                        {{ $assignment->scheduled_date_of_inspection->format('M d, Y') }}
+                                                                        @php
+                                                                            $schedDate = $assignment->scheduled_date_of_inspection;
+                                                                            $badgeClass = '';
+                                                                            $badgeText = '';
+                                                                            $textClass = '';
+                                                                            
+                                                                            if ($schedDate->year == 1970) {
+                                                                                $badgeClass = 'badge-danger';
+                                                                                $badgeText = '⚠ 1970';
+                                                                                $textClass = 'text-danger font-weight-bold';
+                                                                            } elseif ($schedDate->year < 1980) {
+                                                                                $badgeClass = 'badge-danger';
+                                                                                $badgeText = '⚠ ' . $schedDate->year;
+                                                                                $textClass = 'text-danger font-weight-bold';
+                                                                            } elseif ($schedDate->isFuture()) {
+                                                                                $badgeClass = 'badge-info';
+                                                                                $badgeText = '📅';
+                                                                                $textClass = 'text-info';
+                                                                            } elseif ($schedDate->lt(now()->subYears(10))) {
+                                                                                $badgeClass = 'badge-warning';
+                                                                                $badgeText = '⏰';
+                                                                                $textClass = 'text-muted';
+                                                                            }
+                                                                        @endphp
+                                                                        <span class="{{ $textClass }}">{{ $assignment->scheduled_date_of_inspection->format('M d, Y') }}</span>
+                                                                        @if($badgeText)
+                                                                            <span class="badge {{ $badgeClass }} ml-1">{{ $badgeText }}</span>
+                                                                        @endif
                                                                     @else
                                                                         <span class="text-muted">—</span>
                                                                     @endif
                                                                 </td>
                                                                 <td>
                                                                     @if($assignment->report_submitted)
-                                                                        {{ $assignment->report_submitted->format('M d, Y') }}
+                                                                        @php
+                                                                            $reportDate = $assignment->report_submitted;
+                                                                            $badgeClass = '';
+                                                                            $badgeText = '';
+                                                                            $textClass = '';
+                                                                            
+                                                                            if ($reportDate->year == 1970) {
+                                                                                $badgeClass = 'badge-danger';
+                                                                                $badgeText = '⚠ 1970';
+                                                                                $textClass = 'text-danger font-weight-bold';
+                                                                            } elseif ($reportDate->year < 1980) {
+                                                                                $badgeClass = 'badge-danger';
+                                                                                $badgeText = '⚠ ' . $reportDate->year;
+                                                                                $textClass = 'text-danger font-weight-bold';
+                                                                            } elseif ($reportDate->isFuture()) {
+                                                                                $badgeClass = 'badge-info';
+                                                                                $badgeText = '📅';
+                                                                                $textClass = 'text-info';
+                                                                            } elseif ($reportDate->lt(now()->subYears(10))) {
+                                                                                $badgeClass = 'badge-warning';
+                                                                                $badgeText = '⏰';
+                                                                                $textClass = 'text-muted';
+                                                                            }
+                                                                            
+                                                                            // Check backwards logic
+                                                                            if ($assignment->scheduled_date_of_inspection && 
+                                                                                $reportDate->lt($assignment->scheduled_date_of_inspection) && 
+                                                                                $reportDate->year >= 1980) {
+                                                                                $badgeClass = 'badge-danger';
+                                                                                $badgeText = '⚠ Backwards';
+                                                                                $textClass = 'text-danger font-weight-bold';
+                                                                            }
+                                                                        @endphp
+                                                                        <span class="{{ $textClass }}">{{ $assignment->report_submitted->format('M d, Y') }}</span>
+                                                                        @if($badgeText)
+                                                                            <span class="badge {{ $badgeClass }} ml-1">{{ $badgeText }}</span>
+                                                                        @endif
                                                                     @else
                                                                         <span class="text-muted">—</span>
                                                                     @endif

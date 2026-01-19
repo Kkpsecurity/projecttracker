@@ -227,14 +227,38 @@ class HB837DataTableService
     {
         if ($hb837->scheduled_date_of_inspection) {
             $date = \Carbon\Carbon::parse($hb837->scheduled_date_of_inspection);
+            $dateIssues = [];
+            $cssClass = '';
+            $badgeHtml = '';
 
-            // Apply red bold styling for "Late Reports" criteria
-            $isLateReport = $hb837->report_status === 'not-started'
-                && $hb837->contracting_status === 'executed'
-                && $date->lt(now()->subDays(30));
+            // Check for date quality issues
+            if ($date->year == 1970) {
+                $dateIssues[] = '1970 Epoch';
+                $cssClass = 'text-danger font-weight-bold';
+                $badgeHtml = '<span class="badge badge-danger ml-1" title="1970 epoch date - likely NULL conversion issue">⚠ 1970</span>';
+            } elseif ($date->year < 1980) {
+                $dateIssues[] = 'Pre-1980';
+                $cssClass = 'text-danger font-weight-bold';
+                $badgeHtml = '<span class="badge badge-danger ml-1" title="Pre-1980 date - likely data error">⚠ ' . $date->year . '</span>';
+            } elseif ($date->isFuture()) {
+                $dateIssues[] = 'Future Date';
+                $cssClass = 'text-info font-weight-bold';
+                $badgeHtml = '<span class="badge badge-info ml-1" title="Future date">📅 Future</span>';
+            } elseif ($date->lt(now()->subYears(10))) {
+                $dateIssues[] = 'Too Old';
+                $cssClass = 'text-warning';
+                $badgeHtml = '<span class="badge badge-warning ml-1" title="Date is more than 10 years old">⏰ Old</span>';
+            }
 
-            $class = $isLateReport ? 'text-danger font-weight-bold' : '';
-            return '<span class="' . $class . '">' . $date->format('M j, Y') . '</span>';
+            // Apply red bold styling for "Late Reports" criteria (only if no other date issue)
+            if (empty($dateIssues)) {
+                $isLateReport = $hb837->report_status === 'not-started'
+                    && $hb837->contracting_status === 'executed'
+                    && $date->lt(now()->subDays(30));
+                $cssClass = $isLateReport ? 'text-danger font-weight-bold' : '';
+            }
+
+            return '<span class="' . $cssClass . '">' . $date->format('M j, Y') . '</span>' . $badgeHtml;
         }
         return '<span class="text-muted">Not scheduled</span>';
     }

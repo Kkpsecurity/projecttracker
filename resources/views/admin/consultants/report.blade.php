@@ -15,6 +15,13 @@
             </ol>
         </div>
     </div>
+    <div class="row">
+        <div class="col-12">
+            <a href="{{ route('admin.consultants.report.date-anomalies') }}" class="btn btn-warning btn-sm">
+                <i class="fas fa-exclamation-triangle"></i> View Date Anomalies
+            </a>
+        </div>
+    </div>
 @stop
 
 @section('content')
@@ -23,7 +30,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-chart-bar"></i> Top 10 Consultants by Projects</h3>
+                    <h3 class="card-title"><i class="fas fa-chart-bar"></i> Top 10 Consultants by Completed Projects</h3>
                 </div>
                 <div class="card-body">
                     <canvas id="topConsultantsChart" height="250"></canvas>
@@ -33,7 +40,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-chart-pie"></i> Project Status Distribution</h3>
+                    <h3 class="card-title"><i class="fas fa-chart-pie"></i> Gross vs Net Revenue (Top 10)</h3>
                 </div>
                 <div class="card-body">
                     <canvas id="projectStatusChart" height="250"></canvas>
@@ -46,7 +53,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-chart-line"></i> Top 10 Consultants by Revenue</h3>
+                    <h3 class="card-title"><i class="fas fa-chart-line"></i> Top 10 Consultants by Gross Revenue</h3>
                 </div>
                 <div class="card-body">
                     <canvas id="revenueChart" height="250"></canvas>
@@ -56,7 +63,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-percentage"></i> Completion Rate by Consultant</h3>
+                    <h3 class="card-title"><i class="fas fa-clock"></i> Average Report Completion Time (Top 10 Fastest)</h3>
                 </div>
                 <div class="card-body">
                     <canvas id="completionRateChart" height="250"></canvas>
@@ -67,7 +74,7 @@
 
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Consultant Performance & Project Summary</h3>
+            <h3 class="card-title">Consultant Revenue Summary (Completed Projects)</h3>
             <div class="card-tools">
                 <button type="button" class="btn btn-tool" data-card-widget="collapse">
                     <i class="fas fa-minus"></i>
@@ -79,8 +86,8 @@
                 <div class="col-12">
                     <p class="text-muted">
                         <i class="fas fa-info-circle"></i>
-                        This report provides a comprehensive overview of each consultant's project portfolio, 
-                        including total projects, completion rates, and average project completion times.
+                        This report breaks down work completed by our consultants and associated revenue, 
+                        showing completed projects with gross revenue, estimated expenses, net revenue, and average report completion time.
                     </p>
                 </div>
             </div>
@@ -91,11 +98,11 @@
                         <tr>
                             <th>Consultant Name</th>
                             <th>Company</th>
-                            <th>Total Projects</th>
-                            <th>Active Projects</th>
-                            <th>Completed Projects</th>
-                            <th>Completion Rate</th>
-                            <th>Total Financial Value</th>
+                            <th>No. of Completed Projects</th>
+                            <th>Gross Revenue</th>
+                            <th>Estimated Expenses</th>
+                            <th>Net Revenue</th>
+                            <th>Avg Report Completion Time (Days)</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -121,11 +128,11 @@
         <div class="col-lg-3 col-6">
             <div class="small-box bg-success">
                 <div class="inner">
-                    <h3 id="total-projects">-</h3>
-                    <p>Total Projects</p>
+                    <h3 id="completed-projects">-</h3>
+                    <p>Completed Projects</p>
                 </div>
                 <div class="icon">
-                    <i class="fas fa-project-diagram"></i>
+                    <i class="fas fa-check-circle"></i>
                 </div>
             </div>
         </div>
@@ -133,11 +140,11 @@
         <div class="col-lg-3 col-6">
             <div class="small-box bg-warning">
                 <div class="inner">
-                    <h3 id="active-projects">-</h3>
-                    <p>Active Projects</p>
+                    <h3 id="gross-revenue">-</h3>
+                    <p>Gross Revenue</p>
                 </div>
                 <div class="icon">
-                    <i class="fas fa-spinner"></i>
+                    <i class="fas fa-dollar-sign"></i>
                 </div>
             </div>
         </div>
@@ -145,11 +152,11 @@
         <div class="col-lg-3 col-6">
             <div class="small-box bg-primary">
                 <div class="inner">
-                    <h3 id="completed-projects">-</h3>
-                    <p>Completed Projects</p>
+                    <h3 id="net-revenue">-</h3>
+                    <p>Net Revenue</p>
                 </div>
                 <div class="icon">
-                    <i class="fas fa-check-circle"></i>
+                    <i class="fas fa-chart-line"></i>
                 </div>
             </div>
         </div>
@@ -185,30 +192,32 @@
                     { data: 'name', name: 'first_name' },
                     { data: 'company', name: 'dba_company_name' },
                     { 
-                        data: 'total_projects', 
-                        name: 'total_projects',
-                        className: 'text-center'
-                    },
-                    { 
-                        data: 'active_projects', 
-                        name: 'active_projects',
-                        className: 'text-center'
-                    },
-                    { 
                         data: 'completed_projects', 
                         name: 'completed_projects',
                         className: 'text-center'
                     },
                     { 
-                        data: 'completion_rate', 
-                        name: 'completion_rate',
-                        className: 'text-center',
+                        data: 'gross_revenue', 
+                        name: 'gross_revenue',
+                        className: 'text-right',
                         orderable: false
                     },
                     { 
-                        data: 'total_financial_value', 
-                        name: 'total_financial_value',
+                        data: 'estimated_expenses', 
+                        name: 'estimated_expenses',
                         className: 'text-right',
+                        orderable: false
+                    },
+                    { 
+                        data: 'net_revenue', 
+                        name: 'net_revenue',
+                        className: 'text-right',
+                        orderable: false
+                    },
+                    { 
+                        data: 'avg_completion_time', 
+                        name: 'avg_completion_time',
+                        className: 'text-center',
                         orderable: false
                     },
                     { 
@@ -258,7 +267,7 @@
                             if (!tableNode) return;
 
                             // Make Company column flex to take remaining width.
-                            // Columns: Consultant, Company, Total, Active, Completed, Rate, Value
+                            // Columns: Consultant, Company, Completed, Gross Revenue, Est Expenses, Net Revenue, Avg Completion
                             tableNode.table.widths = ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto'];
 
                             // Truncate long company names so they don't wrap into tall rows.
@@ -305,23 +314,19 @@
                             };
 
                             let totalConsultants = 0;
-                            let totalProjects = 0;
-                            let activeProjects = 0;
                             let completedProjects = 0;
-                            let totalRevenue = 0;
+                            let grossRevenue = 0;
+                            let estimatedExpenses = 0;
+                            let netRevenue = 0;
 
-                            // Columns: 0 Consultant, 1 Company, 2 Total, 3 Active, 4 Completed, 5 Rate, 6 Value
+                            // Columns: 0 Consultant, 1 Company, 2 Completed, 3 Gross, 4 Expenses, 5 Net, 6 Avg Days
                             for (let r = 1; r < body.length; r++) {
                                 totalConsultants++;
-                                totalProjects += toInt(getCellText(body[r][2]));
-                                activeProjects += toInt(getCellText(body[r][3]));
-                                completedProjects += toInt(getCellText(body[r][4]));
-                                totalRevenue += toMoney(getCellText(body[r][6]));
+                                completedProjects += toInt(getCellText(body[r][2]));
+                                grossRevenue += toMoney(getCellText(body[r][3]));
+                                estimatedExpenses += toMoney(getCellText(body[r][4]));
+                                netRevenue += toMoney(getCellText(body[r][5]));
                             }
-
-                            const overallCompletionRate = totalProjects > 0
-                                ? Math.round(((completedProjects / totalProjects) * 100) * 10) / 10
-                                : 0;
 
                             const formatMoney = function (amount) {
                                 const n = Number.isFinite(amount) ? amount : 0;
@@ -337,11 +342,10 @@
                                             widths: ['*', 'auto'],
                                             body: [
                                                 [{ text: 'Total Consultants', bold: true }, String(totalConsultants)],
-                                                [{ text: 'Total Projects', bold: true }, String(totalProjects)],
-                                                [{ text: 'Active Projects', bold: true }, String(activeProjects)],
                                                 [{ text: 'Completed Projects', bold: true }, String(completedProjects)],
-                                                [{ text: 'Overall Completion Rate', bold: true }, String(overallCompletionRate) + '%'],
-                                                [{ text: 'Total Financial Value', bold: true }, formatMoney(totalRevenue)],
+                                                [{ text: 'Gross Revenue', bold: true }, formatMoney(grossRevenue)],
+                                                [{ text: 'Estimated Expenses', bold: true }, formatMoney(estimatedExpenses)],
+                                                [{ text: 'Net Revenue', bold: true }, formatMoney(netRevenue)],
                                             ]
                                         },
                                         layout: 'lightHorizontalLines',
@@ -390,9 +394,14 @@
             function updateSummaryStatsFromMetrics(summary) {
                 if (!summary) return;
                 $('#total-consultants').text(summary.total_consultants ?? 0);
-                $('#total-projects').text(summary.total_projects ?? 0);
-                $('#active-projects').text(summary.active_projects ?? 0);
                 $('#completed-projects').text(summary.completed_projects ?? 0);
+                
+                const formatMoney = function(amount) {
+                    return '$' + (amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                };
+                
+                $('#gross-revenue').text(formatMoney(summary.gross_revenue ?? 0));
+                $('#net-revenue').text(formatMoney(summary.net_revenue ?? 0));
             }
 
             function updateChartsFromMetrics(rows) {
@@ -404,20 +413,20 @@
                 if (revenueChart) revenueChart.destroy();
                 if (completionRateChart) completionRateChart.destroy();
 
-                // Sort by total projects and get top 10
+                // Sort by completed projects and get top 10
                 let sortedByProjects = [...rows]
-                    .sort((a, b) => (b.total_projects || 0) - (a.total_projects || 0))
+                    .sort((a, b) => (b.completed_projects || 0) - (a.completed_projects || 0))
                     .slice(0, 10);
 
-                // Top Consultants by Projects Chart
+                // Top Consultants by Completed Projects Chart
                 const ctxProjects = document.getElementById('topConsultantsChart').getContext('2d');
                 topConsultantsChart = new Chart(ctxProjects, {
                     type: 'bar',
                     data: {
                         labels: sortedByProjects.map(row => row.name),
                         datasets: [{
-                            label: 'Total Projects',
-                            data: sortedByProjects.map(row => row.total_projects || 0),
+                            label: 'Completed Projects',
+                            data: sortedByProjects.map(row => row.completed_projects || 0),
                             backgroundColor: 'rgba(54, 162, 235, 0.8)',
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1
@@ -435,55 +444,61 @@
                     }
                 });
 
-                // Project Status Distribution Chart
-                let totalActive = 0;
-                let totalCompleted = 0;
-                rows.forEach(row => {
-                    totalActive += row.active_projects || 0;
-                    totalCompleted += row.completed_projects || 0;
-                });
+                // Revenue Breakdown Chart (Gross vs Net)
+                let sortedByRevenue = [...rows]
+                    .sort((a, b) => (b.gross_revenue || 0) - (a.gross_revenue || 0))
+                    .slice(0, 10);
 
                 const ctxStatus = document.getElementById('projectStatusChart').getContext('2d');
                 projectStatusChart = new Chart(ctxStatus, {
-                    type: 'doughnut',
+                    type: 'bar',
                     data: {
-                        labels: ['Active Projects', 'Completed Projects'],
-                        datasets: [{
-                            data: [totalActive, totalCompleted],
-                            backgroundColor: [
-                                'rgba(255, 206, 86, 0.8)',
-                                'rgba(75, 192, 192, 0.8)'
-                            ],
-                            borderColor: [
-                                'rgba(255, 206, 86, 1)',
-                                'rgba(75, 192, 192, 1)'
-                            ],
-                            borderWidth: 1
-                        }]
+                        labels: sortedByRevenue.map(row => row.name),
+                        datasets: [
+                            {
+                                label: 'Gross Revenue',
+                                data: sortedByRevenue.map(row => row.gross_revenue || 0),
+                                backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Net Revenue',
+                                data: sortedByRevenue.map(row => row.net_revenue || 0),
+                                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             legend: { position: 'bottom' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
                         }
                     }
                 });
 
-                // Sort by financial value and get top 10
-                let sortedByRevenue = [...rows]
-                    .sort((a, b) => (b.total_revenue || 0) - (a.total_revenue || 0))
-                    .slice(0, 10);
-
-                // Revenue Chart
+                // Gross Revenue Chart (Top 10)
                 const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
                 revenueChart = new Chart(ctxRevenue, {
                     type: 'bar',
                     data: {
                         labels: sortedByRevenue.map(row => row.name),
                         datasets: [{
-                            label: 'Total Revenue ($)',
-                            data: sortedByRevenue.map(row => row.total_revenue || 0),
+                            label: 'Gross Revenue ($)',
+                            data: sortedByRevenue.map(row => row.gross_revenue || 0),
                             backgroundColor: 'rgba(75, 192, 192, 0.8)',
                             borderColor: 'rgba(75, 192, 192, 1)',
                             borderWidth: 1
@@ -508,10 +523,10 @@
                     }
                 });
 
-                // Completion Rate Chart (Top 10) - exclude consultants with 0 total projects
+                // Average Completion Time Chart (Top 10) - exclude consultants with null avg_completion_days
                 let sortedByCompletion = [...rows]
-                    .filter(row => (row.total_projects || 0) > 0)
-                    .sort((a, b) => (b.completion_rate || 0) - (a.completion_rate || 0))
+                    .filter(row => row.avg_completion_days !== null && row.avg_completion_days !== undefined)
+                    .sort((a, b) => (a.avg_completion_days || 0) - (b.avg_completion_days || 0))
                     .slice(0, 10);
 
                 const ctxCompletion = document.getElementById('completionRateChart').getContext('2d');
@@ -520,8 +535,8 @@
                     data: {
                         labels: sortedByCompletion.map(row => row.name),
                         datasets: [{
-                            label: 'Completion Rate (%)',
-                            data: sortedByCompletion.map(row => row.completion_rate || 0),
+                            label: 'Avg Completion Time (Days)',
+                            data: sortedByCompletion.map(row => row.avg_completion_days || 0),
                             backgroundColor: 'rgba(153, 102, 255, 0.8)',
                             borderColor: 'rgba(153, 102, 255, 1)',
                             borderWidth: 1

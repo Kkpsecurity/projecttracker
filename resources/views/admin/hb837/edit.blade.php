@@ -37,6 +37,32 @@
     .tab-content {
         min-height: 400px;
     }
+
+    /* Date validation styling */
+    input[type="date"].date-error {
+        border: 2px solid #dc3545 !important;
+        background-color: #f8d7da !important;
+    }
+
+    input[type="date"].date-warning {
+        border: 2px solid #ffc107 !important;
+        background-color: #fff3cd !important;
+    }
+
+    input[type="date"].date-info {
+        border: 2px solid #17a2b8 !important;
+        background-color: #d1ecf1 !important;
+    }
+
+    input[type="date"].date-old {
+        border: 2px solid #6c757d !important;
+        background-color: #e2e3e5 !important;
+    }
+
+    .date-issue-badge {
+        display: inline-block;
+        margin-top: 0.25rem;
+    }
     </style>
 @stop
 
@@ -233,6 +259,78 @@
 
             var $ = window.jQuery;
 
+            // Date validation function to detect bad dates
+            function validateDateField($input) {
+                const value = $input.val();
+                if (!value) {
+                    $input.removeClass('date-error date-warning date-info date-old');
+                    $input.next('.date-issue-badge').remove();
+                    return;
+                }
+
+                const date = new Date(value);
+                const year = date.getFullYear();
+                const now = new Date();
+                const tenYearsAgo = new Date();
+                tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+                
+                // Remove existing classes and badges
+                $input.removeClass('date-error date-warning date-info date-old');
+                $input.next('.date-issue-badge').remove();
+                
+                let badgeHtml = '';
+                let cssClass = '';
+                
+                // Check for date issues in priority order
+                if (year === 1970) {
+                    cssClass = 'date-error';
+                    badgeHtml = '<span class="badge badge-danger date-issue-badge ml-1" title="1970 epoch date - likely NULL conversion issue">⚠ 1970 Epoch Date</span>';
+                } else if (year < 1980) {
+                    cssClass = 'date-error';
+                    badgeHtml = '<span class="badge badge-danger date-issue-badge ml-1" title="Pre-1980 date - likely data error">⚠ Pre-1980 Date (' + year + ')</span>';
+                } else if (date > now) {
+                    cssClass = 'date-info';
+                    badgeHtml = '<span class="badge badge-info date-issue-badge ml-1" title="Future date">📅 Future Date</span>';
+                } else if (date < tenYearsAgo) {
+                    cssClass = 'date-old';
+                    badgeHtml = '<span class="badge badge-warning date-issue-badge ml-1" title="Date is more than 10 years old">⏰ Old Date (>10 years)</span>';
+                }
+                
+                // Check for backwards logic (report_submitted before scheduled_date_of_inspection)
+                if ($input.attr('name') === 'report_submitted') {
+                    const scheduledVal = $('#scheduled_date_of_inspection').val();
+                    if (scheduledVal) {
+                        const scheduledDate = new Date(scheduledVal);
+                        if (date < scheduledDate && year >= 1980) {  // Only check if not already flagged for other issues
+                            cssClass = 'date-error';
+                            badgeHtml = '<span class="badge badge-danger date-issue-badge ml-1" title="Report submitted before inspection scheduled">⚠ Backwards Logic</span>';
+                        }
+                    }
+                }
+                
+                if (cssClass) {
+                    $input.addClass(cssClass);
+                }
+                
+                if (badgeHtml) {
+                    $input.after(badgeHtml);
+                }
+            }
+
+            // Check backwards logic for both date fields
+            function checkBackwardsLogic() {
+                const scheduledVal = $('#scheduled_date_of_inspection').val();
+                const reportVal = $('#report_submitted').val();
+                
+                if (scheduledVal && reportVal) {
+                    const scheduledDate = new Date(scheduledVal);
+                    const reportDate = new Date(reportVal);
+                    
+                    // Re-validate report_submitted field to show backwards logic warning
+                    validateDateField($('#report_submitted'));
+                }
+            }
+
             function initSlotImagesTable() {
                 if (!$.fn || !$.fn.DataTable) {
                     return;
@@ -264,6 +362,20 @@
 
             $(function() {
             const storageKey = 'hb837_edit_active_tab_{{ $hb837->id }}';
+
+            // Validate all date fields on page load
+            $('input[type="date"]').each(function() {
+                validateDateField($(this));
+            });
+
+            // Validate date fields on change
+            $('input[type="date"]').on('change', function() {
+                validateDateField($(this));
+                // Also check backwards logic when either date changes
+                if ($(this).attr('name') === 'scheduled_date_of_inspection' || $(this).attr('name') === 'report_submitted') {
+                    checkBackwardsLogic();
+                }
+            });
 
             // Auto-calculate project net profit
             function calculateNetProfit() {

@@ -119,7 +119,17 @@ class HB837ConsultantRevenueSummaryController extends Controller
                 "COALESCE(SUM(hb837.quoted_price), 0) as gross_revenue, " .
                 "COALESCE(SUM(hb837.sub_fees_estimated_expenses), 0) as estimated_expenses, " .
                 "COALESCE(SUM(hb837.quoted_price), 0) - COALESCE(SUM(hb837.sub_fees_estimated_expenses), 0) as net_revenue, " .
-                "AVG(CASE WHEN hb837.scheduled_date_of_inspection IS NOT NULL AND hb837.report_submitted IS NOT NULL THEN DATEDIFF(hb837.report_submitted, hb837.scheduled_date_of_inspection) END) as avg_completion_days"
+                "AVG(CASE " .
+                    "WHEN hb837.scheduled_date_of_inspection IS NOT NULL " .
+                    "AND hb837.report_submitted IS NOT NULL " .
+                    "AND YEAR(hb837.scheduled_date_of_inspection) >= 1980 " .
+                    "AND YEAR(hb837.report_submitted) >= 1980 " .
+                    "AND hb837.scheduled_date_of_inspection <= CURDATE() " .
+                    "AND hb837.report_submitted <= CURDATE() " .
+                    "AND hb837.report_submitted >= hb837.scheduled_date_of_inspection " .
+                    "AND DATEDIFF(hb837.report_submitted, hb837.scheduled_date_of_inspection) <= 365 " .
+                    "THEN DATEDIFF(hb837.report_submitted, hb837.scheduled_date_of_inspection) " .
+                "END) as avg_completion_days"
             )
             ->get();
 
